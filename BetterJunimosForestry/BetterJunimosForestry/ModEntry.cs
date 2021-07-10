@@ -1,0 +1,253 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using BetterJunimos;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
+using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
+using StardewValley;
+using StardewValley.Buildings;
+using StardewValley.GameData.HomeRenovations;
+using StardewValley.Locations;
+using StardewValley.TerrainFeatures;
+
+namespace BetterJunimosForestry {
+    public static class Modes {
+        public static readonly string Normal = "normal";
+        public static readonly string Crops = "crops";
+        public static readonly string Orchard = "orchard";
+        public static readonly string Forest = "forest";
+        public static readonly string Grains = "grains";
+    }
+    
+    public class HutState {
+        public bool ShowHUD = false;
+        public string Mode = Modes.Normal;
+    }
+
+    public class ModeChange {
+        public Guid guid;
+        public string mode;
+
+        public ModeChange(Guid guid, string mode) {
+            this.guid = guid;
+            this.mode = mode;
+        }
+    }
+    
+    /// <summary>The mod entry point.</summary>
+    public class ModEntry : Mod {
+        private Dictionary<Rectangle, ModeChange> Rectangles = new Dictionary<Rectangle, ModeChange>();
+        
+        private Rectangle TreeIcon = new Rectangle(0, 656, 14, 14);
+        private Rectangle JunimoIcon = new Rectangle(109, 492, 14, 14);
+        private Rectangle CropIcon = new Rectangle(178, 129, 14, 14);
+        private Rectangle FruitTreeIcon = new Rectangle(16, 624, 14, 14);
+        private Rectangle ScrollIcon = new Rectangle(673, 81, 14, 14);
+        private Rectangle BundleIcon = new Rectangle(331, 374, 15, 14);
+        private Rectangle LetterIcon = new Rectangle(190, 422, 14, 14);
+        private Rectangle QuestionIcon = new Rectangle(174, 424, 14, 14);
+        
+        internal static ModConfig Config;
+        internal static IMonitor SMonitor;
+        internal static Dictionary<Vector2, HutState> HutStates;
+
+        internal static IBetterJunimosApi BJApi;
+        
+        internal static Abilities.PlantTreesAbility PlantTrees;
+        internal static Abilities.PlantFruitTreesAbility PlantFruitTrees;
+
+        private void RenderedWorld(object sender, RenderedWorldEventArgs e) {
+            if (Game1.player.currentLocation is not Farm) return;
+            Rectangles.Clear();
+            foreach (KeyValuePair<Vector2, HutState> kvp in HutStates) {
+                var state = kvp.Value;
+                if (!state.ShowHUD) continue;
+                JunimoHut hut = Util.GetHutFromPosition(kvp.Key);
+                Guid guid = Util.GetHutIdFromHut(hut);
+                if (hut == null) {
+                    // Monitor.Log($"RenderedWorld {kvp.Key} is not a valid building", LogLevel.Debug);
+                    continue;
+                }
+
+                Vector2 hutPos = new Vector2(hut.tileX, hut.tileY);
+                int padding = 3;
+                int offset = 14 * Game1.pixelZoom;
+
+                int scroll_width = offset * 6 + padding * 2;
+                int hut_xvp = hut.tileX.Value * Game1.tileSize - Game1.viewport.X + 1;  // hut x co-ord in viewport pixels
+                int scroll_xvp = (int)(hut_xvp + Game1.tileSize * 1.5 - scroll_width / 2);
+                
+                // Monitor.Log($"RenderedWorld scroll_width {scroll_width} hut_xvp {hut_xvp} scroll_xvp {scroll_xvp}");
+                //Utility.PointToVector2(Game1.viewport.ToXna().Location) + (new Vector2(hut.tileX, hut.tileY + hut.tilesHigh) * Game1.tileSize)
+                
+                Vector2 origin = new Vector2(scroll_xvp,(int) hut.tileY * Game1.tileSize - Game1.viewport.Y + 1 + Game1.tileSize*2 + 16 );
+                Rectangle scroll =  new Rectangle((int)origin.X, (int)origin.Y, scroll_width, 18);
+                
+                Rectangle normal =  new Rectangle((int) origin.X + padding + offset * 0, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle crops =   new Rectangle((int) origin.X + padding + offset * 1, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle orchard = new Rectangle((int) origin.X + padding + offset * 2, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle forest =  new Rectangle((int) origin.X + padding + offset * 3, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle quests =  new Rectangle((int) origin.X + padding + offset * 4, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle actions = new Rectangle((int) origin.X + padding + offset * 5, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+
+                Rectangles[scroll] = new ModeChange(guid, "_menu");
+                Rectangles[normal] = new ModeChange(guid, "normal");
+                Rectangles[crops] = new ModeChange(guid, "crops");
+                Rectangles[orchard] = new ModeChange(guid, "orchard");
+                Rectangles[forest] = new ModeChange(guid, "forest");
+                Rectangles[quests] = new ModeChange(guid, "_quests");
+                Rectangles[actions] = new ModeChange(guid, "_actions");
+                    
+                Util.DrawScroll(e.SpriteBatch, origin, scroll_width);
+                e.SpriteBatch.Draw(Game1.mouseCursors, normal, JunimoIcon, Color.White * (state.Mode=="normal"?1.0f:0.25f));
+                e.SpriteBatch.Draw(Game1.mouseCursors, crops, CropIcon, Color.White * (state.Mode=="crops"?1.0f:0.25f));
+                e.SpriteBatch.Draw(Game1.mouseCursors, orchard, FruitTreeIcon, Color.White * (state.Mode=="orchard"?1.0f:0.25f));
+                e.SpriteBatch.Draw(Game1.mouseCursors, forest, TreeIcon,Color.White * (state.Mode=="forest"?1.0f:0.25f));
+                e.SpriteBatch.Draw(Game1.mouseCursors, quests, LetterIcon, Color.White);
+                e.SpriteBatch.Draw(Game1.mouseCursors, actions, QuestionIcon, Color.White);
+            }
+        }
+
+        void OnButtonPressed(object sender, ButtonPressedEventArgs e) {
+            if (!Context.IsWorldReady) { return; }
+            
+            if (e.Button == SButton.MouseLeft) {
+                if (Game1.player.currentLocation is not Farm) return;
+                if (Game1.activeClickableMenu != null) return;
+                Guid? hut = Util.HutOnTile(e.Cursor.Tile);
+                if (hut is Guid hut_guid) {
+                    Vector2 hut_pos = Util.GetHutPositionFromId(hut_guid);
+                    if (!HutStates.ContainsKey(hut_pos)) HutStates[hut_pos] = new HutState();
+                    HutStates[hut_pos].ShowHUD = !HutStates[hut_pos].ShowHUD;
+                    Monitor.Log($"Hut {hut_pos} HUD state {HutStates[hut_pos].ShowHUD} mode {HutStates[hut_pos].Mode}", LogLevel.Debug);
+                    Helper.Input.Suppress(SButton.MouseLeft);
+                    return;
+                }
+                
+                foreach (KeyValuePair<Rectangle, ModeChange> kvp in Rectangles) {
+                    Rectangle r = kvp.Key;
+                    ModeChange mc = kvp.Value;
+                    bool contains = r.Contains(e.Cursor.ScreenPixels.X, e.Cursor.ScreenPixels.Y);
+                    if (contains) {
+                        Helper.Input.Suppress(SButton.MouseLeft);
+                        Vector2 hut_pos = Util.GetHutPositionFromId(mc.guid);
+                        Monitor.Log($"Rectangle {r} {mc.mode} {r.X} {r.Y} contains: {contains}");
+                        if (mc.mode == "_quests") {
+                            Monitor.Log($"quests triggered", LogLevel.Debug);
+                            BJApi.ShowPerfectionTracker();
+                        }
+                        if (mc.mode == "_actions") {
+                            Monitor.Log($"actions triggered", LogLevel.Debug);
+                            BJApi.ListAvailableActions(mc.guid);
+                        }
+                        else if (! mc.mode.StartsWith("_")) HutStates[hut_pos].Mode = mc.mode;
+                    }
+                }
+            }
+        }
+        
+        private void OnLaunched(object sender, GameLaunchedEventArgs e) {
+            HutStates = new Dictionary<Vector2, HutState>();
+            
+            Config = Helper.ReadConfig<ModConfig>();
+            Util.Config = Config;
+
+            var gmcm_api = Helper.ModRegistry.GetApi<GenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+            if (gmcm_api is not null) {
+                gmcm_api.RegisterModConfig(ModManifest, () => Config = new ModConfig(), () => Helper.WriteConfig(Config));
+                gmcm_api.SetDefaultIngameOptinValue(ModManifest, false);
+
+                gmcm_api.RegisterSimpleOption(ModManifest, "Sustainable tree harvesting", "Only harvest wild trees when they've grown a seed", () => Config.SustainableWildTreeHarvesting, (val) => Config.SustainableWildTreeHarvesting = val);
+
+                gmcm_api.RegisterChoiceOption(ModManifest, "Wild tree pattern", "", () => Config.WildTreePattern, (string val) => Config.WildTreePattern = val, Config.WildTreePatternChoices);
+                gmcm_api.RegisterChoiceOption(ModManifest, "Fruit tree pattern", "", () => Config.FruitTreePattern, (string val) => Config.FruitTreePattern = val, Config.FruitTreePatternChoices);
+                
+                gmcm_api.RegisterClampedOption(ModManifest, "Wild tree growth boost", "", () => Config.PlantWildTreesSize, (float val) => Config.PlantWildTreesSize = (int) val, 0, 5, 1);
+                gmcm_api.RegisterClampedOption(ModManifest, "Fruit tree growth boost", "", () => Config.PlantFruitTreesSize, (float val) => Config.PlantFruitTreesSize = (int) val, 0, 5, 1);
+            }
+
+            BJApi = Helper.ModRegistry.GetApi<BetterJunimos.IBetterJunimosApi>("hawkfalcon.BetterJunimos");
+            if (BJApi is null) {
+                Monitor.Log($"Could not load Better Junimos API", LogLevel.Error);
+                return;
+            }
+
+            PlantTrees = new Abilities.PlantTreesAbility(Monitor);
+            PlantFruitTrees = new Abilities.PlantFruitTreesAbility(Monitor);
+            BJApi.RegisterJunimoAbility(new Abilities.HarvestGrassAbility());
+            BJApi.RegisterJunimoAbility(new Abilities.HarvestDebrisAbility(Monitor));
+            BJApi.RegisterJunimoAbility(new Abilities.CollectDroppedObjectsAbility(Monitor));
+            BJApi.RegisterJunimoAbility(new Abilities.ChopTreesAbility(Monitor));
+            BJApi.RegisterJunimoAbility(new Abilities.CollectSeedsAbility(Monitor));
+            BJApi.RegisterJunimoAbility(new Abilities.FertilizeTreesAbility());
+            BJApi.RegisterJunimoAbility(PlantTrees);
+            BJApi.RegisterJunimoAbility(PlantFruitTrees);
+            BJApi.RegisterJunimoAbility(new Abilities.HarvestFruitTreesAbility(Monitor));
+            BJApi.RegisterJunimoAbility(new Abilities.HoeAroundTreesAbility(Monitor));
+        }
+
+        /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        void OnSaveLoaded(object sender, EventArgs e) {
+            // reload the config to pick up any changes made in GMCM on the title screen
+            Config = Helper.ReadConfig<ModConfig>();
+
+            // load progression data from the save file
+            HutStates = this.Helper.Data.ReadSaveData<Dictionary<Vector2, HutState>>("ceruleandeep.BetterJunimosForestry.HutStates");
+            if (HutStates is null) HutStates = new Dictionary<Vector2, HutState>();
+
+            foreach (Vector2 hut_pos in HutStates.Keys) {
+                Monitor.Log($"HutStates: {hut_pos}", LogLevel.Debug);
+            }
+        }
+        
+        /// <summary>Raised after a the game is saved</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        void OnSaving(object sender, SavingEventArgs e) {
+            Helper.Data.WriteSaveData("ceruleandeep.BetterJunimosForestry.HutStates", HutStates);
+            Helper.WriteConfig(Config);
+        }
+        
+        /// <summary>Raised after the game begins a new day (including when the player loads a save).</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        void OnDayStarted(object sender, DayStartedEventArgs e) {
+            Monitor.Log($"Huts in HutStates", LogLevel.Debug);
+            foreach (Vector2 hut_pos in HutStates.Keys) {
+                HutState state = HutStates[hut_pos];
+                Monitor.Log($"    {hut_pos} {state.Mode}", LogLevel.Debug);
+            }
+            
+            Monitor.Log($"Huts in farm", LogLevel.Debug);
+            foreach (JunimoHut hut in Game1.getFarm().buildings.OfType<JunimoHut>()) {
+                Guid guid = Game1.getFarm().buildings.GuidOf(hut);
+                Monitor.Log($"    {guid} {hut}", LogLevel.Debug);
+            }
+
+            // reset for rainy days, winter, or GMCM options change
+            Helper.Content.InvalidateCache(@"Characters\Junimo");
+        }
+        
+        /*********
+        ** Public methods
+        *********/
+        /// <summary>The mod entry point, called after the mod is first loaded.</summary>
+        /// <param name="helper">Provides simplified APIs for writing mods.</param>
+        public override void Entry(IModHelper helper) {
+            Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            Helper.Events.Display.RenderedWorld += RenderedWorld;
+            Helper.Events.GameLoop.GameLaunched += OnLaunched;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+            Helper.Events.GameLoop.Saving += OnSaving;
+            Helper.Events.GameLoop.DayStarted += OnDayStarted;
+
+            SMonitor = Monitor;
+        }
+    }
+}
