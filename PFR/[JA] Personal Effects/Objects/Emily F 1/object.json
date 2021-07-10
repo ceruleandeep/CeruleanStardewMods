@@ -1,0 +1,53 @@
+{
+    "Name": "Emily's Panties",
+    "Description": "I thought they'd be brighter.",
+    "Category": "-23",
+    "Edibility": -300,
+    "Price": 27,
+    "IsColored": false,
+    "GiftTastes": {
+        "Love": [
+            "Demetrius",
+            "Pierre"
+        ],
+        "Like": [
+            "Emily"
+        ],
+        "Dislike": [
+            "Abigail",
+            "Alex",
+            "Caroline",
+            "Clint",
+            "Dwarf",
+            "Elliott",
+            "Emily",
+            "Evelyn",
+            "George",
+            "Gus",
+            "Haley",
+            "Harvey",
+            "Jas",
+            "Jodi",
+            "Kent",
+            "Krobus",
+            "Leah",
+            "Lewis",
+            "Linus",
+            "Marnie",
+            "Maru",
+            "Pam",
+            "Penny",
+            "Robin",
+            "Sam",
+            "Sandy",
+            "Shane",
+            "Vincent",
+            "Willy",
+            "Wizard"
+        ],
+        "Hate": [
+            "Sebastian"
+        ]
+    },
+    "CanPurchase": false
+}

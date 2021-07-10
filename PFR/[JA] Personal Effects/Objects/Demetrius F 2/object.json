@@ -1,0 +1,51 @@
+{
+    "Name": "Demetrius's Delicates",
+    "Description": "They don't smell worn.",
+    "Category": "-23",
+    "Edibility": -300,
+    "Price": 24,
+    "IsColored": false,
+    "GiftTastes": {
+        "Love": [
+            "Demetrius",
+            "Pierre"
+        ],
+        "Like": [],
+        "Dislike": [
+            "Abigail",
+            "Alex",
+            "Caroline",
+            "Clint",
+            "Dwarf",
+            "Elliott",
+            "Emily",
+            "Evelyn",
+            "George",
+            "Gus",
+            "Haley",
+            "Harvey",
+            "Jas",
+            "Jodi",
+            "Kent",
+            "Krobus",
+            "Leah",
+            "Lewis",
+            "Linus",
+            "Marnie",
+            "Maru",
+            "Pam",
+            "Penny",
+            "Robin",
+            "Sam",
+            "Sandy",
+            "Shane",
+            "Vincent",
+            "Willy",
+            "Wizard"
+        ],
+        "Hate": [
+            "Sebastian"
+        ]
+    },
+    "CanPurchase": false
+}

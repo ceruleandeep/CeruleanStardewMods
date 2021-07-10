@@ -1,0 +1,11 @@
+{
+  "Name": "[MSD] Multiple Spouse Dialogs",
+  "Author": "ceruleandeep",
+  "Version": "1.0.0",
+  "Description": "Base dialog for Multiple Spouse Dialogs",
+  "UniqueID": "ceruleandeep.multiplespousedialogs.base-dialog",
+  "UpdateKeys": ["Nexus:???"],
+  "ContentPackFor": {
+    "UniqueID": "ceruleandeep.multiplespousedialogs"
+  }
+}
