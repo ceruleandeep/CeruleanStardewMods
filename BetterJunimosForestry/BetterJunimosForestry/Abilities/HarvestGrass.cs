@@ -13,11 +13,14 @@ namespace BetterJunimosForestry.Abilities {
             return "HarvestGrass";
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid)
+        {
+            if (!ModEntry.Config.HarvestGrassEnabled) return false;
             return farm.terrainFeatures.ContainsKey(pos) && farm.terrainFeatures[pos] is Grass;
         }
 
         public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid id) {
+            if (!ModEntry.Config.HarvestGrassEnabled) return false;
             if (farm.terrainFeatures.ContainsKey(pos) && farm.terrainFeatures[pos] is Grass g) {
                 return TryHarvestGrass(g, farm, pos);
             }

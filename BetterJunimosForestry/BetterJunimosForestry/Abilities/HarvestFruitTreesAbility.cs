@@ -32,7 +32,7 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableFruitTree(farm.terrainFeatures[nextPos])) {
                     return true;
                 }
@@ -51,7 +51,7 @@ namespace BetterJunimosForestry.Abilities {
             int direction = 0;
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableFruitTree(farm.terrainFeatures[nextPos])) {
                     FruitTree tree = farm.terrainFeatures[nextPos] as FruitTree;
 

@@ -7,6 +7,7 @@ using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using StardewModdingAPI;
 using System.Collections.Generic;
+using StardewValley.Buildings;
 using SObject = StardewValley.Object;
 
 namespace BetterJunimosForestry.Abilities {
@@ -22,6 +23,8 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            JunimoHut hut = Util.GetHutFromId(guid);
+
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
             Vector2 right = new Vector2(pos.X + 1, pos.Y);
             Vector2 down = new Vector2(pos.X, pos.Y - 1);
@@ -29,13 +32,14 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
-                if (ShouldPlantFruitTreeOnTile(farm, nextPos)) return true;
+                if (!Util.IsWithinRadius(hut, pos)) continue;
+                if (ShouldPlantFruitTreeOnTile(farm, hut, nextPos)) return true;
             }
             return false;
         }
 
-        internal bool ShouldPlantFruitTreeOnTile(Farm farm, Vector2 pos) {
+        internal bool ShouldPlantFruitTreeOnTile(Farm farm, JunimoHut hut, Vector2 pos) {
+            if (Util.BlocksDoor(hut, pos)) return false;
             return IsTileInPattern(pos) && CanPlantFruitTreeOnTile(farm, pos);
         }
         
@@ -46,12 +50,12 @@ namespace BetterJunimosForestry.Abilities {
             return true;
         }
 
-        internal bool TileIsNextToAPlantableTile(Farm farm, Vector2 pos) {
+        internal bool TileIsNextToAPlantableTile(Farm farm, JunimoHut hut, Vector2 pos) {
             // why isn't IsGrowthBlocked enough?
             for (int x = -1; x < 2; x++) {
                 for (int y = -1; y < 2; y++) {
                     Vector2 v = new Vector2(pos.X + x, pos.Y + y);
-                    if (ShouldPlantFruitTreeOnTile(farm, v)) {
+                    if (ShouldPlantFruitTreeOnTile(farm, hut, v)) {
                         // Monitor.Log($"TileIsNextToAPlantableTile [{pos.X}, {pos.Y}]: neighbour tile [{v.X}, {v.Y}] should be planted", LogLevel.Info);
                         return true;
                     }
@@ -91,7 +95,8 @@ namespace BetterJunimosForestry.Abilities {
 
 
         public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            Chest chest = Util.GetHutFromId(guid).output.Value;
+            JunimoHut hut = Util.GetHutFromId(guid);
+            Chest chest = hut.output.Value;
             Item foundItem;
             foundItem = chest.items.FirstOrDefault(item => item != null && Util.FruitTreeSeeds.Keys.Contains(item.ParentSheetIndex));
             if (foundItem == null) return false;
@@ -103,16 +108,13 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
-                if (ShouldPlantFruitTreeOnTile(farm, nextPos)) {
+                if (!Util.IsWithinRadius(hut, pos)) continue;
+                if (ShouldPlantFruitTreeOnTile(farm, hut, nextPos)) {
                     bool success = Plant(farm, nextPos, foundItem.ParentSheetIndex);
                     if (success) {
                         //Monitor.Log($"PerformAction planted {foundItem.Name} at {nextPos.X} {nextPos.Y}", LogLevel.Info);
                         Util.RemoveItemFromChest(chest, foundItem);
                         return true;
-                    }
-                    else {
-                        Monitor.Log($"PerformAction could not plant {foundItem.Name} at {nextPos.X} {nextPos.Y}", LogLevel.Warn);
                     }
                 }
             }
@@ -121,7 +123,6 @@ namespace BetterJunimosForestry.Abilities {
 
         private bool Plant(Farm farm, Vector2 pos, int index) {
             if (farm.terrainFeatures.Keys.Contains(pos)) {
-                Monitor.Log($"Plant: {pos.X} {pos.Y} occupied by {farm.terrainFeatures[pos]}", LogLevel.Error);
                 return false;
             }
 

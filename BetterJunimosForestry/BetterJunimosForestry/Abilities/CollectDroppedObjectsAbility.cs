@@ -18,7 +18,6 @@ namespace BetterJunimosForestry.Abilities {
 
         internal CollectDroppedObjectsAbility(IMonitor Monitor) {
             this.Monitor = Monitor;
-            Monitor.Log($"CollectDroppedObjectsAbility ready", LogLevel.Debug);
         }
 
         public string AbilityName() {
@@ -35,7 +34,7 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 if (IsDebrisAtTile(nextPos)) {
                     // Monitor.Log($"Pos {nextPos} contains debris", LogLevel.Debug);
                     return true;
@@ -56,7 +55,7 @@ namespace BetterJunimosForestry.Abilities {
             int index;
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 index = DebrisIndexAtTile(nextPos);
                 if (index > 0) {
                     junimo.faceDirection(direction);
@@ -74,7 +73,6 @@ namespace BetterJunimosForestry.Abilities {
         protected int DebrisIndexAtTile(Vector2 tile) { 
             // Monitor.Log($"IsDebrisAtTile {tile}", LogLevel.Debug);
             if (Game1.currentLocation.debris is null) {
-                Monitor.Log($"    Game1.currentLocation.debris is null", LogLevel.Warn);
                 return -1;
             }
             foreach (Debris d in Game1.currentLocation.debris) {

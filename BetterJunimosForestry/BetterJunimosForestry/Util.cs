@@ -17,16 +17,24 @@ using Rectangle = Microsoft.Xna.Framework.Rectangle;
 using SObject = StardewValley.Object;
 
 namespace BetterJunimosForestry {
+    internal class FakeFarmer : Farmer
+    {
+        public override Vector2 GetToolLocation(bool ignoreClick = false)
+        {
+            return new Vector2(0, 0);
+        }
+    }
+    
     public class Util {
         internal static ModConfig Config;
         
         internal static Dictionary<int, int> WildTreeSeeds = new Dictionary<int, int>
         {
-            {292, 8},
-            {309, 1},
-            {310, 2},
-            {311, 3},
-            {891, 7}
+            {292, 8}, // mahogany
+            {309, 1}, // acorn
+            {310, 2}, // maple
+            {311, 3}, // pine
+            {891, 7}  // mushroom
         };
         
         internal static Dictionary<int, string> FruitTreeSeeds = new Dictionary<int, string>
@@ -59,7 +67,7 @@ namespace BetterJunimosForestry {
             if (location.terrainFeatures.TryGetValue(tile, out TerrainFeature feature))
             {
                 HoeDirt dirt = feature as HoeDirt;
-                if (dirt == null || dirt.crop != null)
+                if (dirt is not {crop: null})
                     return true;
             }
 
@@ -120,17 +128,15 @@ namespace BetterJunimosForestry {
                     return false;
                 }
             }
-            Microsoft.Xna.Framework.Rectangle tileLocationRect = new Microsoft.Xna.Framework.Rectangle((int)tileLocation.X * 64 + 1, (int)tileLocation.Y * 64 + 1, 62, 62);
-            if (location.largeTerrainFeatures != null)
+            Rectangle tileLocationRect = new Rectangle((int)tileLocation.X * 64 + 1, (int)tileLocation.Y * 64 + 1, 62, 62);
+            foreach (LargeTerrainFeature largeTerrainFeature in location.largeTerrainFeatures)
             {
-                foreach (LargeTerrainFeature largeTerrainFeature in location.largeTerrainFeatures)
+                if (largeTerrainFeature.getBoundingBox().Intersects(tileLocationRect))
                 {
-                    if (largeTerrainFeature.getBoundingBox().Intersects(tileLocationRect))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
             }
+
             Furniture f = location.GetFurnitureAt(tileLocation);
             if (f != null)
             {
@@ -166,11 +172,19 @@ namespace BetterJunimosForestry {
             return false;
         }
         
-        public static Guid? HutOnTile(Vector2 pos) {
+        public static Guid? GuidOfHutOnTile(Vector2 pos) {
             foreach (Building b in Game1.getFarm().buildings) {
                 if (b is JunimoHut hut && b.occupiesTile(pos)) {
-                    ModEntry.SMonitor.Log($"HutOnTile: yes {hut} is a hut");
                     return GetHutIdFromHut(hut);
+                }
+            }
+            return null;
+        }
+
+        public static JunimoHut HutOnTile(Vector2 pos) {
+            foreach (Building b in Game1.getFarm().buildings) {
+                if (b is JunimoHut hut && b.occupiesTile(pos)) {
+                    return hut;
                 }
             }
             return null;
@@ -198,8 +212,6 @@ namespace BetterJunimosForestry {
             if (ModEntry.HutStates.TryGetValue(GetPosFromHut(hut), out HutState state)) {
                 return state.Mode;
             }
-            ModEntry.SMonitor.Log($"GetModeForHut: could not get mode for hut at {GetPosFromHut(hut).ToString()}", LogLevel.Error);
-
             return Modes.Normal;
         }
         
@@ -225,6 +237,10 @@ namespace BetterJunimosForestry {
                 ModEntry.SMonitor.Log($"GetHutPositionFromId: exception while getting position of {id}", LogLevel.Error);
                 return new Vector2(0, 0);
             }
+        }
+
+        public static Vector2 GetHutPositionFromHut(JunimoHut hut) {
+            return new Vector2(hut.tileX.Value, hut.tileY.Value);
         }
 
         public static JunimoHut GetHutFromPosition(Vector2 pos) {
@@ -265,6 +281,12 @@ namespace BetterJunimosForestry {
             if (pos.Y < hut.tileY.Value + 1 - radius || pos.Y >= hut.tileY.Value + 2 + radius) outcome = false;
             // ModEntry.SMonitor.Log($"IsWithinRadius: hut [{hut.tileX.Value} {hut.tileY.Value}], pos [{pos.X} {pos.Y}], radius {radius}: {outcome}", LogLevel.Trace);
             return outcome;
+        }
+        
+        public static bool BlocksDoor(JunimoHut hut, Vector2 pos) {
+            bool blocks = (int)pos.X == hut.tileX.Value + 1 && (int)pos.Y == hut.tileY.Value + 2;
+            // ModEntry.SMonitor.Log($"BlocksDoor: hut [{hut.tileX.Value} {hut.tileY.Value}], pos [{pos.X} {pos.Y}], blocks: {blocks}", LogLevel.Trace);
+            return blocks;
         }
     }
 }

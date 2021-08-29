@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using StardewValley;
@@ -7,14 +7,22 @@ using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using StardewModdingAPI;
 using System.Collections.Generic;
-using StardewValley.Buildings;
 using SObject = StardewValley.Object;
 
 namespace BetterJunimosForestry.Abilities {
-    public class PlantTreesAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class ForestryAbility : BetterJunimos.Abilities.IJunimoAbility {
+        static Dictionary<int, int> WildTreeSeeds = new Dictionary<int, int>
+         {
+            {292, 8},
+            {309, 1},
+            {310, 2},
+            {311, 3},
+            {891, 7}
+         };
+
         private readonly IMonitor Monitor;
 
-        internal PlantTreesAbility(IMonitor Monitor) {
+        internal ForestryAbility(IMonitor Monitor) {
             this.Monitor = Monitor;
         }
 
@@ -23,11 +31,6 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
-            string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
-            if (mode != Modes.Forest) return false;
-
-            JunimoHut hut = Util.GetHutFromId(guid);
-            
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
             Vector2 right = new Vector2(pos.X + 1, pos.Y);
             Vector2 down = new Vector2(pos.X, pos.Y - 1);
@@ -35,8 +38,8 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(hut, pos)) continue;
-                if (ShouldPlantWildTreeHere(farm, hut, nextPos)) return true;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
+                if (ShouldPlantWildTreeHere(farm, nextPos)) return true;
             }
             return false;
 
@@ -45,9 +48,7 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         // is this tile plantable? 
-        internal bool ShouldPlantWildTreeHere(Farm farm, JunimoHut hut, Vector2 pos) {
-            if (Util.BlocksDoor(hut, pos)) return false;
-
+        internal bool ShouldPlantWildTreeHere(Farm farm, Vector2 pos) {
             // Monitor.Log($"    ShouldPlantWildTreeHere: {pos.X} {pos.Y} pattern {ModEntry.Config.WildTreePattern} in pattern {IsTileInPattern(pos)} plantable {Plantable(farm, pos)}", LogLevel.Debug);
             // is this tile in the planting pattern?
             if (!IsTileInPattern(pos)) {
@@ -76,7 +77,7 @@ namespace BetterJunimosForestry.Abilities {
             return true;
         }
 
-        internal static bool IsTileInPattern(Vector2 pos) {
+        private bool IsTileInPattern(Vector2 pos) {
             if (ModEntry.Config.WildTreePattern == "tight") {
                 return pos.X % 2 == 0;
             }
@@ -100,7 +101,7 @@ namespace BetterJunimosForestry.Abilities {
 
         // is this tile plantable?
         private bool Plantable(Farm farm, Vector2 pos) {
-            if (farm.isTileOccupied(pos)) return false;  // is something standing on it? an impassable building? a terrain feature?
+            if (farm.isTileOccupied(pos)) return false;
             if (Util.IsHoed(farm, pos)) return false;
             if (Util.IsOccupied(farm, pos)) return false;
             if (Util.SpawningTreesForbidden(farm, pos)) return false;
@@ -109,10 +110,9 @@ namespace BetterJunimosForestry.Abilities {
         }
         
         public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            JunimoHut hut = Util.GetHutFromId(guid);
-            Chest chest = hut.output.Value;
+            Chest chest = Util.GetHutFromId(guid).output.Value;
             Item foundItem;
-            foundItem = chest.items.FirstOrDefault(item => item != null && Util.WildTreeSeeds.Keys.Contains(item.ParentSheetIndex));
+            foundItem = chest.items.FirstOrDefault(item => item != null && WildTreeSeeds.Keys.Contains(item.ParentSheetIndex));
             if (foundItem == null) return false;
 
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
@@ -123,7 +123,7 @@ namespace BetterJunimosForestry.Abilities {
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
                 if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
-                if (ShouldPlantWildTreeHere(farm, hut, nextPos)) {
+                if (ShouldPlantWildTreeHere(farm, nextPos)) {
                     bool success = Plant(farm, nextPos, foundItem.ParentSheetIndex);
                     if (success) {
                         //Monitor.Log($"PerformAction planted {foundItem.Name} at {nextPos.X} {nextPos.Y}", LogLevel.Info);
@@ -140,7 +140,7 @@ namespace BetterJunimosForestry.Abilities {
                 return false;
             }
 
-            Tree tree = new Tree(Util.WildTreeSeeds[index], ModEntry.Config.PlantWildTreesSize);
+            Tree tree = new Tree(WildTreeSeeds[index], ModEntry.Config.PlantWildTreesSize);
             farm.terrainFeatures.Add(pos, tree);
 
             if (Utility.isOnScreen(Utility.Vector2ToPoint(pos), 64, farm)) {
@@ -154,7 +154,7 @@ namespace BetterJunimosForestry.Abilities {
 
 
         public List<int> RequiredItems() {
-            return Util.WildTreeSeeds.Keys.ToList<int>();
+            return WildTreeSeeds.Keys.ToList<int>();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
@@ -17,6 +18,7 @@ namespace BetterJunimosForestry.Abilities {
         private Pickaxe FakePickaxe = new Pickaxe();
         private Axe FakeAxe = new Axe();
         private MeleeWeapon Scythe = new MeleeWeapon(47);
+        private FakeFarmer FakeFarmer = new FakeFarmer();
 
         internal HarvestDebrisAbility(IMonitor Monitor) {
             this.Monitor = Monitor;
@@ -54,7 +56,7 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 if (farm.objects.ContainsKey(nextPos) && IsDebris(farm.objects[nextPos])) {
                     return true;
                 }
@@ -71,7 +73,7 @@ namespace BetterJunimosForestry.Abilities {
             int direction = 0;
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 if (farm.objects.ContainsKey(nextPos) && IsDebris(farm.objects[nextPos])) {
 
                     junimo.faceDirection(direction);
@@ -81,15 +83,15 @@ namespace BetterJunimosForestry.Abilities {
                     GameLocation location = Game1.currentLocation;
 
                     if (IsStone(item)) {
-                        UseToolOnTile(FakePickaxe, nextPos, Game1.player, Game1.currentLocation);
+                        UseToolOnTile(FakePickaxe, nextPos, Game1.currentLocation);
                     }
 
                     if (IsTwig(item)) {
-                        UseToolOnTile(FakeAxe, nextPos, Game1.player, Game1.currentLocation);
+                        UseToolOnTile(FakeAxe, nextPos, Game1.currentLocation);
                     }
 
                     if (IsWeed(item)) {
-                        UseToolOnTile(Scythe, nextPos, Game1.player, location);
+                        UseToolOnTile(Scythe, nextPos, location);
                         item.performToolAction(Scythe, Game1.currentLocation);
                         location.removeObject(nextPos, false);
                     }
@@ -101,10 +103,26 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        protected bool UseToolOnTile(Tool tool, Vector2 tile, Farmer player, GameLocation location) {
+        protected bool UseToolOnTile(Tool t, Vector2 tile, GameLocation location) {
+            FakeFarmer.currentLocation = location;
+
             // use tool on center of tile
-            player.lastClick = this.GetToolPixelPosition(tile);
-            tool.DoFunction(location, (int)player.lastClick.X, (int)player.lastClick.Y, 0, player);
+            Vector2 lc = GetToolPixelPosition(tile);
+            
+            // just before we get going
+            if (t is null) Monitor.Log($"t is null", LogLevel.Warn);
+            if (FakeFarmer is null) Monitor.Log($"FakeFarmer is null", LogLevel.Warn);
+            if (FakeFarmer.currentLocation is null) Monitor.Log($"FakeFarmer.currentLocation is null", LogLevel.Warn);
+            if (FakeFarmer.currentLocation.debris is null) Monitor.Log($"FakeFarmer.currentLocation.debris is null", LogLevel.Warn);
+
+            t.DoFunction(location, (int) lc.X, (int) lc.Y, 0, FakeFarmer);
+            return true;
+        }
+
+        protected bool FarmerUseToolOnTile(Tool tool, Vector2 tile, GameLocation location) {
+            // use tool on center of tile
+            Vector2 lc = GetToolPixelPosition(tile);
+            tool.DoFunction(location, (int)lc.X, (int)lc.Y, 0, Game1.player);
             return true;
         }
 

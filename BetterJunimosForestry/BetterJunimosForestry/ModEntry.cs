@@ -21,6 +21,7 @@ namespace BetterJunimosForestry {
         public static readonly string Orchard = "orchard";
         public static readonly string Forest = "forest";
         public static readonly string Grains = "grains";
+        public static readonly string Maze = "maze";
     }
     
     public class HutState {
@@ -50,10 +51,12 @@ namespace BetterJunimosForestry {
         private Rectangle BundleIcon = new Rectangle(331, 374, 15, 14);
         private Rectangle LetterIcon = new Rectangle(190, 422, 14, 14);
         private Rectangle QuestionIcon = new Rectangle(174, 424, 14, 14);
+        private Rectangle MapIcon = new Rectangle(426, 492, 14, 14);
         
         internal static ModConfig Config;
         internal static IMonitor SMonitor;
         internal static Dictionary<Vector2, HutState> HutStates;
+        internal static Dictionary<Vector2, Maze> HutMazes;
 
         internal static IBetterJunimosApi BJApi;
         
@@ -73,40 +76,44 @@ namespace BetterJunimosForestry {
                     continue;
                 }
 
-                Vector2 hutPos = new Vector2(hut.tileX, hut.tileY);
-                int padding = 3;
-                int offset = 14 * Game1.pixelZoom;
+                const int padding = 3;
+                const int offset = 14 * Game1.pixelZoom;
 
-                int scroll_width = offset * 6 + padding * 2;
-                int hut_xvp = hut.tileX.Value * Game1.tileSize - Game1.viewport.X + 1;  // hut x co-ord in viewport pixels
-                int scroll_xvp = (int)(hut_xvp + Game1.tileSize * 1.5 - scroll_width / 2);
-                
+                int scrollWidth = offset * 7 + padding * 2;
+                int hutXvp = hut.tileX.Value * Game1.tileSize - Game1.viewport.X + 1;  // hut x co-ord in viewport pixels
+                int scrollXvp = (int)(hutXvp + Game1.tileSize * 1.5 - scrollWidth / 2);
+
+                Vector2 origin = new Vector2(scrollXvp,(int) hut.tileY.Value * Game1.tileSize - Game1.viewport.Y + 1 + Game1.tileSize*2 + 16 );
+
+                int n = 0;
+                Rectangle normal =  new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle crops =   new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle orchard = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle forest =  new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle maze =    new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle quests =  new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+                Rectangle actions = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
+
+                Rectangle scroll =  new Rectangle((int)origin.X, (int)origin.Y, scrollWidth, 18);
+
                 // Monitor.Log($"RenderedWorld scroll_width {scroll_width} hut_xvp {hut_xvp} scroll_xvp {scroll_xvp}");
                 //Utility.PointToVector2(Game1.viewport.ToXna().Location) + (new Vector2(hut.tileX, hut.tileY + hut.tilesHigh) * Game1.tileSize)
                 
-                Vector2 origin = new Vector2(scroll_xvp,(int) hut.tileY * Game1.tileSize - Game1.viewport.Y + 1 + Game1.tileSize*2 + 16 );
-                Rectangle scroll =  new Rectangle((int)origin.X, (int)origin.Y, scroll_width, 18);
-                
-                Rectangle normal =  new Rectangle((int) origin.X + padding + offset * 0, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
-                Rectangle crops =   new Rectangle((int) origin.X + padding + offset * 1, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
-                Rectangle orchard = new Rectangle((int) origin.X + padding + offset * 2, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
-                Rectangle forest =  new Rectangle((int) origin.X + padding + offset * 3, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
-                Rectangle quests =  new Rectangle((int) origin.X + padding + offset * 4, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
-                Rectangle actions = new Rectangle((int) origin.X + padding + offset * 5, (int) origin.Y - 4, 14 * Game1.pixelZoom, 14 * Game1.pixelZoom);
-
                 Rectangles[scroll] = new ModeChange(guid, "_menu");
                 Rectangles[normal] = new ModeChange(guid, "normal");
                 Rectangles[crops] = new ModeChange(guid, "crops");
                 Rectangles[orchard] = new ModeChange(guid, "orchard");
                 Rectangles[forest] = new ModeChange(guid, "forest");
+                Rectangles[maze] = new ModeChange(guid, "maze");
                 Rectangles[quests] = new ModeChange(guid, "_quests");
                 Rectangles[actions] = new ModeChange(guid, "_actions");
                     
-                Util.DrawScroll(e.SpriteBatch, origin, scroll_width);
+                Util.DrawScroll(e.SpriteBatch, origin, scrollWidth);
                 e.SpriteBatch.Draw(Game1.mouseCursors, normal, JunimoIcon, Color.White * (state.Mode=="normal"?1.0f:0.25f));
                 e.SpriteBatch.Draw(Game1.mouseCursors, crops, CropIcon, Color.White * (state.Mode=="crops"?1.0f:0.25f));
                 e.SpriteBatch.Draw(Game1.mouseCursors, orchard, FruitTreeIcon, Color.White * (state.Mode=="orchard"?1.0f:0.25f));
                 e.SpriteBatch.Draw(Game1.mouseCursors, forest, TreeIcon,Color.White * (state.Mode=="forest"?1.0f:0.25f));
+                e.SpriteBatch.Draw(Game1.mouseCursors, maze, MapIcon,Color.White * (state.Mode=="maze"?1.0f:0.25f));
                 e.SpriteBatch.Draw(Game1.mouseCursors, quests, LetterIcon, Color.White);
                 e.SpriteBatch.Draw(Game1.mouseCursors, actions, QuestionIcon, Color.White);
             }
@@ -118,12 +125,13 @@ namespace BetterJunimosForestry {
             if (e.Button == SButton.MouseLeft) {
                 if (Game1.player.currentLocation is not Farm) return;
                 if (Game1.activeClickableMenu != null) return;
-                Guid? hut = Util.HutOnTile(e.Cursor.Tile);
-                if (hut is Guid hut_guid) {
-                    Vector2 hut_pos = Util.GetHutPositionFromId(hut_guid);
+                
+                JunimoHut hut = Util.HutOnTile(e.Cursor.Tile);
+                if (hut is not null) {
+                    Vector2 hut_pos = Util.GetHutPositionFromHut(hut);
                     if (!HutStates.ContainsKey(hut_pos)) HutStates[hut_pos] = new HutState();
                     HutStates[hut_pos].ShowHUD = !HutStates[hut_pos].ShowHUD;
-                    Monitor.Log($"Hut {hut_pos} HUD state {HutStates[hut_pos].ShowHUD} mode {HutStates[hut_pos].Mode}", LogLevel.Debug);
+                    // Monitor.Log($"Hut {hut_pos} HUD state {HutStates[hut_pos].ShowHUD} mode {HutStates[hut_pos].Mode}", LogLevel.Debug);
                     Helper.Input.Suppress(SButton.MouseLeft);
                     return;
                 }
@@ -131,20 +139,33 @@ namespace BetterJunimosForestry {
                 foreach (KeyValuePair<Rectangle, ModeChange> kvp in Rectangles) {
                     Rectangle r = kvp.Key;
                     ModeChange mc = kvp.Value;
-                    bool contains = r.Contains(e.Cursor.ScreenPixels.X, e.Cursor.ScreenPixels.Y);
+                    bool contains = r.Contains((int)e.Cursor.ScreenPixels.X, (int)e.Cursor.ScreenPixels.Y);
                     if (contains) {
                         Helper.Input.Suppress(SButton.MouseLeft);
+                        hut = Util.GetHutFromId(mc.guid);
                         Vector2 hut_pos = Util.GetHutPositionFromId(mc.guid);
-                        Monitor.Log($"Rectangle {r} {mc.mode} {r.X} {r.Y} contains: {contains}");
+                        // Monitor.Log($"Rectangle {r} {mc.mode} {r.X} {r.Y} contains: {contains}");
                         if (mc.mode == "_quests") {
-                            Monitor.Log($"quests triggered", LogLevel.Debug);
+                            // Monitor.Log($"quests triggered", LogLevel.Debug);
                             BJApi.ShowPerfectionTracker();
                         }
                         if (mc.mode == "_actions") {
-                            Monitor.Log($"actions triggered", LogLevel.Debug);
+                            // Monitor.Log($"actions triggered", LogLevel.Debug);
                             BJApi.ListAvailableActions(mc.guid);
                         }
-                        else if (! mc.mode.StartsWith("_")) HutStates[hut_pos].Mode = mc.mode;
+
+                        if (!mc.mode.StartsWith("_"))
+                        {
+                            HutStates[hut_pos].Mode = mc.mode;
+                            if (mc.mode == "maze")
+                            {
+                                Maze.MakeMazeForHut(hut);
+                            }
+                            else
+                            {
+                                Maze.ClearMazeForHut(hut);
+                            }
+                        }
                     }
                 }
             }
@@ -152,6 +173,7 @@ namespace BetterJunimosForestry {
         
         private void OnLaunched(object sender, GameLaunchedEventArgs e) {
             HutStates = new Dictionary<Vector2, HutState>();
+            HutMazes = new Dictionary<Vector2, Maze>();
             
             Config = Helper.ReadConfig<ModConfig>();
             Util.Config = Config;
@@ -168,6 +190,8 @@ namespace BetterJunimosForestry {
                 
                 gmcm_api.RegisterClampedOption(ModManifest, "Wild tree growth boost", "", () => Config.PlantWildTreesSize, (float val) => Config.PlantWildTreesSize = (int) val, 0, 5, 1);
                 gmcm_api.RegisterClampedOption(ModManifest, "Fruit tree growth boost", "", () => Config.PlantFruitTreesSize, (float val) => Config.PlantFruitTreesSize = (int) val, 0, 5, 1);
+                
+                gmcm_api.RegisterSimpleOption(ModManifest, "Harvest Grass", "", () => Config.HarvestGrassEnabled, (val) => Config.HarvestGrassEnabled = val);
             }
 
             BJApi = Helper.ModRegistry.GetApi<BetterJunimos.IBetterJunimosApi>("hawkfalcon.BetterJunimos");
@@ -178,6 +202,7 @@ namespace BetterJunimosForestry {
 
             PlantTrees = new Abilities.PlantTreesAbility(Monitor);
             PlantFruitTrees = new Abilities.PlantFruitTreesAbility(Monitor);
+
             BJApi.RegisterJunimoAbility(new Abilities.HarvestGrassAbility());
             BJApi.RegisterJunimoAbility(new Abilities.HarvestDebrisAbility(Monitor));
             BJApi.RegisterJunimoAbility(new Abilities.CollectDroppedObjectsAbility(Monitor));
@@ -188,6 +213,7 @@ namespace BetterJunimosForestry {
             BJApi.RegisterJunimoAbility(PlantFruitTrees);
             BJApi.RegisterJunimoAbility(new Abilities.HarvestFruitTreesAbility(Monitor));
             BJApi.RegisterJunimoAbility(new Abilities.HoeAroundTreesAbility(Monitor));
+            // BJApi.RegisterJunimoAbility(new Abilities.LayPathsAbility(Monitor));
         }
 
         /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
@@ -197,13 +223,13 @@ namespace BetterJunimosForestry {
             // reload the config to pick up any changes made in GMCM on the title screen
             Config = Helper.ReadConfig<ModConfig>();
 
-            // load progression data from the save file
+            // load hut mode settings from the save file
             HutStates = this.Helper.Data.ReadSaveData<Dictionary<Vector2, HutState>>("ceruleandeep.BetterJunimosForestry.HutStates");
             if (HutStates is null) HutStates = new Dictionary<Vector2, HutState>();
 
-            foreach (Vector2 hut_pos in HutStates.Keys) {
-                Monitor.Log($"HutStates: {hut_pos}", LogLevel.Debug);
-            }
+            // load hut maze settings from the save file
+            HutMazes = this.Helper.Data.ReadSaveData<Dictionary<Vector2, Maze>>("ceruleandeep.BetterJunimosForestry.HutMazes");
+            if (HutMazes is null) HutMazes = new Dictionary<Vector2, Maze>();
         }
         
         /// <summary>Raised after a the game is saved</summary>
@@ -211,6 +237,7 @@ namespace BetterJunimosForestry {
         /// <param name="e">The event arguments.</param>
         void OnSaving(object sender, SavingEventArgs e) {
             Helper.Data.WriteSaveData("ceruleandeep.BetterJunimosForestry.HutStates", HutStates);
+            Helper.Data.WriteSaveData("ceruleandeep.BetterJunimosForestry.HutMazes", HutMazes);
             Helper.WriteConfig(Config);
         }
         
@@ -218,16 +245,20 @@ namespace BetterJunimosForestry {
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
         void OnDayStarted(object sender, DayStartedEventArgs e) {
-            Monitor.Log($"Huts in HutStates", LogLevel.Debug);
+            // Monitor.Log($"Huts in HutStates", LogLevel.Debug);
             foreach (Vector2 hut_pos in HutStates.Keys) {
                 HutState state = HutStates[hut_pos];
-                Monitor.Log($"    {hut_pos} {state.Mode}", LogLevel.Debug);
+                // Monitor.Log($"    {hut_pos} {state.Mode}", LogLevel.Debug);
             }
             
             Monitor.Log($"Huts in farm", LogLevel.Debug);
             foreach (JunimoHut hut in Game1.getFarm().buildings.OfType<JunimoHut>()) {
                 Guid guid = Game1.getFarm().buildings.GuidOf(hut);
-                Monitor.Log($"    {guid} {hut}", LogLevel.Debug);
+                Monitor.Log($"    [{hut.tileX} {hut.tileY}] {Util.GetModeForHut(hut)}", LogLevel.Debug);
+                if (Util.GetModeForHut(hut) == Modes.Maze)
+                {
+                    Maze.MakeMazeForHut(hut);
+                }
             }
 
             // reset for rainy days, winter, or GMCM options change

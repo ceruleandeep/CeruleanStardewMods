@@ -29,7 +29,7 @@ namespace BetterJunimosForestry.Abilities {
 
         protected bool IsHarvestableSeed(TerrainFeature t, string mode) {
             if (t is not Tree tree) return false;
-            if (tree.growthStage.Value != 1) return false;
+            if (tree.growthStage.Value != 0) return false;
             if (mode == Modes.Normal) return false;
             if (mode == Modes.Forest && PlantTreesAbility.IsTileInPattern(t.currentTileLocation)) return false;
             return true;

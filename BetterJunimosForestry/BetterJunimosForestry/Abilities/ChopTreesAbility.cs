@@ -16,7 +16,8 @@ namespace BetterJunimosForestry.Abilities {
 
         private readonly IMonitor Monitor;
         private Axe FakeAxe = new Axe();
-
+        private FakeFarmer FakeFarmer = new FakeFarmer();
+        
         internal ChopTreesAbility(IMonitor Monitor) {
             this.Monitor = Monitor;
             FakeAxe.UpgradeLevel = 1;
@@ -47,7 +48,7 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableTree(farm.terrainFeatures[nextPos], mode)) {
                     // Monitor.Log($"Pos {nextPos} contains tree", LogLevel.Debug);
                     return true;
@@ -67,27 +68,19 @@ namespace BetterJunimosForestry.Abilities {
             int direction = 0;
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), pos)) continue;
+                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableTree(farm.terrainFeatures[nextPos], mode)) {
                     junimo.faceDirection(direction);
-
-                    //farm.terrainFeatures[nextPos].performUseAction(pos, junimo.currentLocation);
-                    UseToolOnTile(FakeAxe, nextPos, Game1.player, Game1.currentLocation);
-
-                    return true;
+                    return UseToolOnTile(FakeAxe, nextPos, Game1.currentLocation);
                 }
                 direction++;
             }
             return false;
         }
-
-        protected bool UseToolOnTile(Tool tool, Vector2 tile, Farmer player, GameLocation location) {
-            // use tool on center of tile
-            // player.lastClick = this.GetToolPixelPosition(tile);
-            //             tool.DoFunction(location, (int)player.lastClick.X, (int)player.lastClick.Y, 0, player);
-
+        
+        protected bool UseToolOnTile(Tool tool, Vector2 tile, GameLocation location) {
             Vector2 lc = GetToolPixelPosition(tile);
-            tool.DoFunction(location, (int)lc.X, (int)lc.Y, 0, player);
+            tool.DoFunction(location, (int)lc.X, (int)lc.Y, 0, FakeFarmer);
             return true;
         }
 
