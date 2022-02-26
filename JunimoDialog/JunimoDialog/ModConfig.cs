@@ -9,6 +9,6 @@ namespace JunimoDialog
         public bool Grumpy { get; set; } = true;
         public float DialogChance { get; set; } = 0.05f;
         public float JunimoTextChance { get; set; } = 0.50f;
-        public bool ExtraDebugOutput { get; set; } = false;
+        public bool ExtraDebugOutput { get; set; }
     }
 }
