@@ -5,15 +5,13 @@ using StardewValley.Locations;
 
 namespace MultipleSpouseDialog
 {
-    public class HelperEvents
+    public static class HelperEvents
     {
-        private static IMonitor Monitor;
         private static IModHelper Helper;
 
         // call this method from your Entry class
-        public static void Initialize(IMonitor monitor, IModHelper helper)
+        public static void Initialize(IModHelper helper)
         {
-            Monitor = monitor;
             Helper = helper;
         }
 
@@ -40,21 +38,13 @@ namespace MultipleSpouseDialog
             Helper.Events.GameLoop.OneSecondUpdateTicked -= GameLoop_OneSecondUpdateTicked;
         }
 
-        public static void GameLoop_OneSecondUpdateTicked(object sender, OneSecondUpdateTickedEventArgs e)
+        private static void GameLoop_OneSecondUpdateTicked(object sender, OneSecondUpdateTickedEventArgs e)
         {
-            foreach (GameLocation location in Game1.locations)
+            foreach (var location in Game1.locations)
             {
-
-                if (location is FarmHouse)
-                {
-                    FarmHouse fh = location as FarmHouse;
-                    if (fh.owner == null) continue;
-
-                    if (location == Game1.player.currentLocation && ModEntry.config.AllowSpousesToChat)
-                    {
-                        Chatting.TryChat();
-                    }
-                }
+                if (location is not FarmHouse fh) continue;
+                if (fh.owner == null) continue;
+                if (fh.Equals(Game1.player.currentLocation) && ModEntry.config.AllowSpousesToChat) Chatting.TryChat();
             }
         }
     }

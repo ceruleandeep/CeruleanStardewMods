@@ -1,5 +1,4 @@
-﻿using System;
-namespace MultipleSpouseDialog
+﻿namespace MultipleSpouseDialog
 {
     public class ModConfig
     {
@@ -11,7 +10,7 @@ namespace MultipleSpouseDialog
         public float MinDistanceToChat { get; set; } = 100f;
         public float MaxDistanceToChat { get; set; } = 350f;
         public float MinSpouseChatInterval { get; set; } = 10f;
-        public bool PreventRelativesFromChatting { get; set; } = false;
-        public bool ExtraDebugOutput { get; set; } = false;
+        public bool PreventRelativesFromChatting { get; set; }
+        public bool ExtraDebugOutput { get; set; }
     }
 }
