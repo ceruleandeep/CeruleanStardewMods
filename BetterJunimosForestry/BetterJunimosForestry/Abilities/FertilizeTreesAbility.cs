@@ -36,7 +36,7 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         public List<int> RequiredItems() {
-            return new List<int> { tree_fertilizer };
+            return new() { tree_fertilizer };
         }
     }
 }

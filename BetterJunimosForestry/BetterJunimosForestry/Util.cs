@@ -26,27 +26,13 @@ namespace BetterJunimosForestry {
     }
     
     public class Util {
-        internal static ModConfig Config;
-        
-        internal static Dictionary<int, int> WildTreeSeeds = new Dictionary<int, int>
+        internal static Dictionary<int, int> WildTreeSeeds = new()
         {
             {292, 8}, // mahogany
             {309, 1}, // acorn
             {310, 2}, // maple
             {311, 3}, // pine
             {891, 7}  // mushroom
-        };
-        
-        internal static Dictionary<int, string> FruitTreeSeeds = new Dictionary<int, string>
-        {
-            {69, "Banana"},
-            {835, "Mango"},
-            {628, ""},
-            {629, ""},
-            {630, ""},
-            {631, ""},
-            {632, ""},
-            {633, ""}
         };
         
         /// <summary>Get whether a tile is blocked due to something it contains.</summary>
@@ -263,7 +249,7 @@ namespace BetterJunimosForestry {
         }
 
         public static void RemoveItemFromChest(Chest chest, Item item) {
-            if (Config.InfiniteJunimoInventory) { return; }
+            if (ModEntry.Config.InfiniteJunimoInventory) { return; }
             item.Stack--;
             if (item.Stack == 0) {
                 chest.items.Remove(item);
@@ -275,11 +261,9 @@ namespace BetterJunimosForestry {
         }
 
         public static bool IsWithinRadius(JunimoHut hut, Vector2 pos) {
-            int radius = MaxRadius();
-            bool outcome = true;
-            if (pos.X < hut.tileX.Value + 1 - radius || pos.X >= hut.tileX.Value + 2 + radius) outcome = false;
+            var radius = MaxRadius();
+            var outcome = !(pos.X < hut.tileX.Value + 1 - radius || pos.X >= hut.tileX.Value + 2 + radius);
             if (pos.Y < hut.tileY.Value + 1 - radius || pos.Y >= hut.tileY.Value + 2 + radius) outcome = false;
-            // ModEntry.SMonitor.Log($"IsWithinRadius: hut [{hut.tileX.Value} {hut.tileY.Value}], pos [{pos.X} {pos.Y}], radius {radius}: {outcome}", LogLevel.Trace);
             return outcome;
         }
         

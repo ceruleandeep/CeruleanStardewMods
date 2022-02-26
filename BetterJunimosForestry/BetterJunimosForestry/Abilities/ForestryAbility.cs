@@ -154,7 +154,7 @@ namespace BetterJunimosForestry.Abilities {
 
 
         public List<int> RequiredItems() {
-            return WildTreeSeeds.Keys.ToList<int>();
+            return WildTreeSeeds.Keys.ToList();
         }
     }
 }
