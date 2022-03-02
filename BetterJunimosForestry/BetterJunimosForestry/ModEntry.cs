@@ -128,62 +128,74 @@ namespace BetterJunimosForestry {
             e.SpriteBatch.Draw(Game1.mouseCursors, actions, CheckboxesIcon, Color.White);
         }
 
-        void OnButtonPressed(object sender, ButtonPressedEventArgs e) {
-            if (!Context.IsWorldReady) { return; }
+        private void OnButtonPressed(object sender, ButtonPressedEventArgs e) {
+            if (!Context.IsWorldReady) return;
+            if (Game1.player.currentLocation is not Farm) return;
+            Monitor.Log($"OnButtonPressed", LogLevel.Debug);
+
+            Monitor.Log($"    checking activeClickableMenu", LogLevel.Debug);
+            if (Game1.activeClickableMenu is not null) return;
+
+            Monitor.Log($"    checking IsUseToolButton", LogLevel.Debug);
+            if (!e.Button.IsUseToolButton()) return;
+
+            Monitor.Log($"    checking HandleMenuClick", LogLevel.Debug);
+            if (HandleMenuClick(e)) return;
+
+            Monitor.Log($"    checking HutOnTile", LogLevel.Debug);
+            var hut = Util.HutOnTile(e.Cursor.Tile);
+            if (hut is null) return;
             
-            if (e.Button == SButton.MouseLeft) {
-                if (Game1.player.currentLocation is not Farm) return;
-                if (Game1.activeClickableMenu != null) return;
-                
-                var hut = Util.HutOnTile(e.Cursor.Tile);
-                if (hut is not null) {
-                    var hutPos = Util.GetHutPositionFromHut(hut);
-                    if (!HutStates.ContainsKey(hutPos)) HutStates[hutPos] = new HutState();
-                    HutStates[hutPos].ShowHUD = !HutStates[hutPos].ShowHUD;
-                    Helper.Input.Suppress(SButton.MouseLeft);
-                    return;
-                }
-                
-                HandleMenuClick(e);
-            }
+            Monitor.Log($"    checking GetHutPositionFromHut", LogLevel.Debug);
+            var hutPos = Util.GetHutPositionFromHut(hut);
+            if (!HutStates.ContainsKey(hutPos)) HutStates[hutPos] = new HutState();
+            
+            HutStates[hutPos].ShowHUD = !HutStates[hutPos].ShowHUD;
+            Monitor.Log($"    hut [{hutPos.X} {hutPos.Y}] HUD {HutStates[hutPos].ShowHUD}", LogLevel.Debug);
+
+            Helper.Input.Suppress(e.Button);
         }
 
-        private void HandleMenuClick(ButtonPressedEventArgs e)
+        private bool HandleMenuClick(ButtonPressedEventArgs e)
         {
             foreach (var (r, mc) in Rectangles)
             {
-                bool contains = r.Contains((int) e.Cursor.ScreenPixels.X, (int) e.Cursor.ScreenPixels.Y);
-                if (contains)
+                var contains = r.Contains((int) e.Cursor.ScreenPixels.X, (int) e.Cursor.ScreenPixels.Y);
+                if (!contains) continue;
+                
+                Helper.Input.Suppress(e.Button);
+                var hut = Util.GetHutFromId(mc.guid);
+                var hutPos = Util.GetHutPositionFromId(mc.guid);
+                
+                switch (mc.mode)
                 {
-                    Helper.Input.Suppress(SButton.MouseLeft);
-                    var hut = Util.GetHutFromId(mc.guid);
-                    Vector2 hutPos = Util.GetHutPositionFromId(mc.guid);
-                    // Monitor.Log($"Rectangle {r} {mc.mode} {r.X} {r.Y} contains: {contains}");
-                    if (mc.mode == "_quests")
-                    {
+                    // handle specials
+                    case "_quests":
                         BJApi.ShowPerfectionTracker();
-                    }
-
-                    if (mc.mode == "_actions")
-                    {
+                        break;
+                    case "_actions":
                         BJApi.ShowConfigurationMenu();
                         BJApi.ListAvailableActions(mc.guid);
-                    }
-
-                    if (!mc.mode.StartsWith("_"))
-                    {
-                        HutStates[hutPos].Mode = mc.mode;
-                        if (mc.mode == "maze")
-                        {
-                            Maze.MakeMazeForHut(hut);
-                        }
-                        else
-                        {
-                            Maze.ClearMazeForHut(hut);
-                        }
-                    }
+                        break;
                 }
+
+                // handle mode changes
+                if (mc.mode.StartsWith("_")) continue;
+                
+                HutStates[hutPos].Mode = mc.mode;
+                if (mc.mode == "maze")
+                {
+                    Maze.MakeMazeForHut(hut);
+                }
+                else
+                {
+                    Maze.ClearMazeForHut(hut);
+                }
+
+                return true;
             }
+
+            return false;
         }
 
         private void OnLaunched(object sender, GameLaunchedEventArgs e) {
