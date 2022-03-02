@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BetterJunimos.Abilities;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
@@ -12,11 +13,11 @@ using SObject = StardewValley.Object;
 // bits of this are from Tractor Mod; https://github.com/Pathoschild/StardewMods/blob/68628a40f992288278b724984c0ade200e6e4296/TractorMod/Framework/BaseAttachment.cs#L132
 
 namespace BetterJunimosForestry.Abilities {
-    public class ChopTreesAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class ChopTreesAbility : IJunimoAbility {
 
         private readonly IMonitor Monitor;
-        private Axe FakeAxe = new Axe();
-        private FakeFarmer FakeFarmer = new FakeFarmer();
+        private Axe FakeAxe = new();
+        private FakeFarmer FakeFarmer = new();
         
         internal ChopTreesAbility(IMonitor Monitor) {
             this.Monitor = Monitor;
@@ -28,17 +29,25 @@ namespace BetterJunimosForestry.Abilities {
             return "ChopTrees";
         }
 
-        protected bool IsHarvestableTree(TerrainFeature t, string mode) {
+        private static bool IsHarvestableTree(TerrainFeature t, string mode) {
             if (t is not Tree tree) return false;
             if (tree.tapped.Value) return false;
-            if (mode == Modes.Crops || mode == Modes.Orchard) return true;
+            switch (mode)
+            {
+                case Modes.Crops or Modes.Orchard:
+                    return true;
+                case Modes.Maze:
+                    // don't cut any trees in Maze mode because they're already factored in as walls
+                    return false;
+            }
+
             if (tree.growthStage.Value < 5) return false;
             if (ModEntry.Config.SustainableWildTreeHarvesting && !tree.hasSeed.Value) return false;
             return true;
         }
 
         public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
-            string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
+            var mode = Util.GetModeForHut(Util.GetHutFromId(guid));
             if (mode == Modes.Normal) return false;
 
             Vector2 up = new Vector2(pos.X, pos.Y + 1);

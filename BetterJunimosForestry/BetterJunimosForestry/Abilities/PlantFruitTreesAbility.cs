@@ -3,17 +3,24 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
-using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using System.Collections.Generic;
+using BetterJunimos.Abilities;
+using StardewModdingAPI;
 using StardewValley.Buildings;
 using SObject = StardewValley.Object;
 
 namespace BetterJunimosForestry.Abilities
 {
-    public class PlantFruitTreesAbility : BetterJunimos.Abilities.IJunimoAbility
+    public class PlantFruitTreesAbility : IJunimoAbility
     {
         private List<int> _RequiredItems;
+        private readonly IMonitor Monitor;
+
+        internal PlantFruitTreesAbility(IMonitor Monitor)
+        {
+            this.Monitor = Monitor;
+        }
         
         public string AbilityName()
         {
@@ -96,20 +103,6 @@ namespace BetterJunimosForestry.Abilities
             throw new ArgumentOutOfRangeException($"Pattern '{ModEntry.Config.FruitTreePattern}' not recognized");
         }
 
-        private bool FruitTreePlantable(Farm farm, Vector2 pos)
-        {
-            var x = (int) pos.X;
-            var y = (int) pos.Y;
-            return (farm != null &&
-                    (farm.doesTileHaveProperty(x, y, "Diggable", "Back") != null ||
-                     farm.doesTileHavePropertyNoNull(x, y, "Type", "Back").Equals("Grass") ||
-                     farm.doesTileHavePropertyNoNull(x, y, "Type", "Back").Equals("Dirt")) &&
-                    !farm.doesTileHavePropertyNoNull(x, y, "NoSpawn", "Back").Equals("Tree")) ||
-                   (farm.CanPlantTreesHere(628, x, y) && (farm.doesTileHaveProperty(x, y, "Diggable", "Back") != null ||
-                                                          farm.doesTileHavePropertyNoNull(x, y, "Type", "Back")
-                                                              .Equals("Stone")));
-        }
-        
         public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid)
         {
             var hut = Util.GetHutFromId(guid);

@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using BetterJunimos.Abilities;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Objects;
@@ -8,7 +9,7 @@ using StardewValley.TerrainFeatures;
 using SObject = StardewValley.Object;
 
 namespace BetterJunimosForestry.Abilities {
-    public class HarvestGrassAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class HarvestGrassAbility : IJunimoAbility {
         public string AbilityName() {
             return "HarvestGrass";
         }

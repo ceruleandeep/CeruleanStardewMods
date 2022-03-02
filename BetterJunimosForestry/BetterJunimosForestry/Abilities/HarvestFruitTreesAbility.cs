@@ -1,63 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using BetterJunimos.Abilities;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
-using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using StardewModdingAPI;
 using SObject = StardewValley.Object;
 
 namespace BetterJunimosForestry.Abilities {
-    public class HarvestFruitTreesAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class HarvestFruitTreesAbility : IJunimoAbility {
         private readonly IMonitor Monitor;
 
         internal HarvestFruitTreesAbility(IMonitor Monitor) {
             this.Monitor = Monitor;
         }
-
+        
         public string AbilityName() {
             return "HarvestFruitTrees";
         }
 
-        private bool IsHarvestableFruitTree(TerrainFeature tf) {
+        private static bool IsHarvestableFruitTree(TerrainFeature tf) {
             return tf is FruitTree tree && tree.fruitsOnTree.Value > 0;
         }
 
         public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
-            Vector2 up = new Vector2(pos.X, pos.Y + 1);
-            Vector2 right = new Vector2(pos.X + 1, pos.Y);
-            Vector2 down = new Vector2(pos.X, pos.Y - 1);
-            Vector2 left = new Vector2(pos.X - 1, pos.Y);
+            var up = new Vector2(pos.X, pos.Y + 1);
+            var right = new Vector2(pos.X + 1, pos.Y);
+            var down = new Vector2(pos.X, pos.Y - 1);
+            var left = new Vector2(pos.X - 1, pos.Y);
 
             Vector2[] positions = { up, right, down, left };
-            foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
-                if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableFruitTree(farm.terrainFeatures[nextPos])) {
-                    return true;
-                }
-            }
-            return false;
+            return positions
+                .Where(nextPos => Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos))
+                .Any(nextPos => farm.terrainFeatures.ContainsKey(nextPos) 
+                                && IsHarvestableFruitTree(farm.terrainFeatures[nextPos]));
         }
 
         public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            Chest chest = Util.GetHutFromId(guid).output.Value;
+            var chest = Util.GetHutFromId(guid).output.Value;
             
-            Vector2 up = new Vector2(pos.X, pos.Y + 1);
-            Vector2 right = new Vector2(pos.X + 1, pos.Y);
-            Vector2 down = new Vector2(pos.X, pos.Y - 1);
-            Vector2 left = new Vector2(pos.X - 1, pos.Y);
+            var up = new Vector2(pos.X, pos.Y + 1);
+            var right = new Vector2(pos.X + 1, pos.Y);
+            var down = new Vector2(pos.X, pos.Y - 1);
+            var left = new Vector2(pos.X - 1, pos.Y);
 
-            int direction = 0;
+            var direction = 0;
             Vector2[] positions = { up, right, down, left };
-            foreach (Vector2 nextPos in positions) {
+            foreach (var nextPos in positions) {
                 if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
                 if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableFruitTree(farm.terrainFeatures[nextPos])) {
-                    FruitTree tree = farm.terrainFeatures[nextPos] as FruitTree;
+                    var tree = farm.terrainFeatures[nextPos] as FruitTree;
 
                     junimo.faceDirection(direction);
 
-                    return HarvestFromTree(farm, pos, junimo, chest, tree);
+                    return HarvestFromTree(pos, junimo, tree);
                 }
                 direction++;
             }
@@ -66,11 +64,11 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         /// <summary>Harvest fruit from a FruitTree and update the tree accordingly.</summary>
-        internal static SObject GetFruitFromTree(FruitTree tree) {
+        private static SObject GetFruitFromTree(FruitTree tree) {
             if (tree.fruitsOnTree.Value == 0)
                 return null;
 
-            int quality = 0;
+            var quality = 0;
             if (tree.daysUntilMature.Value <= -112)
                 quality = 1;
             if (tree.daysUntilMature.Value <= -224)
@@ -82,26 +80,24 @@ namespace BetterJunimosForestry.Abilities {
 
             tree.fruitsOnTree.Value --;
 
-            SObject result = new SObject(Vector2.Zero, tree.struckByLightningCountdown.Value > 0 ? 382 : tree.indexOfFruit.Value, 1) { Quality = quality };
+            var result = new SObject(Vector2.Zero, tree.struckByLightningCountdown.Value > 0 ? 382 : tree.indexOfFruit.Value, 1) { Quality = quality };
             return result;
         }
 
-        protected bool HarvestFromTree(Farm farm, Vector2 pos, JunimoHarvester junimo, Chest chest, FruitTree tree) {
+        private static bool HarvestFromTree(Vector2 pos, JunimoHarvester junimo, FruitTree tree) {
             //shake the tree without it releasing any fruit
-            int fruitsOnTree = tree.fruitsOnTree.Value;
+            var fruitsOnTree = tree.fruitsOnTree.Value;
             tree.fruitsOnTree.Value = 0;
             tree.performUseAction(pos, junimo.currentLocation);
             tree.fruitsOnTree.Value = fruitsOnTree;
-            SObject result = GetFruitFromTree(tree);
-            if (result != null) {
-                junimo.tryToAddItemToHut(result);
-                return true;
-            }
-            return false;
+            var result = GetFruitFromTree(tree);
+            if (result == null) return false;
+            junimo.tryToAddItemToHut(result);
+            return true;
         }
 
         public List<int> RequiredItems() {
-            return new List<int>();
+            return new();
         }
     }
 }

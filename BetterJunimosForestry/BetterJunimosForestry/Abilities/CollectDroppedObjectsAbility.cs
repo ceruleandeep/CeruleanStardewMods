@@ -5,13 +5,14 @@ using StardewValley.Characters;
 using StardewValley.Objects;
 using StardewValley.Tools;
 using System.Collections.Generic;
+using BetterJunimos.Abilities;
 using StardewModdingAPI;
 using SObject = StardewValley.Object;
 
 // bits of this are from Tractor Mod; https://github.com/Pathoschild/StardewMods/blob/68628a40f992288278b724984c0ade200e6e4296/TractorMod/Framework/BaseAttachment.cs#L132
 
 namespace BetterJunimosForestry.Abilities {
-    public class CollectDroppedObjectsAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class CollectDroppedObjectsAbility : IJunimoAbility {
 
         private readonly IMonitor Monitor;
         private readonly Axe FakeAxe = new Axe();

@@ -25,8 +25,8 @@ namespace BetterJunimosForestry {
         }
     }
     
-    public class Util {
-        internal static Dictionary<int, int> WildTreeSeeds = new()
+    public static class Util {
+        internal static readonly Dictionary<int, int> WildTreeSeeds = new()
         {
             {292, 8}, // mahogany
             {309, 1}, // acorn
@@ -48,9 +48,15 @@ namespace BetterJunimosForestry {
             // objects & large terrain features
             if (location.objects.ContainsKey(tile) || location.largeTerrainFeatures.Any(p => p.tilePosition.Value == tile))
                 return true;
-
+            
+            // logs, boulders, etc
+            if (location.resourceClumps.Any(resourceClump => resourceClump.occupiesTile((int)tile.X, (int)tile.Y)))
+            {
+                return true;
+            }
+            
             // non-dirt terrain features
-            if (location.terrainFeatures.TryGetValue(tile, out TerrainFeature feature))
+            if (location.terrainFeatures.TryGetValue(tile, out var feature))
             {
                 HoeDirt dirt = feature as HoeDirt;
                 if (dirt is not {crop: null})
@@ -107,12 +113,9 @@ namespace BetterJunimosForestry {
                 return false;
             }
 
-            foreach (ResourceClump resourceClump in location.resourceClumps)
+            if (location.resourceClumps.Any(resourceClump => resourceClump.occupiesTile((int)tileLocation.X, (int)tileLocation.Y)))
             {
-                if (resourceClump.occupiesTile((int)tileLocation.X, (int)tileLocation.Y))
-                {
-                    return false;
-                }
+                return false;
             }
             Rectangle tileLocationRect = new Rectangle((int)tileLocation.X * 64 + 1, (int)tileLocation.Y * 64 + 1, 62, 62);
             foreach (LargeTerrainFeature largeTerrainFeature in location.largeTerrainFeatures)
@@ -177,8 +180,8 @@ namespace BetterJunimosForestry {
         }
 
         public static void DrawScroll(SpriteBatch b, Vector2 position, int scroll_width) {
-            float alpha = 1f;
-            float layerDepth = 0.88f;
+            const float alpha = 1f;
+            const float layerDepth = 0.88f;
             b.Draw(Game1.mouseCursors, position + new Vector2(-12f, -3f) * 4f, new Rectangle(325, 318, 12, 18), Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth - 0.001f);
             b.Draw(Game1.mouseCursors, position + new Vector2(0f, -3f) * 4f, new Rectangle(337, 318, 1, 18), Color.White * alpha, 0f, Vector2.Zero, new Vector2(scroll_width, 4f), SpriteEffects.None, layerDepth - 0.001f);
             b.Draw(Game1.mouseCursors, position + new Vector2(scroll_width, -12f), new Rectangle(338, 318, 12, 18), Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth - 0.001f);

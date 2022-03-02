@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BetterJunimos.Abilities;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
@@ -12,10 +13,10 @@ using SObject = StardewValley.Object;
 // bits of this are from Tractor Mod; https://github.com/Pathoschild/StardewMods/blob/68628a40f992288278b724984c0ade200e6e4296/TractorMod/Framework/BaseAttachment.cs#L132
 
 namespace BetterJunimosForestry.Abilities {
-    public class CollectSeedsAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class CollectSeedsAbility : IJunimoAbility {
 
         private readonly IMonitor Monitor;
-        private Axe FakeAxe = new Axe();
+        private Axe FakeAxe = new();
 
         internal CollectSeedsAbility(IMonitor Monitor) {
             this.Monitor = Monitor;

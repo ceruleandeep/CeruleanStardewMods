@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using BetterJunimos;
+using BetterJunimos.Abilities;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Objects;
-using StardewValley.Tools;
 using StardewValley.TerrainFeatures;
 using StardewModdingAPI;
 using StardewValley.Buildings;
@@ -15,11 +15,11 @@ using SObject = StardewValley.Object;
 // bits of this are from Tractor Mod; https://github.com/Pathoschild/StardewMods/blob/68628a40f992288278b724984c0ade200e6e4296/TractorMod/Framework/BaseAttachment.cs#L132
 
 namespace BetterJunimosForestry.Abilities {
-    public class HoeAroundTreesAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class HoeAroundTreesAbility : IJunimoAbility {
 
         private readonly IMonitor Monitor;
-        private static readonly List<int> WildTreeSeeds = new List<int> {292, 309, 310, 311, 891};
-        static Dictionary<string, Dictionary<int, bool>> cropSeasons = new Dictionary<string, Dictionary<int, bool>>();
+        private static readonly List<int> WildTreeSeeds = new() {292, 309, 310, 311, 891};
+        private static readonly Dictionary<string, Dictionary<int, bool>> cropSeasons = new();
         private const int SunflowerSeeds = 431;
 
         internal HoeAroundTreesAbility(IMonitor Monitor) {
@@ -80,9 +80,9 @@ namespace BetterJunimosForestry.Abilities {
             }
             
             // would planting out this tile stop a fruit tree from growing?
-            for (int x = -1; x < 2; x++) {
-                for (int y = -1; y < 2; y++) {
-                    Vector2 v = new Vector2(pos.X + x, pos.Y + y);
+            for (var x = -1; x < 2; x++) {
+                for (var y = -1; y < 2; y++) {
+                    var v = new Vector2(pos.X + x, pos.Y + y);
                     if (farm.terrainFeatures.ContainsKey(v) && IsFruitTreeSapling(farm.terrainFeatures[v])) {
                         // Monitor.Log($"    ShouldHoeThisTile not hoeing [{pos.X} {pos.Y}] because fruit tree adjacent", LogLevel.Debug);
                         return false;
@@ -113,16 +113,16 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        private bool IsMatureFruitTree(TerrainFeature tf) {
+        private static bool IsMatureFruitTree(TerrainFeature tf) {
             return tf is FruitTree tree && tree.growthStage.Value >= 4;
         }
 
-        private bool IsFruitTreeSapling(TerrainFeature tf) {
-            new FruitTree();
+        private static bool IsFruitTreeSapling(TerrainFeature tf)
+        {
             return tf is FruitTree tree && tree.growthStage.Value < 4;
         }
 
-        public bool SeedsAvailableToPlantThisTile(JunimoHut hut, Vector2 pos, Guid guid)
+        private bool SeedsAvailableToPlantThisTile(JunimoHut hut, Vector2 pos, Guid guid)
         {
             Item foundItem;
             
@@ -230,7 +230,7 @@ namespace BetterJunimosForestry.Abilities {
             
         }
 
-        protected bool UseToolOnTileManual(Vector2 tileLocation, Farmer player, GameLocation location) {
+        private static bool UseToolOnTileManual(Vector2 tileLocation, Farmer player, GameLocation location) {
             location.makeHoeDirt(tileLocation);
             if (Utility.isOnScreen(Utility.Vector2ToPoint(tileLocation), 64, location)) {
                 location.playSound("hoeHit");
@@ -241,7 +241,7 @@ namespace BetterJunimosForestry.Abilities {
         }
         
         public List<int> RequiredItems() {
-            return new List<int>();
+            return new();
         }
     }
 }

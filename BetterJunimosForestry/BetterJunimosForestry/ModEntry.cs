@@ -1,31 +1,26 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using BetterJunimos;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Buildings;
-using StardewValley.GameData.HomeRenovations;
-using StardewValley.Locations;
-using StardewValley.TerrainFeatures;
 
 namespace BetterJunimosForestry {
     public static class Modes {
-        public static readonly string Normal = "normal";
-        public static readonly string Crops = "crops";
-        public static readonly string Orchard = "orchard";
-        public static readonly string Forest = "forest";
-        public static readonly string Grains = "grains";
-        public static readonly string Maze = "maze";
+        public const string Normal = "normal";
+        public const string Crops = "crops";
+        public const string Orchard = "orchard";
+        public const string Forest = "forest";
+        public const string Grains = "grains";
+        public const string Maze = "maze";
     }
     
     public class HutState {
-        public bool ShowHUD = false;
+        public bool ShowHUD;
         public string Mode = Modes.Normal;
     }
 
@@ -87,15 +82,14 @@ namespace BetterJunimosForestry {
 
             const int padding = 3;
             const int offset = 14 * Game1.pixelZoom;
-
             const int scrollWidth = offset * 7 + padding * 2;
+            
             var hutXvp = hut.tileX.Value * Game1.tileSize - Game1.viewport.X + 1; // hut x co-ord in viewport pixels
             var scrollXvp = (int) (hutXvp + Game1.tileSize * 1.5 - scrollWidth / 2);
 
-            Vector2 origin = new Vector2(scrollXvp,
-                (int) hut.tileY.Value * Game1.tileSize - Game1.viewport.Y + 1 + Game1.tileSize * 2 + 16);
+            var origin = new Vector2(scrollXvp,hut.tileY.Value * Game1.tileSize - Game1.viewport.Y + 1 + Game1.tileSize * 2 + 16);
 
-            int n = 0;
+            var n = 0;
             Rectangle normal = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
                 14 * Game1.pixelZoom);
             Rectangle crops = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
@@ -225,14 +219,14 @@ namespace BetterJunimosForestry {
                 (val) => Config.SustainableWildTreeHarvesting = val);
 
             GMCMAPI.RegisterChoiceOption(ModManifest, "Wild tree pattern", "", () => Config.WildTreePattern,
-                (string val) => Config.WildTreePattern = val, Config.WildTreePatternChoices);
+                val => Config.WildTreePattern = val, Config.WildTreePatternChoices);
             GMCMAPI.RegisterChoiceOption(ModManifest, "Fruit tree pattern", "", () => Config.FruitTreePattern,
-                (string val) => Config.FruitTreePattern = val, Config.FruitTreePatternChoices);
+                val => Config.FruitTreePattern = val, Config.FruitTreePatternChoices);
 
             GMCMAPI.RegisterClampedOption(ModManifest, "Wild tree growth boost", "", () => Config.PlantWildTreesSize,
-                (float val) => Config.PlantWildTreesSize = (int) val, 0, 5, 1);
+                val => Config.PlantWildTreesSize = (int) val, 0, 5, 1);
             GMCMAPI.RegisterClampedOption(ModManifest, "Fruit tree growth boost", "", () => Config.PlantFruitTreesSize,
-                (float val) => Config.PlantFruitTreesSize = (int) val, 0, 5, 1);
+                val => Config.PlantFruitTreesSize = (int) val, 0, 5, 1);
 
             GMCMAPI.RegisterSimpleOption(ModManifest, "Harvest Grass", "", () => Config.HarvestGrassEnabled,
                 (val) => Config.HarvestGrassEnabled = val);
@@ -248,7 +242,7 @@ namespace BetterJunimosForestry {
             
             // we use these elsewhere
             PlantTrees = new Abilities.PlantTreesAbility(Monitor);
-            PlantFruitTrees = new Abilities.PlantFruitTreesAbility();
+            PlantFruitTrees = new Abilities.PlantFruitTreesAbility(Monitor);
 
             BJApi.RegisterJunimoAbility(new Abilities.HarvestGrassAbility());
             BJApi.RegisterJunimoAbility(new Abilities.HarvestDebrisAbility(Monitor));
@@ -261,9 +255,7 @@ namespace BetterJunimosForestry {
             BJApi.RegisterJunimoAbility(new Abilities.HarvestFruitTreesAbility(Monitor));
             BJApi.RegisterJunimoAbility(new Abilities.HoeAroundTreesAbility(Monitor));
             
-            
             if (!Context.IsMainPlayer) {
-                Monitor.Log("Better Junimos Forestry is a single-player mod. It has not been tested in multi-player mode", LogLevel.Warn);
                 return;
             }
 
@@ -280,6 +272,7 @@ namespace BetterJunimosForestry {
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
         void OnSaving(object sender, SavingEventArgs e) {
+            if (!Context.IsMainPlayer) return;
             Helper.Data.WriteSaveData("ceruleandeep.BetterJunimosForestry.HutStates", HutStates);
             Helper.Data.WriteSaveData("ceruleandeep.BetterJunimosForestry.HutMazes", HutMazes);
             Helper.WriteConfig(Config);
@@ -289,7 +282,7 @@ namespace BetterJunimosForestry {
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
         void OnDayStarted(object sender, DayStartedEventArgs e) {
-            foreach (JunimoHut hut in Game1.getFarm().buildings.OfType<JunimoHut>()) {
+            foreach (var hut in Game1.getFarm().buildings.OfType<JunimoHut>()) {
                 if (Util.GetModeForHut(hut) == Modes.Maze)
                 {
                     Maze.MakeMazeForHut(hut);

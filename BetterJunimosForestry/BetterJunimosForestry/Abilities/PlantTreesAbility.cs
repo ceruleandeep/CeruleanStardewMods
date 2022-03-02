@@ -7,11 +7,12 @@ using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using StardewModdingAPI;
 using System.Collections.Generic;
+using BetterJunimos.Abilities;
 using StardewValley.Buildings;
 using SObject = StardewValley.Object;
 
 namespace BetterJunimosForestry.Abilities {
-    public class PlantTreesAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class PlantTreesAbility : IJunimoAbility {
         private readonly IMonitor Monitor;
 
         internal PlantTreesAbility(IMonitor Monitor) {

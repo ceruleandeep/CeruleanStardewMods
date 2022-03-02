@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using BetterJunimos.Abilities;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
@@ -8,7 +9,7 @@ using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 
 namespace BetterJunimosForestry.Abilities {
-    public class FertilizeTreesAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class FertilizeTreesAbility : IJunimoAbility {
         int tree_fertilizer = 805;
 
         public string AbilityName() {

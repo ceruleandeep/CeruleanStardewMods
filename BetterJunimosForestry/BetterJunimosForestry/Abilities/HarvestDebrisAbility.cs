@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using BetterJunimos.Abilities;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.Characters;
@@ -12,13 +12,13 @@ using SObject = StardewValley.Object;
 // bits of this are from Tractor Mod; https://github.com/Pathoschild/StardewMods/blob/68628a40f992288278b724984c0ade200e6e4296/TractorMod/Framework/BaseAttachment.cs#L132
 
 namespace BetterJunimosForestry.Abilities {
-    public class HarvestDebrisAbility : BetterJunimos.Abilities.IJunimoAbility {
+    public class HarvestDebrisAbility : IJunimoAbility {
 
         private readonly IMonitor Monitor;
-        private Pickaxe FakePickaxe = new Pickaxe();
-        private Axe FakeAxe = new Axe();
-        private MeleeWeapon Scythe = new MeleeWeapon(47);
-        private FakeFarmer FakeFarmer = new FakeFarmer();
+        private Pickaxe FakePickaxe = new();
+        private Axe FakeAxe = new();
+        private MeleeWeapon Scythe = new(47);
+        private FakeFarmer FakeFarmer = new();
 
         internal HarvestDebrisAbility(IMonitor Monitor) {
             this.Monitor = Monitor;
