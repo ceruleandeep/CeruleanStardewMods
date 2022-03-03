@@ -179,14 +179,6 @@ namespace BetterJunimosForestry {
             return null;
         }
 
-        public static void DrawScroll(SpriteBatch b, Vector2 position, int scroll_width) {
-            const float alpha = 1f;
-            const float layerDepth = 0.88f;
-            b.Draw(Game1.mouseCursors, position + new Vector2(-12f, -3f) * 4f, new Rectangle(325, 318, 12, 18), Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth - 0.001f);
-            b.Draw(Game1.mouseCursors, position + new Vector2(0f, -3f) * 4f, new Rectangle(337, 318, 1, 18), Color.White * alpha, 0f, Vector2.Zero, new Vector2(scroll_width, 4f), SpriteEffects.None, layerDepth - 0.001f);
-            b.Draw(Game1.mouseCursors, position + new Vector2(scroll_width, -12f), new Rectangle(338, 318, 12, 18), Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth - 0.001f);
-        }
-        
         public static Guid GetHutIdFromHut(JunimoHut hut) {
             return Game1.getFarm().buildings.GuidOf(hut);
         }

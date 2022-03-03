@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using BetterJunimos;
@@ -15,7 +15,6 @@ namespace BetterJunimosForestry {
         public const string Crops = "crops";
         public const string Orchard = "orchard";
         public const string Forest = "forest";
-        public const string Grains = "grains";
         public const string Maze = "maze";
     }
     
@@ -26,7 +25,7 @@ namespace BetterJunimosForestry {
 
     public class ModeChange {
         public Guid guid;
-        public string mode;
+        public readonly string mode;
 
         public ModeChange(Guid guid, string mode) {
             this.guid = guid;
@@ -37,17 +36,17 @@ namespace BetterJunimosForestry {
     /// <summary>The mod entry point.</summary>
     public class ModEntry : Mod {
         private readonly Dictionary<Rectangle, ModeChange> Rectangles = new();
+
+        private Texture2D icons;
+        private Texture2D scroll;
         
-        private readonly Rectangle TreeIcon = new(0, 656, 14, 14);
-        private readonly Rectangle JunimoIcon = new(109, 492, 14, 14);
-        private readonly Rectangle CropIcon = new(178, 129, 14, 14);
-        private readonly Rectangle FruitTreeIcon = new(16, 624, 14, 14);
-        private readonly Rectangle ScrollIcon = new(673, 81, 14, 14);
-        private readonly Rectangle BundleIcon = new(331, 374, 15, 14);
-        private readonly Rectangle LetterIcon = new(190, 422, 14, 14);
-        private readonly Rectangle QuestionIcon = new(174, 424, 14, 14);
-        private readonly Rectangle MapIcon = new(426, 492, 14, 14);
-        private readonly Rectangle CheckboxesIcon = new(225, 424, 22, 14);
+        private readonly Rectangle JunimoIcon = new(0, 0, 16, 16);
+        private readonly Rectangle CropIcon = new(16, 0, 16, 16);
+        private readonly Rectangle FruitTreeIcon = new(32, 0, 16, 16);
+        private readonly Rectangle TreeIcon = new(48, 0, 16, 16);
+        private readonly Rectangle MapIcon = new(64, 0, 16, 16);
+        private readonly Rectangle LetterIcon = new(80, 0, 16, 16);
+        private readonly Rectangle CheckboxesIcon = new(96, 0, 16, 16);
         
         internal static ModConfig Config;
         internal static IMonitor SMonitor;
@@ -74,40 +73,66 @@ namespace BetterJunimosForestry {
         {
             if (!hutState.ShowHUD) return;
             var hut = Util.GetHutFromPosition(hutPos);
+            if (hut == null) return;
             var guid = Util.GetHutIdFromHut(hut);
-            if (hut == null)
-            {
-                return;
-            }
 
-            const int padding = 3;
-            const int offset = 14 * Game1.pixelZoom;
-            const int scrollWidth = offset * 7 + padding * 2;
+            // what a palaver
             
-            var hutXvp = hut.tileX.Value * Game1.tileSize - Game1.viewport.X + 1; // hut x co-ord in viewport pixels
-            var scrollXvp = (int) (hutXvp + Game1.tileSize * 1.5 - scrollWidth / 2);
+            const int iconW = 16;
+            const int paddingX = 3;
+            const int offset = (iconW + 1) * Game1.pixelZoom;
+            const int scrollWidth = offset * 7 + paddingX * 2;
+            
+            var hutXvp = hut.tileX.Value * Game1.tileSize - Game1.viewport.X; // hut x co-ord in viewport pixels
+            var hutYvp = hut.tileY.Value * Game1.tileSize - Game1.viewport.Y;
+            
+            var scrollXvp = (int) (hutXvp + Game1.tileSize * 1.5 - scrollWidth / 2.0);
+            var scrollYvp = (int) (hutYvp + Game1.tileSize * 2.25);
+            
+            var iconYvp = scrollYvp + 1 * Game1.pixelZoom;
 
-            var origin = new Vector2(scrollXvp,hut.tileY.Value * Game1.tileSize - Game1.viewport.Y + 1 + Game1.tileSize * 2 + 16);
+            var origin = new Vector2(scrollXvp,scrollYvp);
 
             var n = 0;
-            Rectangle normal = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
-                14 * Game1.pixelZoom);
-            Rectangle crops = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
-                14 * Game1.pixelZoom);
-            Rectangle orchard = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
-                14 * Game1.pixelZoom);
-            Rectangle forest = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
-                14 * Game1.pixelZoom);
-            Rectangle maze = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
-                14 * Game1.pixelZoom);
-            Rectangle quests = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
-                14 * Game1.pixelZoom);
-            Rectangle actions = new Rectangle((int) origin.X + padding + offset * n++, (int) origin.Y - 4, 14 * Game1.pixelZoom,
-                14 * Game1.pixelZoom);
+            Rectangle normal = new Rectangle(
+                (int) origin.X + paddingX + offset * n++, 
+                iconYvp, 
+                iconW * Game1.pixelZoom,
+                iconW * Game1.pixelZoom);
+            Rectangle crops = new Rectangle(
+                (int) origin.X + paddingX + offset * n++, 
+                iconYvp, 
+                iconW * Game1.pixelZoom,
+                iconW * Game1.pixelZoom);
+            Rectangle orchard = new Rectangle(
+                (int) origin.X + paddingX + offset * n++, 
+                iconYvp, 
+                iconW * Game1.pixelZoom,
+                iconW * Game1.pixelZoom);
+            Rectangle forest = new Rectangle(
+                (int) origin.X + paddingX + offset * n++, 
+                iconYvp, 
+                iconW * Game1.pixelZoom,
+                iconW * Game1.pixelZoom);
+            Rectangle maze = new Rectangle(
+                (int) origin.X + paddingX + offset * n++, 
+                iconYvp, 
+                iconW * Game1.pixelZoom,
+                iconW * Game1.pixelZoom);
+            Rectangle quests = new Rectangle(
+                (int) origin.X + paddingX + offset * n++, 
+                iconYvp, 
+                iconW * Game1.pixelZoom,
+                iconW * Game1.pixelZoom);
+            Rectangle actions = new Rectangle(
+                (int) origin.X + paddingX + offset * n++, 
+                iconYvp, 
+                iconW * Game1.pixelZoom,
+                iconW * Game1.pixelZoom);
 
-            var scroll = new Rectangle((int) origin.X, (int) origin.Y, scrollWidth, 18);
-
-            Rectangles[scroll] = new ModeChange(guid, "_menu");
+            // var scroll = new Rectangle((int) origin.X, (int) origin.Y, scrollWidth, 18);
+            //
+            // Rectangles[scroll] = new ModeChange(guid, "_menu");
             Rectangles[normal] = new ModeChange(guid, "normal");
             Rectangles[crops] = new ModeChange(guid, "crops");
             Rectangles[orchard] = new ModeChange(guid, "orchard");
@@ -116,18 +141,26 @@ namespace BetterJunimosForestry {
             Rectangles[quests] = new ModeChange(guid, "_quests");
             Rectangles[actions] = new ModeChange(guid, "_actions");
 
-            Util.DrawScroll(e.SpriteBatch, origin, scrollWidth);
-            e.SpriteBatch.Draw(Game1.mouseCursors, normal, JunimoIcon,
-                Color.White * (hutState.Mode == "normal" ? 1.0f : 0.25f));
-            e.SpriteBatch.Draw(Game1.mouseCursors, crops, CropIcon, Color.White * (hutState.Mode == "crops" ? 1.0f : 0.25f));
-            e.SpriteBatch.Draw(Game1.mouseCursors, orchard, FruitTreeIcon,
-                Color.White * (hutState.Mode == "orchard" ? 1.0f : 0.25f));
-            e.SpriteBatch.Draw(Game1.mouseCursors, forest, TreeIcon, Color.White * (hutState.Mode == "forest" ? 1.0f : 0.25f));
-            e.SpriteBatch.Draw(Game1.mouseCursors, maze, MapIcon, Color.White * (hutState.Mode == "maze" ? 1.0f : 0.25f));
-            e.SpriteBatch.Draw(Game1.mouseCursors, quests, LetterIcon, Color.White);
-            e.SpriteBatch.Draw(Game1.mouseCursors, actions, CheckboxesIcon, Color.White);
+            DrawScroll(e.SpriteBatch, origin, scrollWidth);
+            e.SpriteBatch.Draw(icons, normal, JunimoIcon, Color.White * (hutState.Mode == "normal" ? 1.0f : 0.25f));
+            e.SpriteBatch.Draw(icons, crops, CropIcon, Color.White * (hutState.Mode == "crops" ? 1.0f : 0.25f));
+            e.SpriteBatch.Draw(icons, orchard, FruitTreeIcon, Color.White * (hutState.Mode == "orchard" ? 1.0f : 0.25f));
+            e.SpriteBatch.Draw(icons, forest, TreeIcon, Color.White * (hutState.Mode == "forest" ? 1.0f : 0.25f));
+            e.SpriteBatch.Draw(icons, maze, MapIcon, Color.White * (hutState.Mode == "maze" ? 1.0f : 0.25f));
+            e.SpriteBatch.Draw(icons, quests, LetterIcon, Color.White);
+            e.SpriteBatch.Draw(icons, actions, CheckboxesIcon, Color.White);
         }
 
+        private void DrawScroll(SpriteBatch b, Vector2 position, int scroll_width) {
+            const float alpha = 1f;
+            const float layerDepth = 0.88f;
+            b.Draw(scroll, position + new Vector2(-12f, -3f) * 4f, new Rectangle(0, 0, 144, 24), Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth - 0.001f);
+
+            // b.Draw(Game1.mouseCursors, position + new Vector2(-12f, -3f) * 4f, new Rectangle(325, 318, 12, 18), Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth - 0.001f);
+            // b.Draw(Game1.mouseCursors, position + new Vector2(0f, -3f) * 4f, new Rectangle(337, 318, 1, 18), Color.White * alpha, 0f, Vector2.Zero, new Vector2(scroll_width, 4f), SpriteEffects.None, layerDepth - 0.001f);
+            // b.Draw(Game1.mouseCursors, position + new Vector2(scroll_width, -12f), new Rectangle(338, 318, 12, 18), Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth - 0.001f);
+        }
+        
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e) {
             if (!Context.IsWorldReady) return;
             if (Game1.player.currentLocation is not Farm) return;
@@ -211,6 +244,9 @@ namespace BetterJunimosForestry {
             if (BJApi is null) {
                 Monitor.Log($"Could not load Better Junimos API", LogLevel.Error);
             }
+            
+            icons = Helper.Content.Load<Texture2D>("assets/icons.png");
+            scroll = Helper.Content.Load<Texture2D>("assets/scroll.png");
 
             // BJApi.RegisterJunimoAbility(new Abilities.LayPathsAbility(Monitor));
             // Abilities now registered in OnSaveLoaded
