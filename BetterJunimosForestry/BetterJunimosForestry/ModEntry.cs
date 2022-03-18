@@ -88,8 +88,8 @@ namespace BetterJunimosForestry {
             
             var scrollXvp = (int) (hutXvp + Game1.tileSize * 1.5 - scrollWidth / 2.0);
             var scrollYvp = (int) (hutYvp + Game1.tileSize * 2.25);
-            
-            var iconYvp = scrollYvp + 1 * Game1.pixelZoom;
+
+            var iconYvp = scrollYvp; //+ 1 * Game1.pixelZoom;
 
             var origin = new Vector2(scrollXvp,scrollYvp);
 
@@ -164,27 +164,18 @@ namespace BetterJunimosForestry {
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e) {
             if (!Context.IsWorldReady) return;
             if (Game1.player.currentLocation is not Farm) return;
-            Monitor.Log($"OnButtonPressed", LogLevel.Debug);
 
-            Monitor.Log($"    checking activeClickableMenu", LogLevel.Debug);
             if (Game1.activeClickableMenu is not null) return;
-
-            Monitor.Log($"    checking IsUseToolButton", LogLevel.Debug);
             if (!e.Button.IsUseToolButton()) return;
-
-            Monitor.Log($"    checking HandleMenuClick", LogLevel.Debug);
             if (HandleMenuClick(e)) return;
 
-            Monitor.Log($"    checking HutOnTile", LogLevel.Debug);
             var hut = Util.HutOnTile(e.Cursor.Tile);
             if (hut is null) return;
             
-            Monitor.Log($"    checking GetHutPositionFromHut", LogLevel.Debug);
             var hutPos = Util.GetHutPositionFromHut(hut);
             if (!HutStates.ContainsKey(hutPos)) HutStates[hutPos] = new HutState();
             
             HutStates[hutPos].ShowHUD = !HutStates[hutPos].ShowHUD;
-            Monitor.Log($"    hut [{hutPos.X} {hutPos.Y}] HUD {HutStates[hutPos].ShowHUD}", LogLevel.Debug);
 
             Helper.Input.Suppress(e.Button);
         }
@@ -200,6 +191,8 @@ namespace BetterJunimosForestry {
                 var hut = Util.GetHutFromId(mc.guid);
                 var hutPos = Util.GetHutPositionFromId(mc.guid);
                 
+                Game1.getFarm().playSound("junimoMeep1");
+
                 switch (mc.mode)
                 {
                     // handle specials
@@ -246,7 +239,7 @@ namespace BetterJunimosForestry {
             }
             
             icons = Helper.Content.Load<Texture2D>("assets/icons.png");
-            scroll = Helper.Content.Load<Texture2D>("assets/scroll.png");
+            scroll = Helper.Content.Load<Texture2D>("assets/scroll2.png");
 
             // BJApi.RegisterJunimoAbility(new Abilities.LayPathsAbility(Monitor));
             // Abilities now registered in OnSaveLoaded

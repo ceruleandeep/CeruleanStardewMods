@@ -25,7 +25,7 @@ namespace BetterJunimosForestry.Abilities {
             return "CollectDroppedObjects";
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
             // Monitor.Log($"CollectDroppedObjectsAbility IsActionAvailable {pos}", LogLevel.Debug);
 
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
@@ -44,7 +44,7 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
             Chest chest = Util.GetHutFromId(guid).output.Value;
             
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
@@ -96,7 +96,7 @@ namespace BetterJunimosForestry.Abilities {
             return 0;
         }
 
-        protected bool MoveDebrisFromTileToChest(Vector2 tile, Farm farm, Chest chest) {
+        protected bool MoveDebrisFromTileToChest(Vector2 tile, GameLocation farm, Chest chest) {
             // Monitor.Log($"MoveDebrisFromTileToChest {tile}", LogLevel.Debug);
             if (Game1.currentLocation.debris is null) return false;
             List<Debris> to_remove = new List<Debris>();
@@ -121,7 +121,7 @@ namespace BetterJunimosForestry.Abilities {
             return (to_remove.Count > 0);
         }
 
-        protected void MoveDebrisToChest(Debris d, Farm farm, Chest chest) {
+        protected void MoveDebrisToChest(Debris d, GameLocation farm, Chest chest) {
             foreach (Chunk c in d.Chunks) {
                 if (d.item is not null) {
                     SObject item = new SObject(d.item.ParentSheetIndex, 1);
@@ -138,7 +138,17 @@ namespace BetterJunimosForestry.Abilities {
         }
         
         public List<int> RequiredItems() {
-            return new List<int>();
+            return new();
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }

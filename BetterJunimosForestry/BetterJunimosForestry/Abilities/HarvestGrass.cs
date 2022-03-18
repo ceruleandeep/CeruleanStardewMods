@@ -14,13 +14,13 @@ namespace BetterJunimosForestry.Abilities {
             return "HarvestGrass";
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid)
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid)
         {
             if (!ModEntry.Config.HarvestGrassEnabled) return false;
             return farm.terrainFeatures.ContainsKey(pos) && farm.terrainFeatures[pos] is Grass;
         }
 
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid id) {
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid id) {
             if (!ModEntry.Config.HarvestGrassEnabled) return false;
             if (farm.terrainFeatures.ContainsKey(pos) && farm.terrainFeatures[pos] is Grass g) {
                 return TryHarvestGrass(g, farm, pos);
@@ -50,7 +50,17 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         public List<int> RequiredItems() {
-            return new List<int>();
+            return new();
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }

@@ -10,34 +10,42 @@ using StardewValley.TerrainFeatures;
 
 namespace BetterJunimosForestry.Abilities {
     public class FertilizeTreesAbility : IJunimoAbility {
-        int tree_fertilizer = 805;
+        private const int tree_fertilizer = 805;
 
         public string AbilityName() {
             return "FertilizeTrees";
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
             // in practice only seeds can be fertilized because the junimos can't get on top of saplings
             return farm.terrainFeatures.ContainsKey(pos) && farm.terrainFeatures[pos] is Tree t &&
                 t.growthStage.Value < 5 && !farm.objects.ContainsKey(pos) && !t.fertilized.Value;
         }
 
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            Chest chest = Util.GetHutFromId(guid).output.Value;
-            Item foundItem = chest.items.FirstOrDefault(item => item != null && item.ParentSheetIndex == tree_fertilizer);
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            var chest = Util.GetHutFromId(guid).output.Value;
+            var foundItem = chest.items.FirstOrDefault(item => item is {ParentSheetIndex: tree_fertilizer});
             if (foundItem == null) return false;
 
-            if (farm.terrainFeatures[pos] is Tree t) {
-                t.fertilize(farm);
-                Util.RemoveItemFromChest(chest, foundItem);
-                return true;
-            }
+            if (farm.terrainFeatures[pos] is not Tree t) return false;
+            t.fertilize(farm);
+            Util.RemoveItemFromChest(chest, foundItem);
+            return true;
 
-            return false;
         }
 
         public List<int> RequiredItems() {
             return new() { tree_fertilizer };
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }

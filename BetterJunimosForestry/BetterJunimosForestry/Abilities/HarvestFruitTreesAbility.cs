@@ -25,7 +25,7 @@ namespace BetterJunimosForestry.Abilities {
             return tf is FruitTree tree && tree.fruitsOnTree.Value > 0;
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
             var up = new Vector2(pos.X, pos.Y + 1);
             var right = new Vector2(pos.X + 1, pos.Y);
             var down = new Vector2(pos.X, pos.Y - 1);
@@ -38,7 +38,7 @@ namespace BetterJunimosForestry.Abilities {
                                 && IsHarvestableFruitTree(farm.terrainFeatures[nextPos]));
         }
 
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
             var chest = Util.GetHutFromId(guid).output.Value;
             
             var up = new Vector2(pos.X, pos.Y + 1);
@@ -98,6 +98,16 @@ namespace BetterJunimosForestry.Abilities {
 
         public List<int> RequiredItems() {
             return new();
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }

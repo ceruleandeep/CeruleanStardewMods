@@ -48,7 +48,7 @@ namespace BetterJunimosForestry.Abilities {
             return !(obj is Chest) && obj?.Name == "Stone";
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
             Vector2 right = new Vector2(pos.X + 1, pos.Y);
             Vector2 down = new Vector2(pos.X, pos.Y - 1);
@@ -64,7 +64,7 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
             Vector2 right = new Vector2(pos.X + 1, pos.Y);
             Vector2 down = new Vector2(pos.X, pos.Y - 1);
@@ -131,7 +131,17 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         public List<int> RequiredItems() {
-            return new List<int>();
+            return new();
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }

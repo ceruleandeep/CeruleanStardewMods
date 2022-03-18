@@ -23,7 +23,7 @@ namespace BetterJunimosForestry.Abilities {
             return "PlantTrees";
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
             string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
             if (mode != Modes.Forest) return false;
 
@@ -46,7 +46,7 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         // is this tile plantable? 
-        internal bool ShouldPlantWildTreeHere(Farm farm, JunimoHut hut, Vector2 pos) {
+        internal bool ShouldPlantWildTreeHere(GameLocation farm, JunimoHut hut, Vector2 pos) {
             if (Util.BlocksDoor(hut, pos)) return false;
 
             // Monitor.Log($"    ShouldPlantWildTreeHere: {pos.X} {pos.Y} pattern {ModEntry.Config.WildTreePattern} in pattern {IsTileInPattern(pos)} plantable {Plantable(farm, pos)}", LogLevel.Debug);
@@ -100,7 +100,7 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         // is this tile plantable?
-        private bool Plantable(Farm farm, Vector2 pos) {
+        private bool Plantable(GameLocation farm, Vector2 pos) {
             if (farm.isTileOccupied(pos)) return false;  // is something standing on it? an impassable building? a terrain feature?
             if (Util.IsHoed(farm, pos)) return false;
             if (Util.IsOccupied(farm, pos)) return false;
@@ -109,7 +109,7 @@ namespace BetterJunimosForestry.Abilities {
             return true;
         }
         
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
             JunimoHut hut = Util.GetHutFromId(guid);
             Chest chest = hut.output.Value;
             Item foundItem;
@@ -136,7 +136,7 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        private bool Plant(Farm farm, Vector2 pos, int index) {
+        private bool Plant(GameLocation farm, Vector2 pos, int index) {
             if (farm.terrainFeatures.Keys.Contains(pos)) {
                 return false;
             }
@@ -155,7 +155,17 @@ namespace BetterJunimosForestry.Abilities {
 
 
         public List<int> RequiredItems() {
-            return Util.WildTreeSeeds.Keys.ToList<int>();
+            return Util.WildTreeSeeds.Keys.ToList();
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }

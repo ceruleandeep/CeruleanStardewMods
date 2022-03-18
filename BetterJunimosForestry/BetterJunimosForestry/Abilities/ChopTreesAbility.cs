@@ -46,7 +46,7 @@ namespace BetterJunimosForestry.Abilities {
             return true;
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
             var mode = Util.GetModeForHut(Util.GetHutFromId(guid));
             if (mode == Modes.Normal) return false;
 
@@ -66,7 +66,7 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
             string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
 
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
@@ -86,19 +86,29 @@ namespace BetterJunimosForestry.Abilities {
             }
             return false;
         }
-        
-        protected bool UseToolOnTile(Tool tool, Vector2 tile, GameLocation location) {
-            Vector2 lc = GetToolPixelPosition(tile);
-            tool.DoFunction(location, (int)lc.X, (int)lc.Y, 0, FakeFarmer);
+
+        private bool UseToolOnTile(Tool tool, Vector2 tile, GameLocation location) {
+            var (x, y) = GetToolPixelPosition(tile);
+            tool.DoFunction(location, (int)x, (int)y, 0, FakeFarmer);
             return true;
         }
 
-        protected Vector2 GetToolPixelPosition(Vector2 tile) {
+        private static Vector2 GetToolPixelPosition(Vector2 tile) {
             return (tile * Game1.tileSize) + new Vector2(Game1.tileSize / 2f);
         }
 
         public List<int> RequiredItems() {
-            return new List<int>();
+            return new();
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }

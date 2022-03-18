@@ -36,7 +36,7 @@ namespace BetterJunimosForestry.Abilities {
             return true;
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
             string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
             if (farm.terrainFeatures.ContainsKey(pos) && IsHarvestableSeed(farm.terrainFeatures[pos], mode)) {
                 return true;
@@ -44,7 +44,7 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
             string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
             if (farm.terrainFeatures.ContainsKey(pos) && IsHarvestableSeed(farm.terrainFeatures[pos], mode)) {
                 UseToolOnTile(FakeAxe, pos, Game1.player, Game1.currentLocation);
@@ -65,6 +65,16 @@ namespace BetterJunimosForestry.Abilities {
 
         public List<int> RequiredItems() {
             return new List<int>();
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }

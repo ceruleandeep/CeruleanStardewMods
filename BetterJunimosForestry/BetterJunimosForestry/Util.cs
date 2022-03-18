@@ -145,7 +145,7 @@ namespace BetterJunimosForestry {
             return true;
         }
 
-        public static bool IsHoed(Farm farm, Vector2 pos) {
+        public static bool IsHoed(GameLocation farm, Vector2 pos) {
             if (farm.terrainFeatures.TryGetValue(pos, out TerrainFeature feature))
             {
                 return feature is HoeDirt;
@@ -154,7 +154,7 @@ namespace BetterJunimosForestry {
             return false;
         }
         
-        public static bool SpawningTreesForbidden(Farm farm, Vector2 pos) {
+        public static bool SpawningTreesForbidden(GameLocation farm, Vector2 pos) {
             string noSpawn = farm.doesTileHaveProperty((int)pos.X, (int)pos.Y, "NoSpawn", "Back");
             bool cantSpawnHere = noSpawn != null && (noSpawn.Equals("Tree") || noSpawn.Equals("All") || noSpawn.Equals("True"));
             if (cantSpawnHere) return true;
@@ -235,7 +235,7 @@ namespace BetterJunimosForestry {
             return null;
         }
         
-        public static void AddItemToChest(Farm farm, Chest chest, SObject item) {
+        public static void AddItemToChest(GameLocation farm, Chest chest, SObject item) {
             Item obj = chest.addItem(item);
             if (obj == null) return;
             Vector2 pos = chest.TileLocation;

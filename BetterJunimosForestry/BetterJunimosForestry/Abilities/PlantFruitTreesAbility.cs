@@ -27,7 +27,7 @@ namespace BetterJunimosForestry.Abilities
             return "PlantFruitTrees";
         }
 
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid)
+        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid)
         {
             JunimoHut hut = Util.GetHutFromId(guid);
 
@@ -46,13 +46,13 @@ namespace BetterJunimosForestry.Abilities
             return false;
         }
 
-        internal bool ShouldPlantFruitTreeOnTile(Farm farm, JunimoHut hut, Vector2 pos)
+        internal static bool ShouldPlantFruitTreeOnTile(GameLocation farm, JunimoHut hut, Vector2 pos)
         {
             if (Util.BlocksDoor(hut, pos)) return false;
             return IsTileInPattern(pos) && CanPlantFruitTreeOnTile(farm, pos);
         }
 
-        private static bool CanPlantFruitTreeOnTile(Farm farm, Vector2 pos)
+        private static bool CanPlantFruitTreeOnTile(GameLocation farm, Vector2 pos)
         {
             if (FruitTree.IsGrowthBlocked(pos, farm)) return false;
             if (Util.IsOccupied(farm, pos)) return false;
@@ -60,7 +60,7 @@ namespace BetterJunimosForestry.Abilities
             return true;
         }
 
-        internal bool TileIsNextToAPlantableTile(Farm farm, JunimoHut hut, Vector2 pos)
+        internal static bool TileIsNextToAPlantableTile(GameLocation farm, JunimoHut hut, Vector2 pos)
         {
             // why isn't IsGrowthBlocked enough?
             for (var x = -1; x < 2; x++)
@@ -81,29 +81,21 @@ namespace BetterJunimosForestry.Abilities
 
         private static bool IsTileInPattern(Vector2 pos)
         {
-            if (ModEntry.Config.FruitTreePattern == "rows")
+            return ModEntry.Config.FruitTreePattern switch
             {
-                return pos.X % 3 == 0 && pos.Y % 3 == 0;
-            }
-
-            if (ModEntry.Config.FruitTreePattern == "diagonal")
-            {
-                if (pos.X % 4 == 2) return pos.Y % 4 == 2;
-                if (pos.X % 4 == 0) return pos.Y % 4 == 0;
-                return false;
-            }
-
-            if (ModEntry.Config.FruitTreePattern == "tight")
-            {
-                if (pos.Y % 2 == 0) return pos.X % 4 == 0;
-                if (pos.Y % 2 == 1) return pos.X % 4 == 2;
-                return false;
-            }
-
-            throw new ArgumentOutOfRangeException($"Pattern '{ModEntry.Config.FruitTreePattern}' not recognized");
+                "rows" => pos.X % 3 == 0 && pos.Y % 3 == 0,
+                "diagonal" when pos.X % 4 == 2 => pos.Y % 4 == 2,
+                "diagonal" when pos.X % 4 == 0 => pos.Y % 4 == 0,
+                "diagonal" => false,
+                "tight" when pos.Y % 2 == 0 => pos.X % 4 == 0,
+                "tight" when pos.Y % 2 == 1 => pos.X % 4 == 2,
+                "tight" => false,
+                _ => throw new ArgumentOutOfRangeException(
+                    $"Pattern '{ModEntry.Config.FruitTreePattern}' not recognized")
+            };
         }
 
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid)
+        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid)
         {
             var hut = Util.GetHutFromId(guid);
             var chest = hut.output.Value;
@@ -117,11 +109,8 @@ namespace BetterJunimosForestry.Abilities
             var left = new Vector2(pos.X - 1, pos.Y);
 
             Vector2[] positions = {up, right, down, left};
-            foreach (var nextPos in positions)
+            if (positions.Where(nextPos => Util.IsWithinRadius(hut, pos)).Where(nextPos => ShouldPlantFruitTreeOnTile(farm, hut, nextPos)).Any(nextPos => Plant(farm, nextPos, foundItem.ParentSheetIndex)))
             {
-                if (!Util.IsWithinRadius(hut, pos)) continue;
-                if (!ShouldPlantFruitTreeOnTile(farm, hut, nextPos)) continue;
-                if (!Plant(farm, nextPos, foundItem.ParentSheetIndex)) continue;
                 Util.RemoveItemFromChest(chest, foundItem);
                 return true;
             }
@@ -129,7 +118,7 @@ namespace BetterJunimosForestry.Abilities
             return false;
         }
 
-        private static bool Plant(Farm farm, Vector2 pos, int index)
+        private static bool Plant(GameLocation farm, Vector2 pos, int index)
         {
             if (farm.terrainFeatures.Keys.Contains(pos))
             {
@@ -153,6 +142,16 @@ namespace BetterJunimosForestry.Abilities
             var saplings = Game1.objectInformation.Where(pair => pair.Value.Split('/')[0].Contains("Sapling"));
             _RequiredItems = (from kvp in saplings select kvp.Key).ToList();
             return _RequiredItems;
+        }
+        
+        
+        /* older API compat */
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+            return IsActionAvailable((GameLocation) farm, pos, guid);
+        }
+        
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
 }
