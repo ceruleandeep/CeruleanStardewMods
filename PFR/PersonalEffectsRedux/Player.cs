@@ -12,15 +12,13 @@ namespace PersonalEffects
     {
         public int GetFriendshipPoints(string NPC)
         {
-            Farmer f2 = Game1.player;
-            if (f2.friendshipData.ContainsKey(NPC)) return f2.friendshipData[NPC].Points;
-            else return 0;
+            var f2 = Game1.player;
+            return f2.friendshipData.ContainsKey(NPC) ? f2.friendshipData[NPC].Points : 0;
         }
 
-        public FriendshipStatus GetFriendshipStatus(string NPC)
+        private FriendshipStatus GetFriendshipStatus(string NPC)
         {
-            if (!Game1.player.friendshipData.ContainsKey(NPC)) return FriendshipStatus.Friendly;
-            return Game1.player.friendshipData[NPC].Status;
+            return !Game1.player.friendshipData.ContainsKey(NPC) ? FriendshipStatus.Friendly : Game1.player.friendshipData[NPC].Status;
         }
 
         public void SetFriendshipStatus(string NPC, FriendshipStatus status)
@@ -33,8 +31,10 @@ namespace PersonalEffects
         public void SetFriendshipPoints(string NPC, int points)
         {
             Farmer f2 = Game1.player;
-            if (!f2.friendshipData.ContainsKey(NPC)) f2.friendshipData[NPC] = new Friendship(points);
-            else f2.friendshipData[NPC].Points = points;
+            if (f2.friendshipData.ContainsKey(NPC))
+                f2.friendshipData[NPC].Points = points;
+            else
+                f2.friendshipData[NPC] = new Friendship(points);
         }
 
         public bool HasItem(int id, int count = 1)
@@ -87,7 +87,7 @@ namespace PersonalEffects
             //Sasha Valeria Edits
             Random r = new Random();
             //-0.1 to 0.1
-            float l = (float)(((r.NextDouble() * 2) - 1) * 0.1f);
+            var l = (float)(((r.NextDouble() * 2) - 1) * 0.1f);
             l += 0.1f; //0.0 to 0.2
             l *= 5f; //0.0 to 1.0
             l = (l / 2f) + (l / 2f * (Game1.player.LuckLevel / 3f)); //lucklevel is 0-3, this applies it as a float multiplier to 50% of your daily luck.
@@ -98,9 +98,9 @@ namespace PersonalEffects
         public int[] GetFacingTileCoordinate()
         {
             var f = Game1.player;
-            int target_x = f.getTileX();
-            int target_y = f.getTileY();
-            int d = f.FacingDirection;
+            var target_x = f.getTileX();
+            var target_y = f.getTileY();
+            var d = f.FacingDirection;
             switch (d)
             {
                 case 0: target_y -= 1; break; //up

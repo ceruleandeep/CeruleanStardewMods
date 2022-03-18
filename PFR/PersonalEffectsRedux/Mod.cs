@@ -8,8 +8,6 @@ namespace PersonalEffects
 {
     public class Mod : StardewModdingAPI.Mod
     {
-        internal static string Module;
-
 #if DEBUG
         internal static readonly bool Debug = true;
 #else
@@ -19,16 +17,14 @@ namespace PersonalEffects
         public override void Entry(IModHelper helper)
         {
             Modworks.Startup(this);
-            Monitor.Log("ceruleandeep here! let's have some fun <3 " + Assembly.GetEntryAssembly().GetName().Version.ToString() + (Debug ? " (DEBUG MODE ACTIVE)" : ""));
-
-            Module = helper.ModRegistry.ModID;
+            Monitor.Log("ceruleandeep here! let's have some fun <3 " + Assembly.GetEntryAssembly().GetName().Version + (Debug ? " (DEBUG MODE ACTIVE)" : ""));
 
             Config.Load(Helper.DirectoryPath + System.IO.Path.DirectorySeparatorChar);
             if (Config.Ready)
             {
                 //Modworks.Events.ItemEaten += Events_ItemEaten;
-                //helper.Events.Input.ButtonPressed += Input_ButtonPressed;
-                //helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
+                // helper.Events.Input.ButtonPressed += Input_ButtonPressed;
+                helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
 
                 //AddTrashLoot("Sam", 0);
                 //AddTrashLoot("Jodi", 0);
@@ -69,10 +65,10 @@ namespace PersonalEffects
         //    Modworks.Items.AddTrashLoot(Module, new bwdyworks.Structures.TrashLootEntry(Module, "px" + Config.GetNPC(NPC).Abbreviate() + (Config.GetNPC(NPC).HasMaleItems() ? "m" : "f") + 2, can));
         //}
 
-        public static int tickUpdateLimiter = 0;
-        public static bool EatingPrimed = false;
-        public static Item EatingItem;
-        public static int eatingQuantity = 0;
+        private static int tickUpdateLimiter;
+        private static bool EatingPrimed;
+        private static Item EatingItem;
+        private static int eatingQuantity;
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
             tickUpdateLimiter++;
@@ -81,14 +77,15 @@ namespace PersonalEffects
             if (Game1.player == null) return;
             if (EatingPrimed)
             {
-                if (!Game1.player.isEating)
+                if (Game1.player.isEating) return;
+                
+                EatingPrimed = false;
+                //make sure we didn't say no
+                if (Game1.player.ActiveObject == null || Game1.player.ActiveObject.Stack < eatingQuantity)
                 {
-
-                    EatingPrimed = false;
-                    //make sure we didn't say no
-                    if (Game1.player.ActiveObject == null || Game1.player.ActiveObject.Stack < eatingQuantity) Modworks.Events.ItemEatenEvent(Game1.player, EatingItem);
-                    EatingItem = null;
+                    Events_ItemEaten(EatingItem);
                 }
+                EatingItem = null;
             }
             else if (Game1.player.isEating)
             {
@@ -100,20 +97,20 @@ namespace PersonalEffects
             }
         }
 
-        private void Events_ItemEaten(object sender, ItemEatenEventArgs args)
+        private void Events_ItemEaten(Item item)
         {
-            string dn = args.Item.DisplayName;
+            string dn = item.DisplayName;
             string npc;
 
-            if (dn.EndsWith("'s Panties")) npc = dn.Substring(0, dn.IndexOf("'s Panties"));
-            else if (dn.EndsWith("'s Underwear")) npc = dn.Substring(0, dn.IndexOf("'s Underwear"));
-            else if (dn.EndsWith("'s Delicates")) npc = dn.Substring(0, dn.IndexOf("'s Delicates"));
-            else if (dn.EndsWith("'s Underpants")) npc = dn.Substring(0, dn.IndexOf("'s Underpants"));
+            if (dn.EndsWith("'s Panties")) npc = dn[..dn.IndexOf("'s Panties")];
+            else if (dn.EndsWith("'s Underwear")) npc = dn[..dn.IndexOf("'s Underwear")];
+            else if (dn.EndsWith("'s Delicates")) npc = dn[..dn.IndexOf("'s Delicates")];
+            else if (dn.EndsWith("'s Underpants")) npc = dn[..dn.IndexOf("'s Underpants")];
             else return; //not one of ours
 
             if (string.IsNullOrWhiteSpace(npc)) return;
 
-            string npcName = Config.LookupNPC(npc);
+            var npcName = Config.LookupNPC(npc);
             if (npcName == null) return;
 
             var npcConfig = Config.GetNPC(npcName);
@@ -131,24 +128,6 @@ namespace PersonalEffects
             {
                 Modworks.Player.SetFriendshipPoints(npcName, Math.Max(friendship - Modworks.RNG.Next(100), 0));
                 Modworks.Log.Trace("Relationship decreased");
-            }
-        }
-
-        private void Input_ButtonPressed(object sender, ButtonPressedEventArgs e)
-        {
-            if (e.Button.IsActionButton())
-            {
-                if(Game1.player.ActiveObject != null)
-                {
-                    string name = Game1.player.ActiveObject.Name;
-                    if(name.Contains("'s Underwear") || name.Contains("'s Panties") || name.Contains("'s Delicates") || name.Contains("'s Underpants"))
-                    {
-                        if(Game1.player.currentLocation.isCharacterAtTile(e.Cursor.GrabTile) == null)
-                        {
-                            //Modworks.Player.ForceOfferEatInedibleHeldItem();
-                        }
-                    }
-                }
             }
         }
     }

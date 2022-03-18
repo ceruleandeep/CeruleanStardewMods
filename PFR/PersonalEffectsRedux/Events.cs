@@ -1,18 +1,12 @@
-﻿using Microsoft.Xna.Framework;
-using StardewValley;
+﻿using StardewValley;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PersonalEffects
 {
-
     public class ItemEatenEventArgs : EventArgs
     {
-        public StardewValley.Item Item { get; set; }
-        public StardewValley.Farmer Farmer { get; set; }
+        public Item Item { get; set; }
+        public Farmer Farmer { get; set; }
     }
 
     public class Events

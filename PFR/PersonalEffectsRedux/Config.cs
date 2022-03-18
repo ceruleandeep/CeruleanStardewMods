@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using StardewValley;
 
 namespace PersonalEffects
 {
@@ -24,7 +25,7 @@ namespace PersonalEffects
         }
     }
 
-    class Config
+    internal static class Config
     {
         public static Dictionary<string, ConfigNPC> Data;
         private static ConfigNPC NoData;
@@ -42,45 +43,59 @@ namespace PersonalEffects
                 OtherSpots = false
             };
 
-
-            string filepath = directory + "config.json";
-            if (File.Exists(filepath))
+            var filepath = Path.Combine(directory, "assets", "npcs.json");
+            if (!File.Exists(filepath))
             {
-                try
-                {
-                    string filecontents = File.ReadAllText(filepath);
-                    Data = JsonConvert.DeserializeObject<Dictionary<string, ConfigNPC>>(filecontents);
-                    Ready = true;
-                }
-                catch (Exception e)
-                {
-                    Modworks.Log.Error("Failed to read config file: " + e.Message);
-                }
-                //set internal names
-                foreach (var kvp in Data)
-                {
-                    kvp.Value.InternalName = kvp.Key;
+                Modworks.Log.Error($"Config file not found at {filepath}");
+                return;
+            }
+            try
+            {
+                var fileContents = File.ReadAllText(filepath);
+                Data = JsonConvert.DeserializeObject<Dictionary<string, ConfigNPC>>(fileContents);
+                Ready = true;
+                Modworks.Log.Debug($"Loaded config from {filepath}, data has {Data.Count} NPCs");
+            }
+            catch (Exception e)
+            {
+                Modworks.Log.Error("Failed to read config file: " + e.Message);
+            }
+            //set internal names
+            foreach (var kvp in Data)
+            {
+                kvp.Value.InternalName = kvp.Key;
 
-                    //child safety - if any configured NPCs are children, we'll disable them here
-                    var n = StardewValley.Game1.getCharacterFromName(kvp.Value.InternalName);
-                    if (n == null) continue; //if we can't read it, we'll let it pass.
-                    if (Modworks.NPCs.IsChild(n)) kvp.Value.Enabled = false;
-                }
+                //child safety - if any configured NPCs are children, we'll disable them here
+                var n = StardewValley.Game1.getCharacterFromName(kvp.Value.InternalName);
+                if (n == null) continue; //if we can't read it, we'll let it pass.
+                if (IsChild(n)) kvp.Value.Enabled = false;
+            }
 
-                foreach (ConfigNPC cnpc in Data.Values)
+            foreach (var cnpc in Data.Values)
+            {
+                if (cnpc.Enabled)
                 {
-                    if (cnpc.Enabled)
-                    {
-                        Modworks.Log.Trace("Personal Effects enabled for NPC " + cnpc.DisplayName);
-                    }
+                    Modworks.Log.Trace("Personal Effects enabled for NPC " + cnpc.DisplayName);
                 }
             }
         }
 
+        private static bool IsChild(NPC npc)
+        {
+
+            if (npc is StardewValley.Characters.Child) return true; //should get vanilla player-children
+            var dispositions = Game1.content.Load<Dictionary<string, string>>("Data\\NPCDispositions");
+            if (dispositions.ContainsKey(npc.Name))
+            {
+                return dispositions[npc.Name].Split('/')[0] == "child";
+            }
+            //this npc doesn't exist in dispositions? perhaps a child, or other mod-added NPC (e.g. a Moongate)
+            return npc.Age == 2; //should get any remaining NPC children
+        }
+        
         public static ConfigNPC GetNPC(string npc)
         {
-            if (Data.ContainsKey(npc)) return Data[npc];
-            return NoData;
+            return Data != null && Data.ContainsKey(npc) ? Data[npc] : NoData;
         }
 
         public static string LookupNPC(string displayName)
@@ -109,26 +124,15 @@ namespace PersonalEffects
 
         public int PercentChance()
         {
-            switch (Rarity)
-            /*
-            int very_rare = 1; //wrong house o.O - otherspots
-            int rare = 2; //wrong part of the house - otherspots
-            int normal = 4; //bedroom, usually - homespots
-            */
+            return Rarity switch
             {
-                case "very_rare":
-                    return 1;
-                case "rare":
-                    return 2;
-                case "normal":
-                    return 4;
-                case "always":
-                    return 100;
-                case "never":
-                    return -1;
-                default:
-                    return 4;
-            }
+                "very_rare" => 1,
+                "rare" => 2,
+                "normal" => 4,
+                "always" => 100,
+                "never" => -1,
+                _ => 4
+            };
         }
     }
 
@@ -138,24 +142,23 @@ namespace PersonalEffects
         public static bool Ready;
         public static void Load(string directory)
         {
-            string filepath = Path.Combine(directory, "assets", "locations.json");
+            var filepath = Path.Combine(directory, "assets", "locations.json");
             if (! File.Exists(filepath))
             {
                 Modworks.Log.Error($"Location file does not exist at {filepath}");
 
             }
-            if (File.Exists(filepath))
+
+            if (!File.Exists(filepath)) return;
+            try
             {
-                try
-                {
-                    var filecontents = File.ReadAllText(filepath);
-                    Data = JsonConvert.DeserializeObject<List<ConfigLocation>>(filecontents);
-                    Ready = true;
-                }
-                catch (Exception e)
-                {
-                    Modworks.Log.Error("Failed to read location file: " + e.Message);
-                }
+                var fileContents = File.ReadAllText(filepath);
+                Data = JsonConvert.DeserializeObject<List<ConfigLocation>>(fileContents);
+                Ready = true;
+            }
+            catch (Exception e)
+            {
+                Modworks.Log.Error("Failed to read location file: " + e.Message);
             }
         }
     }
