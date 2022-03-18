@@ -7,9 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
-using StardewValley.Characters;
 using StardewValley.Locations;
-using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using xTile.Dimensions;
@@ -21,7 +19,7 @@ namespace BetterJunimosForestry {
     {
         public override Vector2 GetToolLocation(bool ignoreClick = false)
         {
-            return new Vector2(0, 0);
+            return new(0, 0);
         }
     }
     
@@ -251,14 +249,13 @@ namespace BetterJunimosForestry {
             }
         }
         
-        public static int MaxRadius() {
-            return ModEntry.BJApi.GetJunimoHutMaxRadius();
-        }
-
-        public static bool IsWithinRadius(JunimoHut hut, Vector2 pos) {
-            var radius = MaxRadius();
-            var outcome = !(pos.X < hut.tileX.Value + 1 - radius || pos.X >= hut.tileX.Value + 2 + radius);
-            if (pos.Y < hut.tileY.Value + 1 - radius || pos.Y >= hut.tileY.Value + 2 + radius) outcome = false;
+        public static bool IsWithinRadius(GameLocation location, JunimoHut hut, Vector2 pos)
+        {
+            if (!location.IsFarm) return true;
+            var radius = ModEntry.BJApi.GetJunimoHutMaxRadius();
+            var (x, y) = pos;
+            var outcome = !(x < hut.tileX.Value + 1 - radius || x >= hut.tileX.Value + 2 + radius);
+            if (y < hut.tileY.Value + 1 - radius || y >= hut.tileY.Value + 2 + radius) outcome = false;
             return outcome;
         }
         

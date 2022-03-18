@@ -25,7 +25,7 @@ namespace BetterJunimosForestry.Abilities {
             return "CollectDroppedObjects";
         }
 
-        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation location, Vector2 pos, Guid guid) {
             // Monitor.Log($"CollectDroppedObjectsAbility IsActionAvailable {pos}", LogLevel.Debug);
 
             Vector2 up = new Vector2(pos.X, pos.Y + 1);
@@ -35,7 +35,7 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
+                if (!Util.IsWithinRadius(location, Util.GetHutFromId(guid), nextPos)) continue;
                 if (IsDebrisAtTile(nextPos)) {
                     // Monitor.Log($"Pos {nextPos} contains debris", LogLevel.Debug);
                     return true;
@@ -44,23 +44,22 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            Chest chest = Util.GetHutFromId(guid).output.Value;
-            
-            Vector2 up = new Vector2(pos.X, pos.Y + 1);
-            Vector2 right = new Vector2(pos.X + 1, pos.Y);
-            Vector2 down = new Vector2(pos.X, pos.Y - 1);
-            Vector2 left = new Vector2(pos.X - 1, pos.Y);
+        public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            var chest = Util.GetHutFromId(guid).output.Value;
 
-            int direction = 0;
-            int index;
+            var (x, y) = pos;
+            var up = new Vector2(x, y + 1);
+            var right = new Vector2(x + 1, y);
+            var down = new Vector2(x, y - 1);
+            var left = new Vector2(x - 1, y);
+
+            var direction = 0;
             Vector2[] positions = { up, right, down, left };
-            foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
-                index = DebrisIndexAtTile(nextPos);
-                if (index > 0) {
+            foreach (var nextPos in positions) {
+                if (!Util.IsWithinRadius(location, Util.GetHutFromId(guid), nextPos)) continue;
+                if (DebrisIndexAtTile(nextPos) > 0) {
                     junimo.faceDirection(direction);
-                    return MoveDebrisFromTileToChest(nextPos, farm, chest);
+                    return MoveDebrisFromTileToChest(nextPos, location, chest);
                 }
                 direction++;
             }

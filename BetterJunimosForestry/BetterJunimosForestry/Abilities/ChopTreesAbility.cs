@@ -46,7 +46,7 @@ namespace BetterJunimosForestry.Abilities {
             return true;
         }
 
-        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation location, Vector2 pos, Guid guid) {
             var mode = Util.GetModeForHut(Util.GetHutFromId(guid));
             if (mode == Modes.Normal) return false;
 
@@ -57,8 +57,8 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
-                if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableTree(farm.terrainFeatures[nextPos], mode)) {
+                if (!Util.IsWithinRadius(location, Util.GetHutFromId(guid), nextPos)) continue;
+                if (location.terrainFeatures.ContainsKey(nextPos) && IsHarvestableTree(location.terrainFeatures[nextPos], mode)) {
                     // Monitor.Log($"Pos {nextPos} contains tree", LogLevel.Debug);
                     return true;
                 }
@@ -66,19 +66,20 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
+        public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            var mode = Util.GetModeForHut(Util.GetHutFromId(guid));
 
-            Vector2 up = new Vector2(pos.X, pos.Y + 1);
-            Vector2 right = new Vector2(pos.X + 1, pos.Y);
-            Vector2 down = new Vector2(pos.X, pos.Y - 1);
-            Vector2 left = new Vector2(pos.X - 1, pos.Y);
+            var (x, y) = pos;
+            var up = new Vector2(x, y + 1);
+            var right = new Vector2(x + 1, y);
+            var down = new Vector2(x, y - 1);
+            var left = new Vector2(x - 1, y);
 
-            int direction = 0;
+            var direction = 0;
             Vector2[] positions = { up, right, down, left };
-            foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
-                if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableTree(farm.terrainFeatures[nextPos], mode)) {
+            foreach (var nextPos in positions) {
+                if (!Util.IsWithinRadius(location, Util.GetHutFromId(guid), nextPos)) continue;
+                if (location.terrainFeatures.ContainsKey(nextPos) && IsHarvestableTree(location.terrainFeatures[nextPos], mode)) {
                     junimo.faceDirection(direction);
                     return UseToolOnTile(FakeAxe, nextPos, Game1.currentLocation);
                 }

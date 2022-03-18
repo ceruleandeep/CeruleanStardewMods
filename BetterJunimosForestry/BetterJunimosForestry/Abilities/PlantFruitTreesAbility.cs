@@ -27,7 +27,7 @@ namespace BetterJunimosForestry.Abilities
             return "PlantFruitTrees";
         }
 
-        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid)
+        public bool IsActionAvailable(GameLocation location, Vector2 pos, Guid guid)
         {
             JunimoHut hut = Util.GetHutFromId(guid);
 
@@ -39,8 +39,8 @@ namespace BetterJunimosForestry.Abilities
             Vector2[] positions = {up, right, down, left};
             foreach (var nextPos in positions)
             {
-                if (!Util.IsWithinRadius(hut, pos)) continue;
-                if (ShouldPlantFruitTreeOnTile(farm, hut, nextPos)) return true;
+                if (!Util.IsWithinRadius(location, hut, pos)) continue;
+                if (ShouldPlantFruitTreeOnTile(location, hut, nextPos)) return true;
             }
 
             return false;
@@ -95,12 +95,11 @@ namespace BetterJunimosForestry.Abilities
             };
         }
 
-        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid)
+        public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid)
         {
             var hut = Util.GetHutFromId(guid);
             var chest = hut.output.Value;
-            var foundItem = chest.items.FirstOrDefault(item =>
-                item != null && RequiredItems().Contains(item.ParentSheetIndex));
+            var foundItem = chest.items.FirstOrDefault(item => item != null && RequiredItems().Contains(item.ParentSheetIndex));
             if (foundItem == null) return false;
 
             var up = new Vector2(pos.X, pos.Y + 1);
@@ -109,13 +108,11 @@ namespace BetterJunimosForestry.Abilities
             var left = new Vector2(pos.X - 1, pos.Y);
 
             Vector2[] positions = {up, right, down, left};
-            if (positions.Where(nextPos => Util.IsWithinRadius(hut, pos)).Where(nextPos => ShouldPlantFruitTreeOnTile(farm, hut, nextPos)).Any(nextPos => Plant(farm, nextPos, foundItem.ParentSheetIndex)))
-            {
-                Util.RemoveItemFromChest(chest, foundItem);
-                return true;
-            }
-
-            return false;
+            if (!positions.Where(nextPos => Util.IsWithinRadius(location, hut, pos))
+                .Where(nextPos => ShouldPlantFruitTreeOnTile(location, hut, nextPos))
+                .Any(nextPos => Plant(location, nextPos, foundItem.ParentSheetIndex))) return false;
+            Util.RemoveItemFromChest(chest, foundItem);
+            return true;
         }
 
         private static bool Plant(GameLocation farm, Vector2 pos, int index)

@@ -23,33 +23,54 @@ namespace BetterJunimosForestry.Abilities {
             return "PlantTrees";
         }
 
-        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
-            string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
+        public bool IsActionAvailable(GameLocation location, Vector2 pos, Guid guid) {
+            var mode = Util.GetModeForHut(Util.GetHutFromId(guid));
             if (mode != Modes.Forest) return false;
 
-            JunimoHut hut = Util.GetHutFromId(guid);
+            var hut = Util.GetHutFromId(guid);
             
-            Vector2 up = new Vector2(pos.X, pos.Y + 1);
-            Vector2 right = new Vector2(pos.X + 1, pos.Y);
-            Vector2 down = new Vector2(pos.X, pos.Y - 1);
-            Vector2 left = new Vector2(pos.X - 1, pos.Y);
+            var (x, y) = pos;
+            var up = new Vector2(x, y + 1);
+            var right = new Vector2(x + 1, y);
+            var down = new Vector2(x, y - 1);
+            var left = new Vector2(x - 1, y);
 
             Vector2[] positions = { up, right, down, left };
-            foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(hut, pos)) continue;
-                if (ShouldPlantWildTreeHere(farm, hut, nextPos)) return true;
+            foreach (var nextPos in positions) {
+                if (!Util.IsWithinRadius(location, hut, nextPos)) continue;
+                if (ShouldPlantWildTreeHere(location, hut, nextPos)) return true;
             }
             return false;
+        }
 
-            //return farm.terrainFeatures.ContainsKey(pos) && farm.terrainFeatures[pos] is HoeDirt hd && hd.crop == null &&
-            //    !farm.objects.ContainsKey(pos);
+        public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+            var hut = Util.GetHutFromId(guid);
+            var chest = hut.output.Value;
+            var foundItem = chest.items.FirstOrDefault(item => item != null && Util.WildTreeSeeds.Keys.Contains(item.ParentSheetIndex));
+            if (foundItem == null) return false;
+
+            var (x, y) = pos;
+            var up = new Vector2(x, y + 1);
+            var right = new Vector2(x + 1, y);
+            var down = new Vector2(x, y - 1);
+            var left = new Vector2(x - 1, y);
+
+            Vector2[] positions = { up, right, down, left };
+            foreach (var nextPos in positions) {
+                if (!Util.IsWithinRadius(location, hut, nextPos)) continue;
+                if (!ShouldPlantWildTreeHere(location, hut, nextPos)) continue;
+                if (!Plant(location, nextPos, foundItem.ParentSheetIndex)) continue;
+                Util.RemoveItemFromChest(chest, foundItem);
+                return true;
+            }
+            return false;
         }
 
         // is this tile plantable? 
         internal bool ShouldPlantWildTreeHere(GameLocation farm, JunimoHut hut, Vector2 pos) {
             if (Util.BlocksDoor(hut, pos)) return false;
 
-            // Monitor.Log($"    ShouldPlantWildTreeHere: {pos.X} {pos.Y} pattern {ModEntry.Config.WildTreePattern} in pattern {IsTileInPattern(pos)} plantable {Plantable(farm, pos)}", LogLevel.Debug);
+            // Monitor.Log($"    ShouldPlantWildTreeHere: {pos.X} {pos.Y} pattern {ModEntry.Config.WildTreePattern} in pattern {IsTileInPattern(pos)} plantable {Plantable(location, pos)}", LogLevel.Debug);
             // is this tile in the planting pattern?
             if (!IsTileInPattern(pos)) {
                 // Monitor.Log($"        ShouldPlantWildTreeHere: no, {pos.X} {pos.Y} not in pattern", LogLevel.Debug);
@@ -66,7 +87,7 @@ namespace BetterJunimosForestry.Abilities {
             // for (int x = -1; x < 2; x++) {
             //     for (int y = -1; y < 2; y++) {
             //         Vector2 v = new Vector2(pos.X + x, pos.Y + y);
-            //         if (!Plantable(farm, v)) {
+            //         if (!Plantable(location, v)) {
             //             Monitor.Log($"ShouldPlantWildTreeHere: {pos.X} {pos.Y} is not plantable so not planting here", LogLevel.Debug);
             //             return false;
             //         }
@@ -100,53 +121,26 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         // is this tile plantable?
-        private bool Plantable(GameLocation farm, Vector2 pos) {
-            if (farm.isTileOccupied(pos)) return false;  // is something standing on it? an impassable building? a terrain feature?
-            if (Util.IsHoed(farm, pos)) return false;
-            if (Util.IsOccupied(farm, pos)) return false;
-            if (Util.SpawningTreesForbidden(farm, pos)) return false;
-            if (!Util.CanBeHoed(farm, pos)) return false;
+        private static bool Plantable(GameLocation location, Vector2 pos) {
+            if (location.isTileOccupied(pos)) return false;  // is something standing on it? an impassable building? a terrain feature?
+            if (Util.IsHoed(location, pos)) return false;
+            if (Util.IsOccupied(location, pos)) return false;
+            if (Util.SpawningTreesForbidden(location, pos)) return false;
+            if (!Util.CanBeHoed(location, pos)) return false;
             return true;
         }
         
-        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            JunimoHut hut = Util.GetHutFromId(guid);
-            Chest chest = hut.output.Value;
-            Item foundItem;
-            foundItem = chest.items.FirstOrDefault(item => item != null && Util.WildTreeSeeds.Keys.Contains(item.ParentSheetIndex));
-            if (foundItem == null) return false;
-
-            Vector2 up = new Vector2(pos.X, pos.Y + 1);
-            Vector2 right = new Vector2(pos.X + 1, pos.Y);
-            Vector2 down = new Vector2(pos.X, pos.Y - 1);
-            Vector2 left = new Vector2(pos.X - 1, pos.Y);
-
-            Vector2[] positions = { up, right, down, left };
-            foreach (Vector2 nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
-                if (ShouldPlantWildTreeHere(farm, hut, nextPos)) {
-                    bool success = Plant(farm, nextPos, foundItem.ParentSheetIndex);
-                    if (success) {
-                        //Monitor.Log($"PerformAction planted {foundItem.Name} at {nextPos.X} {nextPos.Y}", LogLevel.Info);
-                        Util.RemoveItemFromChest(chest, foundItem);
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private bool Plant(GameLocation farm, Vector2 pos, int index) {
-            if (farm.terrainFeatures.Keys.Contains(pos)) {
+        private static bool Plant(GameLocation location, Vector2 pos, int index) {
+            if (location.terrainFeatures.Keys.Contains(pos)) {
                 return false;
             }
 
-            Tree tree = new Tree(Util.WildTreeSeeds[index], ModEntry.Config.PlantWildTreesSize);
-            farm.terrainFeatures.Add(pos, tree);
+            var tree = new Tree(Util.WildTreeSeeds[index], ModEntry.Config.PlantWildTreesSize);
+            location.terrainFeatures.Add(pos, tree);
 
-            if (Utility.isOnScreen(Utility.Vector2ToPoint(pos), 64, farm)) {
-                farm.playSound("stoneStep");
-                farm.playSound("dirtyHit");
+            if (Utility.isOnScreen(Utility.Vector2ToPoint(pos), 64, location)) {
+                location.playSound("stoneStep");
+                location.playSound("dirtyHit");
             }
 
             ++Game1.stats.SeedsSown;

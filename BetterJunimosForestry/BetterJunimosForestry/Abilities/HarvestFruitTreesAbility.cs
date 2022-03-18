@@ -25,7 +25,7 @@ namespace BetterJunimosForestry.Abilities {
             return tf is FruitTree tree && tree.fruitsOnTree.Value > 0;
         }
 
-        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(GameLocation location, Vector2 pos, Guid guid) {
             var up = new Vector2(pos.X, pos.Y + 1);
             var right = new Vector2(pos.X + 1, pos.Y);
             var down = new Vector2(pos.X, pos.Y - 1);
@@ -33,14 +33,12 @@ namespace BetterJunimosForestry.Abilities {
 
             Vector2[] positions = { up, right, down, left };
             return positions
-                .Where(nextPos => Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos))
-                .Any(nextPos => farm.terrainFeatures.ContainsKey(nextPos) 
-                                && IsHarvestableFruitTree(farm.terrainFeatures[nextPos]));
+                .Where(nextPos => Util.IsWithinRadius(location, Util.GetHutFromId(guid), nextPos))
+                .Any(nextPos => location.terrainFeatures.ContainsKey(nextPos) 
+                                && IsHarvestableFruitTree(location.terrainFeatures[nextPos]));
         }
 
-        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            var chest = Util.GetHutFromId(guid).output.Value;
-            
+        public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid) {
             var up = new Vector2(pos.X, pos.Y + 1);
             var right = new Vector2(pos.X + 1, pos.Y);
             var down = new Vector2(pos.X, pos.Y - 1);
@@ -49,9 +47,9 @@ namespace BetterJunimosForestry.Abilities {
             var direction = 0;
             Vector2[] positions = { up, right, down, left };
             foreach (var nextPos in positions) {
-                if (!Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
-                if (farm.terrainFeatures.ContainsKey(nextPos) && IsHarvestableFruitTree(farm.terrainFeatures[nextPos])) {
-                    var tree = farm.terrainFeatures[nextPos] as FruitTree;
+                if (!Util.IsWithinRadius(location, Util.GetHutFromId(guid), nextPos)) continue;
+                if (location.terrainFeatures.ContainsKey(nextPos) && IsHarvestableFruitTree(location.terrainFeatures[nextPos])) {
+                    var tree = location.terrainFeatures[nextPos] as FruitTree;
 
                     junimo.faceDirection(direction);
 

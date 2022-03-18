@@ -57,7 +57,7 @@ namespace BetterJunimosForestry.Abilities
                 // bool inRadius = Util.IsWithinRadius(hut, nextPos);
                 // Monitor.Log($" HoeAroundTrees IsActionAvailable around [{pos.X} {pos.Y}]: [{nextPos.X} {nextPos.Y}] should hoe: {avail} in radius: {inRadius}", LogLevel.Debug);
 
-                if (location.IsFarm && !Util.IsWithinRadius(Util.GetHutFromId(guid), nextPos)) continue;
+                if (!Util.IsWithinRadius(location, Util.GetHutFromId(guid), nextPos)) continue;
                 if (ShouldHoeThisTile(location, hut, nextPos, mode))
                 {
                     return true;
@@ -248,8 +248,6 @@ namespace BetterJunimosForestry.Abilities
             if (mode == Modes.Normal) return false;
 
             var (x, y) = pos;
-            // Monitor.Log($"HoeAroundTrees PerformAction {location.Name} [{x} {y}]", LogLevel.Debug);
-
             var up = new Vector2(x, y + 1);
             var right = new Vector2(x + 1, y);
             var down = new Vector2(x, y - 1);
@@ -259,7 +257,7 @@ namespace BetterJunimosForestry.Abilities
             Vector2[] positions = {up, right, down, left};
             foreach (var nextPos in positions)
             {
-                if (location.IsFarm && !Util.IsWithinRadius(hut, nextPos)) continue;
+                if (!Util.IsWithinRadius(location, hut, nextPos)) continue;
                 if (!ShouldHoeThisTile(location, hut, nextPos, mode)) continue;
                 junimo.faceDirection(direction);
                 if (UseToolOnTileManual(location, nextPos)) return true;
@@ -285,10 +283,10 @@ namespace BetterJunimosForestry.Abilities
         private static void removeSquareDebrisFromTile(GameLocation location, int tileX, int tileY)
         {
             location.debris.Filter(
-                (Func<Debris, bool>) (debris =>
+                debris =>
                     (Debris.DebrisType) (NetFieldBase<Debris.DebrisType, NetEnum<Debris.DebrisType>>) debris.debrisType !=
                     Debris.DebrisType.SQUARES || (int) (debris.Chunks[0].position.X / 64.0) != tileX ||
-                    debris.chunkFinalYLevel / 64 != tileY));
+                    debris.chunkFinalYLevel / 64 != tileY);
         }
 
         public List<int> RequiredItems()
