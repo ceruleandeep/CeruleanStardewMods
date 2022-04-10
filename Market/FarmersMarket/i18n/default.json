@@ -1,0 +1,9 @@
+{
+    "like": "< {{itemName}}",
+    "love": "Mmm, {{itemName}}",
+    "buy": "I'll have that {{itemName}}",
+    "silver": "Nice {{itemName}}",
+    "gold": "< Great {{itemName}}",
+    "iridium": "Superb {{itemName}}",
+    "no-stock": "No stock!"
+}
