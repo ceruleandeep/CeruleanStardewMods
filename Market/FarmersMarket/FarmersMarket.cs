@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ContentPatcher;
 using HarmonyLib;
@@ -10,15 +11,16 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Objects;
-using Object = System.Object;
 using SObject = StardewValley.Object;
 
 /*
  * TODO:
- * allow another villager to open a shop
- * auto-restock from the chest
  * stick a sales report in the mail
  * make sure this stuff doesn't run during the fair
+ * boost price if item is in season
+ * allow sales of non-item items
+ * allow player to purchase from NPC stores
+ * get NPCs to tend their stores
  */
 
 namespace FarmersMarket
@@ -34,279 +36,96 @@ namespace FarmersMarket
 
     public class Store
     {
+        private const int WOOD_SIGN = 37;
+        private const double BUY_CHANCE = 0.25;
+
+        public readonly List<Item> GrangeDisplay = new();
+
         public int X;
         public int Y;
+        public string Name;
+        public Color StoreColor;
+        public int SignObjectIndex;
+        public Dictionary<string, int> Stock;
+
         public Chest StorageChest;
         public Sign GrangeSign;
-        
+
+        public bool PlayerStore;
+
         public Vector2 VisibleChestPosition;
         public Vector2 VisibleSignPosition;
         public Vector2 HiddenChestPosition;
         public Vector2 HiddenSignPosition;
-        
+
         public List<SalesRecord> Sales = new();
         public Dictionary<NPC, int> recentlyLooked = new();
 
-        Store(int X, int Y)
+        public Store(string name, bool playerStore, int X, int Y)
         {
-            
-        }
-
-    }
-
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class FarmersMarket : Mod
-    {
-        internal const int STORE_X = 23;
-        internal const int STORE_Y = 63;
-        internal const double VISIT_CHANCE = 0.25;
-        private const double BUY_CHANCE = 0.25;
-        private const int WOOD_SIGN = 37;
-
-        private static Vector2 VisibleChestPosition = new Vector2(STORE_X + 3, STORE_Y + 1);
-        private static Vector2 VisibleSignPosition = new Vector2(STORE_X + 3, STORE_Y + 3);
-
-        private static Vector2 HiddenChestPosition = new Vector2(STORE_X - 9, STORE_Y + 1);
-        private static Vector2 HiddenSignPosition = new Vector2(STORE_X - 9, STORE_Y + 3);
-
-        // private Vector2 HiddenChestPosition = new Vector2(1337, 1337); 
-        // private Vector2 HiddenSignPosition = new Vector2(1337, 1338); 
-
-        private static ContentPatcher.IContentPatcherAPI ContentPatcherAPI;
-        private static IManagedConditions MarketDayConditions;
-        internal static ModConfig Config;
-        internal static IMonitor SMonitor;
-        private static readonly List<Item> GrangeDisplay = new();
-
-        private static List<SalesRecord> Sales = new();
-        private Dictionary<NPC, int> recentlyLooked = new();
-
-        /// <summary>The mod entry point, called after the mod is first loaded.</summary>
-        /// <param name="helper">Provides simplified APIs for writing mods.</param>
-        public override void Entry(IModHelper helper)
-        {
-            SMonitor = Monitor;
-
-            Helper.Events.GameLoop.GameLaunched += OnLaunched;
-            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
-            Helper.Events.GameLoop.DayStarted += OnDayStarted;
-            Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
-            // Helper.Events.GameLoop.TimeChanged += OnTimeChanged;
-            Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking;
-            Helper.Events.GameLoop.DayEnding += OnDayEnding;
-            Helper.Events.GameLoop.Saving += OnSaving;
-            Helper.Events.Input.ButtonPressed += OnButtonPressed;
-            Helper.Events.Display.RenderedWorld += OnRenderedWorld;
+            Name = name;
+            PlayerStore = playerStore;
+            this.X = X;
+            this.Y = Y;
+            VisibleChestPosition = new Vector2(X + 3, Y + 1);
+            VisibleSignPosition = new Vector2(X + 3, Y + 3);
+            HiddenChestPosition = new Vector2(X + 5, Y + 1);
+            HiddenSignPosition = new Vector2(X + 5, Y + 3);
 
             while (GrangeDisplay.Count < 9) GrangeDisplay.Add(null);
-
-            Harmony harmony = new Harmony("ceruleandeep.FarmersMarket");
-            harmony.PatchAll();
-            
-            helper.ConsoleCommands.Add("fm_destroy", "Destroy furniture", DestroyFurniture);
-
         }
 
-        /// <summary>Raised after the game is saved</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event arguments.</param>
-        void OnSaving(object sender, SavingEventArgs e)
-        {
-            Helper.WriteConfig(Config);
-        }
-
-        /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event arguments.</param>
-        void OnSaveLoaded(object sender, EventArgs e)
-        {
-            // reload the config to pick up any changes made in GMCM on the title screen
-            Config = Helper.ReadConfig<ModConfig>();
-        }
-
-        [EventPriority(EventPriority.Low)]
-        void OnDayStarted(object sender, EventArgs e)
+        public void OnDayStarted(bool IsMarketDay)
         {
             Sales = new List<SalesRecord>();
             recentlyLooked = new Dictionary<NPC, int>();
-            
-            var rawConditions = new Dictionary<string, string>
+
+            GetReferencesToFurniture();
+
+            if (IsMarketDay)
             {
-                ["DayOfWeek"] = "Saturday",
-                ["Weather"] = "Sun, Wind",
-                ["HasValue:{{DayEvent}}"] = "false"
-            };
-            MarketDayConditions = ContentPatcherAPI.ParseConditions(
-                ModManifest,
-                rawConditions,
-                new SemanticVersion("1.20.0")
-            );
-            
-            if (IsMarketDay())
-            {
-                SMonitor.Log($"Market day", LogLevel.Info);
-                EnsureChestPresent();
+                Log($"Market day", LogLevel.Info);
+                if (!PlayerStore)
+                {
+                    StockChestForTheDay();
+                }
+                if (!PlayerStore || FarmersMarket.Config.StockGrangeAutomatically) RestockGrangeFromChest(true);
+                ShowFurniture();
             }
             else
             {
-                EnsureChestHidden();
-                SMonitor.Log($"Apparently not a market day", LogLevel.Info);
+                Log($"Apparently not a market day", LogLevel.Info);
+                HideFurniture();
             }
         }
 
-        void OnDayEnding(object sender, EventArgs e)
+        public void OnTimeChanged()
         {
-            EmptyStoreIntoChest();
-            EnsureChestHidden();
-        }
-
-        private void EnsureChestPresent()
-        {
-            GetReferencesToFurniture();
-
-            var location = Game1.getLocationFromName("Town");
-            location.setObject(VisibleChestPosition, StorageChest);
-            location.removeObject(HiddenChestPosition, false);
-            // location.moveObject((int)StorageChest.TileLocation.X, (int)StorageChest.TileLocation.Y, (int)VisibleChestPosition.X, (int)VisibleChestPosition.Y);
-            location.moveObject((int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
-                (int) VisibleSignPosition.X, (int) VisibleSignPosition.Y);
-            //
-            // location.setObject(VisibleChestPosition, StorageChest);
-            // location.setObject(VisibleSignPosition, GrangeSign);
-            // // location.objects[VisibleSignPosition] = GrangeSign;
-            //
-            // location.removeObject(HiddenChestPosition, false);
-            // location.removeObject(HiddenSignPosition, false);
-        }
-
-        private void GetReferencesToFurniture()
-        {
-            SMonitor.Log($"GetReferencesToFurniture", LogLevel.Debug);
-
-            var location = Game1.getLocationFromName("Town");
-            if (StorageChest is null)
+            if (PlayerStore)
             {
-                foreach (var (tile, item) in location.Objects.Pairs)
-                {
-                    if (item is not Chest chest) continue;
-                    if (!chest.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeStorage", out _)) continue;
-                    SMonitor.Log($"    StorageChest at {tile} claims to be at {chest.TileLocation}", LogLevel.Debug);
-                    StorageChest = chest;
-                }
-
-                if (StorageChest is null)
-                {
-                    SMonitor.Log($"    Creating new StorageChest at {HiddenChestPosition}", LogLevel.Debug);
-                    StorageChest = new Chest(true, HiddenChestPosition, 232)
-                    {
-                        modData = {[$"{ModManifest.UniqueID}/GrangeStorage"] = "true"}
-                    };
-                    location.setObject(HiddenChestPosition, StorageChest);
-                }
+                if (FarmersMarket.Config.RestockAutomatically) RestockGrangeFromChest();
             }
-
-            if (GrangeSign is null)
+            else
             {
-                foreach (var (tile, item) in location.Objects.Pairs)
-                {
-                    if (item is not Sign sign) continue;
-                    if (!sign.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeSign", out _)) continue;
-                    SMonitor.Log($"    GrangeSign at {tile} claims to be at {sign.TileLocation}", LogLevel.Debug);
-                    GrangeSign = sign;
-                }
-
-                if (GrangeSign is null)
-                    SMonitor.Log($"    Creating new GrangeSign at {HiddenSignPosition}", LogLevel.Debug);
-                GrangeSign = new Sign(HiddenSignPosition, WOOD_SIGN)
-                {
-                    modData = {[$"{ModManifest.UniqueID}/GrangeSign"] = "true"}
-                };
-                location.objects[HiddenSignPosition] = GrangeSign;
+                RestockGrangeFromChest();
             }
-            SMonitor.Log($"    ... StorageChest at {StorageChest.TileLocation}", LogLevel.Debug);
-            SMonitor.Log($"    ... GrangeSign at {GrangeSign.TileLocation}", LogLevel.Debug);
-
         }
-
-        private void DestroyFurniture(string command, string[] args)
+        
+        public void OnDayEnding()
         {
-            SMonitor.Log($"DestroyFurniture", LogLevel.Debug);
-
-            var toRemove = new Dictionary<Vector2, SObject>();
-
-            var location = Game1.getLocationFromName("Town");
-            foreach (var (tile, item) in location.Objects.Pairs)
+            if (PlayerStore)
             {
-                if (item.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeStorage", out _))
-                {
-                    SMonitor.Log($"    GrangeStorage at {item.TileLocation}", LogLevel.Debug);
-                    toRemove[tile] = item;
-                }
-                
-                if (item.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeSign", out _))
-                {
-                    SMonitor.Log($"    GrangeSign at {item.TileLocation}", LogLevel.Debug);
-                    toRemove[tile] = item;
-                }
+                EmptyStoreIntoChest();
+                HideFurniture();
             }
-
-            foreach (var (tile, item) in toRemove)
+            else
             {
-                SMonitor.Log($"    Removing {item.displayName} from {tile}", LogLevel.Debug);
-                location.Objects.Remove(tile);
-            }
-
-            StorageChest = null;
-            GrangeSign = null;
-        }
-
-        private static void EmptyStoreIntoChest()
-        {
-            for (var j = 0; j < GrangeDisplay.Count; j++)
-            {
-                if (GrangeDisplay[j] == null) continue;
-                StorageChest.addItem(GrangeDisplay[j]);
-                GrangeDisplay[j] = null;
+                DestroyFurniture();
             }
         }
 
-        private void EnsureChestHidden()
+        public void OnUpdateTicking()
         {
-            SMonitor.Log($"EnsureChestHidden: I have been instructed to move the furniture", LogLevel.Debug);
-
-            var location = Game1.getLocationFromName("Town");
-            GetReferencesToFurniture();
-
-            SMonitor.Log($"EnsureChestHidden: StorageChest from {StorageChest.TileLocation} to {HiddenChestPosition}",
-                LogLevel.Debug);
-            location.setObject(HiddenChestPosition, StorageChest);
-            location.objects.Remove(VisibleChestPosition);
-            // location.moveObject((int)StorageChest.TileLocation.X, (int)StorageChest.TileLocation.Y, (int)HiddenChestPosition.X, (int)HiddenChestPosition.Y);
-            StorageChest.modData[$"{ModManifest.UniqueID}/MovedYou"] = "yes";
-
-            SMonitor.Log($"EnsureChestHidden: GrangeSign from {GrangeSign.TileLocation} to {HiddenSignPosition}",
-                LogLevel.Debug);
-            location.moveObject((int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
-                (int) HiddenSignPosition.X, (int) HiddenSignPosition.Y);
-
-            // location.setObject(HiddenSignPosition, GrangeSign);
-            //
-            // location.removeObject(VisibleChestPosition, false);
-            // location.removeObject(VisibleSignPosition, false);
-            //
-
-            // location.setObject(HiddenChestPosition, StorageChest);
-            // location.objects[HiddenSignPosition] = GrangeSign;
-            // location.setObject(VisibleChestPosition, null);
-            // location.objects[VisibleSignPosition] = null;
-        }
-
-        void OnUpdateTicking(object sender, UpdateTickingEventArgs e)
-        {
-            if (!e.IsMultipleOf(10)) return;
-            if (!Context.IsWorldReady) return;
-            if (!IsMarketDay()) return;
-
             // var nearby = new List<string>();
             // foreach (var npc in NearbyNPCs()) nearby.Add($"{npc.displayName} ({npc.movementPause})");
             // SMonitor.Log($"Nearby NPCs: {string.Join(", ", nearby)}", LogLevel.Debug);
@@ -333,19 +152,27 @@ namespace FarmersMarket
             }
         }
 
-        private static bool RecentlyBought(NPC npc)
+        internal void OnOneSecondUpdateTicking()
         {
-            return Sales.Any(sale => sale.npc == npc && sale.timeOfDay > Game1.timeOfDay - 100);
+            SellSomething();
         }
 
-        private void OnOneSecondUpdateTicking(object sender, OneSecondUpdateTickingEventArgs e)
+        internal void OnRenderedWorld(RenderedWorldEventArgs e)
         {
-            if (!Context.IsWorldReady) return;
-            if (!IsMarketDay()) return;
-            SellSomethingFromGrangeDisplay();
+            var tileLocation = new Vector2(X, Y);
+            var drawLayer = Math.Max(0f, ((tileLocation.Y + 1) * 64 - 24) / 10000f) + tileLocation.X * 1E-05f;
+            drawGrangeItems(tileLocation, e.SpriteBatch, drawLayer);
         }
 
-        private void SellSomethingFromGrangeDisplay()
+        internal void OnActionButton(ButtonPressedEventArgs e)
+        {
+            Log($"Button pressed at {e.Cursor.Tile}", LogLevel.Debug);
+            Game1.activeClickableMenu =
+                new StorageContainer(GrangeDisplay, 9, 3, onGrangeChange, Utility.highlightSmallObjects);
+            FarmersMarket.SMod.Helper.Input.Suppress(e.Button);
+        }
+
+        private void SellSomething()
         {
             foreach (var npc in NearbyNPCs())
             {
@@ -367,84 +194,91 @@ namespace FarmersMarket
                     return;
                 }
 
+                // find what the NPC likes best
                 available.Sort((a, b) =>
                     ItemPurchaseLikelihoodMultiplier(a, npc).CompareTo(ItemPurchaseLikelihoodMultiplier(b, npc)));
-
-                foreach (var ai in available)
-                {
-                    var m = SellPriceMultiplier(ai, npc);
-                    SMonitor.Log($"Available item {ai.DisplayName} mult {m}");
-                }
 
                 var i = GrangeDisplay.IndexOf(available[0]);
                 var item = GrangeDisplay[i];
 
-                var mult = SellPriceMultiplier(item, npc);
-                var obj = ((SObject) item);
-                if (obj is null) continue;
-                var salePrice = obj.sellToStorePrice();
-
-                salePrice = Convert.ToInt32(salePrice * mult);
-
-                Game1.player.Money += salePrice;
-                SMonitor.Log($"Item {item.ParentSheetIndex} sold for {salePrice}", LogLevel.Debug);
+                // buy it
+                if (PlayerStore) AddToPlayerFunds(item, npc);
                 GrangeDisplay[i] = null;
 
-                var newSale = new SalesRecord()
-                {
-                    item = item,
-                    price = salePrice,
-                    npc = npc,
-                    mult = mult,
-                    timeOfDay = Game1.timeOfDay
-                };
-                Sales.Add(newSale);
-                ListSales();
-
-                if (Game1.random.NextDouble() < 0.25)
-                {
-                    npc.doEmote(20);
-                }
-                else
-                {
-                    string dialog;
-                    if (npc.getGiftTasteForThisItem(item) == NPC.gift_taste_love)
-                    {
-                        dialog = Get("love", new {itemName = item.DisplayName});
-                    }
-                    else if (npc.getGiftTasteForThisItem(item) == NPC.gift_taste_like)
-                    {
-                        dialog = Get("like", new {itemName = item.DisplayName});
-                    }
-                    else if (((SObject) item).Quality == SObject.bestQuality)
-                    {
-                        dialog = Get("iridium", new {itemName = item.DisplayName});
-                    }
-                    else if (((SObject) item).Quality == SObject.highQuality)
-                    {
-                        dialog = Get("gold", new {itemName = item.DisplayName});
-                    }
-                    else if (((SObject) item).Quality == SObject.medQuality)
-                    {
-                        dialog = Get("silver", new {itemName = item.DisplayName});
-                    }
-                    else
-                    {
-                        dialog = Get("buy", new {itemName = item.DisplayName});
-                    }
-
-                    npc.showTextAboveHead(dialog, -1, 2, 1000);
-                    npc.Sprite.UpdateSourceRect();
-                }
+                EmoteForPurchase(npc, item);
             }
         }
 
-        private static void ListSales()
+        private static void EmoteForPurchase(NPC npc, Item item)
+        {
+            if (Game1.random.NextDouble() < 0.25)
+            {
+                npc.doEmote(20);
+            }
+            else
+            {
+                string dialog;
+                if (npc.getGiftTasteForThisItem(item) == NPC.gift_taste_love)
+                {
+                    dialog = Get("love", new {itemName = item.DisplayName});
+                }
+                else if (npc.getGiftTasteForThisItem(item) == NPC.gift_taste_like)
+                {
+                    dialog = Get("like", new {itemName = item.DisplayName});
+                }
+                else if (((SObject) item).Quality == SObject.bestQuality)
+                {
+                    dialog = Get("iridium", new {itemName = item.DisplayName});
+                }
+                else if (((SObject) item).Quality == SObject.highQuality)
+                {
+                    dialog = Get("gold", new {itemName = item.DisplayName});
+                }
+                else if (((SObject) item).Quality == SObject.medQuality)
+                {
+                    dialog = Get("silver", new {itemName = item.DisplayName});
+                }
+                else
+                {
+                    dialog = Get("buy", new {itemName = item.DisplayName});
+                }
+
+                npc.showTextAboveHead(dialog, -1, 2, 1000);
+                npc.Sprite.UpdateSourceRect();
+            }
+        }
+
+        private void AddToPlayerFunds(Item item, NPC npc)
+        {
+            var mult = SellPriceMultiplier(item, npc);
+            var obj = (SObject) item;
+            if (obj is null) return;
+
+            var salePrice = obj.sellToStorePrice();
+
+            salePrice = Convert.ToInt32(salePrice * mult);
+
+            Game1.player.Money += salePrice;
+            Log($"Item {item.ParentSheetIndex} sold for {salePrice}", LogLevel.Debug);
+
+            var newSale = new SalesRecord()
+            {
+                item = item,
+                price = salePrice,
+                npc = npc,
+                mult = mult,
+                timeOfDay = Game1.timeOfDay
+            };
+            Sales.Add(newSale);
+            ListSales();
+        }
+
+        private void ListSales()
         {
             foreach (var sale in Sales)
             {
                 var displayMult = Convert.ToInt32(sale.mult * 100);
-                SMonitor.Log(
+                Log(
                     sale.npc is not null
                         ? $"{sale.item.DisplayName} sold to {sale.npc?.displayName} for {sale.price}g ({displayMult}%)"
                         : $"{sale.item.DisplayName} sold for {sale.price}g ({displayMult}%)",
@@ -452,50 +286,8 @@ namespace FarmersMarket
             }
         }
 
-        private static List<NPC> NearbyNPCs()
-        {
-            var location = Game1.getLocationFromName("Town");
-            if (location is null) return new List<NPC>();
 
-            // foreach (var n in location.characters)
-            // {
-            //     var dx = Math.Abs(STORE_X + 1 - n.getTileX());
-            //     var dy = Math.Abs(STORE_Y + 4 - n.getTileY());
-            //     var dist = Math.Abs(dx) + Math.Abs(dy);
-            //     var pf = n.controller is null ? "no controller" : "has a controller";
-            //     SMonitor.Log($"NearbyNPC: {n.displayName} pf {pf} dx {dx} dy {dy} dist {dist}", LogLevel.Debug);
-            // }
-
-            //x= 23 24 25
-            //STORE_Y=67
-            var nearby = (from npc in location.characters
-                // let dx = Math.Abs(STORE_X + 1 - npc.getTileX())
-                // let dy = Math.Abs(STORE_Y + 4 - npc.getTileY())
-                where npc.getTileX() >= STORE_X && npc.getTileX() <= STORE_X + 2 && npc.getTileY() == STORE_Y + 4
-                select npc).ToList();
-            return nearby;
-        }
-
-        private static NPC NearbyNPC()
-        {
-            var location = Game1.getLocationFromName("Town");
-            if (location is null) return null;
-
-            var nearby = NearbyNPCs();
-            return nearby.Count == 0 ? null : nearby[Game1.random.Next(nearby.Count)];
-        }
-
-        /*
-        * sell price buffs:
-        
-        * sold to an NPC
-        * npc relationship
-        * NPC likes/loves item
-        * item is in season
-        * lucky
-        */
-
-        private static double SellPriceMultiplier(Item item, NPC npc)
+        private double SellPriceMultiplier(Item item, NPC npc)
         {
             var mult = 1.0;
 
@@ -506,9 +298,9 @@ namespace FarmersMarket
             if (Game1.player.currentLocation.Name == "Town") mult += 0.2;
 
             // * value of item on sign
-            if (GrangeSign.displayItem.Value is not null)
+            if (GrangeSign.displayItem.Value is SObject o)
             {
-                var signSellPrice = ((SObject) GrangeSign.displayItem.Value).sellToStorePrice();
+                var signSellPrice = o.sellToStorePrice();
                 signSellPrice = Math.Min(signSellPrice, 1000);
                 mult += signSellPrice / 1000.0 / 10.0;
             }
@@ -553,17 +345,307 @@ namespace FarmersMarket
             }
         }
 
-        void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
+        private List<NPC> NearbyNPCs()
         {
-            if (!IsMarketDay()) return;
+            var location = Game1.getLocationFromName("Town");
+            if (location is null) return new List<NPC>();
 
-            Vector2 tileLocation = new Vector2(STORE_X, STORE_Y);
-            float drawLayer = Math.Max(0f, ((tileLocation.Y + 1) * 64 - 24) / 10000f) + tileLocation.X * 1E-05f;
-            drawGrangeItems(tileLocation, e.SpriteBatch, drawLayer);
+            var nearby = (from npc in location.characters
+                where npc.getTileX() >= X && npc.getTileX() <= X + 2 && npc.getTileY() == Y + 4
+                select npc).ToList();
+            return nearby;
+        }
+
+        private bool RecentlyBought(NPC npc)
+        {
+            return Sales.Any(sale => sale.npc == npc && sale.timeOfDay > Game1.timeOfDay - 100);
+        }
+
+        private void GetReferencesToFurniture()
+        {
+            Log($"GetReferencesToFurniture", LogLevel.Debug);
+
+            var location = Game1.getLocationFromName("Town");
+            
+            
+            // the storage chest
+            foreach (var (tile, item) in location.Objects.Pairs)
+            {
+                if (item is not Chest chest) continue;
+                if (!chest.modData.TryGetValue($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage",
+                    out var owner)) continue;
+                if (owner != Name) continue;
+                Log($"    StorageChest for {owner} at {tile} claims to be at {chest.TileLocation}", LogLevel.Debug);
+                if (tile != chest.TileLocation)
+                {
+                    chest.TileLocation = tile;
+                    Log($"    Moving storage chest, now at {chest.TileLocation}", LogLevel.Debug);
+
+                }
+                StorageChest = chest;
+            }
+
+            if (StorageChest is null)
+            {
+                Log($"    Creating new StorageChest at {HiddenChestPosition}", LogLevel.Debug);
+                StorageChest = new Chest(true, HiddenChestPosition, 232)
+                {
+                    modData = {[$"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage"] = Name}
+                };
+                location.setObject(HiddenChestPosition, StorageChest);
+            }
+
+            
+            // the grange sign
+            foreach (var (tile, item) in location.Objects.Pairs)
+            {
+                if (item is not Sign sign) continue;
+                if (!sign.modData.TryGetValue($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeSign",
+                    out var owner))
+                    continue;
+                if (owner != Name) continue;
+                Log($"    GrangeSign for {owner} at {tile} claims to be at {sign.TileLocation}", LogLevel.Debug);
+                GrangeSign = sign;
+            }
+
+            if (GrangeSign is null)
+            {
+                Log($"    Creating new GrangeSign at {HiddenSignPosition}", LogLevel.Debug);
+                GrangeSign = new Sign(HiddenSignPosition, WOOD_SIGN)
+                {
+                    modData = {[$"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeSign"] = Name}
+                };
+                location.objects[HiddenSignPosition] = GrangeSign;
+            }
+
+            
+            // the results
+            
+            Log($"    ... StorageChest at {StorageChest.TileLocation}", LogLevel.Debug);
+            Log($"    ... GrangeSign at {GrangeSign.TileLocation}", LogLevel.Debug);
+
+            if (StoreColor.R > 0 || StoreColor.G > 0 || StoreColor.B > 0)
+            {
+                Log($"    StoreColor {StoreColor}", LogLevel.Debug);
+
+                StoreColor.A = 255;
+                StorageChest.playerChoiceColor.Value = StoreColor;
+            }
+
+            if (SignObjectIndex > 0)
+            {
+                Log($"    GrangeSign.displayItem.Value to {SignObjectIndex}", LogLevel.Debug);
+                GrangeSign.displayItem.Value = new SObject(SignObjectIndex, 1);
+                GrangeSign.displayType.Value = 1;
+            }
+        }
+
+        private void ShowFurniture()
+        {
+            var location = Game1.getLocationFromName("Town");
+
+            Debug.Assert(StorageChest is not null, "StorageChest is not null");
+            Debug.Assert(GrangeSign is not null, "GrangeSign is not null");
+            Debug.Assert(GrangeSign.TileLocation.X > 0, "GrangeSign.TileLocation.X assigned");
+            Debug.Assert(GrangeSign.TileLocation.Y > 0, "GrangeSign.TileLocation.Y assigned");
+
+            // location.setObject(VisibleChestPosition, StorageChest);
+            // location.removeObject(HiddenChestPosition, false);
+            location.moveObject(
+                (int) StorageChest.TileLocation.X, (int) StorageChest.TileLocation.Y,
+                (int) VisibleChestPosition.X, (int) VisibleChestPosition.Y);
+
+            location.moveObject(
+                (int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
+                (int) VisibleSignPosition.X, (int) VisibleSignPosition.Y);
+
+            // location.moveObject((int)StorageChest.TileLocation.X, (int)StorageChest.TileLocation.Y, (int)VisibleChestPosition.X, (int)VisibleChestPosition.Y);
+            //
+            // location.setObject(VisibleChestPosition, StorageChest);
+            // location.setObject(VisibleSignPosition, GrangeSign);
+            // // location.objects[VisibleSignPosition] = GrangeSign;
+            //
+            // location.removeObject(HiddenChestPosition, false);
+            // location.removeObject(HiddenSignPosition, false);
+        }
+
+        private void HideFurniture()
+        {
+            var location = Game1.getLocationFromName("Town");
+            location.setObject(HiddenChestPosition, StorageChest);
+            location.removeObject(VisibleChestPosition, false);
+            location.moveObject((int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
+                (int) HiddenSignPosition.X, (int) HiddenSignPosition.Y);
+        }
+
+        private void DestroyFurniture()
+        {
+            var toRemove = new Dictionary<Vector2, SObject>();
+
+            var location = Game1.getLocationFromName("Town");
+            foreach (var (tile, item) in location.Objects.Pairs)
+            {
+                if (item is Sign sign)
+                {
+                    if (!sign.modData.TryGetValue($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeSign",
+                        out var owner))
+                        continue;
+                    if (owner != Name) continue;
+                    toRemove[tile] = item;
+                }
+
+                if (item is Chest chest)
+                {
+                    if (!chest.modData.TryGetValue($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage",
+                        out var owner)) continue;
+                    if (owner != Name) continue;
+                    toRemove[tile] = item;
+                }
+            }
+
+            foreach (var (tile, item) in toRemove)
+            {
+                Log($"    Removing {item.displayName} from {tile}", LogLevel.Debug);
+                location.Objects.Remove(tile);
+            }
+
+            StorageChest = null;
+            GrangeSign = null;
+        }
+
+        private void StockChestForTheDay()
+        {
+            foreach (var (sIdx, stack) in Stock)
+            {
+                if (int.TryParse(sIdx, out var idx))
+                {
+                    StorageChest.addItem(new SObject(idx, stack));
+                }
+                else
+                {
+                    Log($"Could not parse {sIdx}", LogLevel.Warn);
+                }
+            }
+        }
+
+        private void RestockGrangeFromChest(bool fullRestock=false)
+        {
+            if (StorageChest.items.Count < 1) return;
+            for (var j = 0; j < GrangeDisplay.Count; j++)
+            {
+                if (GrangeDisplay[j] != null) continue;
+
+                var anItem = StorageChest.items[Game1.random.Next(StorageChest.items.Count)];
+                StorageChest.addItem(anItem.getOne());
+                if (anItem.Stack == 1)
+                {
+                    StorageChest.items.Remove(anItem);
+                }
+                else
+                {
+                    anItem.Stack--;
+                }
+                
+                addItemToGrangeDisplay(anItem, j, false);
+
+                if (!fullRestock) return;
+            }
+            
+        }
+
+        private void EmptyStoreIntoChest()
+        {
+            for (var j = 0; j < GrangeDisplay.Count; j++)
+            {
+                if (GrangeDisplay[j] == null) continue;
+                StorageChest.addItem(GrangeDisplay[j]);
+                GrangeDisplay[j] = null;
+            }
+        }
+
+        private bool onGrangeChange(Item i, int position, Item old, StorageContainer container, bool onRemoval)
+        {
+            // Log(
+            //     $"onGrangeChange: item {i.ParentSheetIndex} position {position} old item {old?.ParentSheetIndex} onRemoval: {onRemoval}",
+            //     LogLevel.Debug);
+
+            if (!onRemoval)
+            {
+                if (i.Stack > 1 || i.Stack == 1 && old is {Stack: 1} && i.canStackWith(old))
+                {
+                    // Log($"onGrangeChange: big stack", LogLevel.Debug);
+
+                    if (old != null && old.canStackWith(i))
+                    {
+                        // tried to add extra of same item to a slot that's already taken, 
+                        // reset the stack size to 1
+                        // Log(
+                        //     $"onGrangeChange: can stack: heldItem now {old.Stack} of {old.ParentSheetIndex}, rtn false",
+                        //     LogLevel.Debug);
+
+                        container.ItemsToGrabMenu.actualInventory[position].Stack = 1;
+                        container.heldItem = old;
+                        return false;
+                    }
+
+                    if (old != null)
+                    {
+                        // tried to add item to a slot that's already taken, 
+                        // swap the old item back in
+                        // Log(
+                        //     $"onGrangeChange: cannot stack: helditem now {i.Stack} of {i.ParentSheetIndex}, {old.ParentSheetIndex} to inventory, rtn false",
+                        //     LogLevel.Debug);
+
+                        Utility.addItemToInventory(old, position, container.ItemsToGrabMenu.actualInventory);
+                        container.heldItem = i;
+                        return false;
+                    }
+
+
+                    int allButOne = i.Stack - 1;
+                    Item reject = i.getOne();
+                    reject.Stack = allButOne;
+                    container.heldItem = reject;
+                    i.Stack = 1;
+                    // Log(
+                    //     $"onGrangeChange: only accept 1, reject {allButOne}, heldItem now {reject.Stack} of {reject.ParentSheetIndex}",
+                    //     LogLevel.Debug);
+                }
+            }
+            else if (old is {Stack: > 1})
+            {
+                // Log($"onGrangeChange: old {old.ParentSheetIndex} stack {old.Stack}", LogLevel.Debug);
+
+                if (!old.Equals(i))
+                {
+                    // Log($"onGrangeChange: item {i.ParentSheetIndex} old {old.ParentSheetIndex} return false",
+                    //     LogLevel.Debug);
+                    return false;
+                }
+            }
+
+            var itemToAdd = onRemoval && (old == null || old.Equals(i)) ? null : i;
+            // Log($"onGrangeChange: force-add {itemToAdd?.ParentSheetIndex} at {position}", LogLevel.Debug);
+
+            addItemToGrangeDisplay(itemToAdd, position, true);
+            return true;
+        }
+
+        private void addItemToGrangeDisplay(Item i, int position, bool force)
+        {
+            while (GrangeDisplay.Count < 9) GrangeDisplay.Add(null);
+            // Log($"addItemToGrangeDisplay: item {i?.ParentSheetIndex} position {position} force {force}",
+            //     LogLevel.Debug);
+
+            if (position < 0) return;
+            if (position >= GrangeDisplay.Count) return;
+            if (GrangeDisplay[position] != null && !force) return;
+
+            GrangeDisplay[position] = i;
         }
 
         // aedenthorn
-        private static void drawGrangeItems(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
+        private void drawGrangeItems(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
         {
             Vector2 start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
 
@@ -588,7 +670,7 @@ namespace FarmersMarket
                     start.Y += 42f;
                     start.X += 4f;
                     spriteBatch.Draw(Game1.shadowTexture, start,
-                        new Microsoft.Xna.Framework.Rectangle?(Game1.shadowTexture.Bounds), Color.White, 0f,
+                        Game1.shadowTexture.Bounds, Color.White, 0f,
                         Vector2.Zero, 4f, SpriteEffects.None, layerDepth + 0.02f);
                     start.Y -= 42f;
                     start.X -= 4f;
@@ -605,245 +687,8 @@ namespace FarmersMarket
             }
         }
 
-        /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event arguments.</param>
-        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-            if (Game1.activeClickableMenu is not null) return;
-
-            var (x, y) = e.Cursor.Tile;
-
-            if (e.Button.IsUseToolButton())
-            {
-                if (Game1.currentLocation.objects.TryGetValue(new Vector2(x, y), out var objectAt))
-                {
-                    if (objectAt.modData.ContainsKey($"{ModManifest.UniqueID}/GrangeStorage") ||
-                        objectAt.modData.ContainsKey($"{ModManifest.UniqueID}/GrangeSign"))
-                    {
-                        // Helper.Input.Suppress(e.Button);
-                        return;
-                    }
-                }
-            }
-
-            if (e.Button.IsActionButton())
-            {
-                if (!IsMarketDay()) return;
-
-                var tileIndexAt = Game1.currentLocation.getTileIndexAt((int) x, (int) y, "Buildings");
-                if (tileIndexAt is < 349 or > 351) return;
-
-                Game1.activeClickableMenu =
-                    new StorageContainer(GrangeDisplay, 9, 3, onGrangeChange, Utility.highlightSmallObjects);
-
-                Helper.Input.Suppress(e.Button);
-            }
-        }
-
-        private static void addItemToGrangeDisplay(Item i, int position, bool force)
-        {
-            SMonitor.Log($"addItemToGrangeDisplay: item count {GrangeDisplay.Count}", LogLevel.Debug);
-
-            while (GrangeDisplay.Count < 9) GrangeDisplay.Add(null);
-            SMonitor.Log($"addItemToGrangeDisplay: item {i?.ParentSheetIndex} position {position} force {force}",
-                LogLevel.Debug);
-
-            if (position < 0) return;
-            if (position >= GrangeDisplay.Count) return;
-            if (GrangeDisplay[position] != null && !force) return;
-
-            SMonitor.Log($"addItemToGrangeDisplay: adding item", LogLevel.Debug);
-
-            GrangeDisplay[position] = i;
-        }
-
-        private static bool onGrangeChange(Item i, int position, Item old, StorageContainer container, bool onRemoval)
-        {
-            SMonitor.Log(
-                $"onGrangeChange: item {i.ParentSheetIndex} position {position} old item {old?.ParentSheetIndex} onRemoval: {onRemoval}",
-                LogLevel.Debug);
-
-            if (!onRemoval)
-            {
-                if (i.Stack > 1 || i.Stack == 1 && old is {Stack: 1} && i.canStackWith(old))
-                {
-                    SMonitor.Log($"onGrangeChange: big stack", LogLevel.Debug);
-
-                    if (old != null && old.canStackWith(i))
-                    {
-                        // tried to add extra of same item to a slot that's already taken, 
-                        // reset the stack size to 1
-                        SMonitor.Log(
-                            $"onGrangeChange: can stack: heldItem now {old.Stack} of {old.ParentSheetIndex}, rtn false",
-                            LogLevel.Debug);
-
-                        container.ItemsToGrabMenu.actualInventory[position].Stack = 1;
-                        container.heldItem = old;
-                        return false;
-                    }
-
-                    if (old != null)
-                    {
-                        // tried to add item to a slot that's already taken, 
-                        // swap the old item back in
-                        SMonitor.Log(
-                            $"onGrangeChange: cannot stack: helditem now {i.Stack} of {i.ParentSheetIndex}, {old.ParentSheetIndex} to inventory, rtn false",
-                            LogLevel.Debug);
-
-                        Utility.addItemToInventory(old, position, container.ItemsToGrabMenu.actualInventory);
-                        container.heldItem = i;
-                        return false;
-                    }
-
-
-                    int allButOne = i.Stack - 1;
-                    Item reject = i.getOne();
-                    reject.Stack = allButOne;
-                    container.heldItem = reject;
-                    i.Stack = 1;
-                    SMonitor.Log(
-                        $"onGrangeChange: only accept 1, reject {allButOne}, heldItem now {reject.Stack} of {reject.ParentSheetIndex}",
-                        LogLevel.Debug);
-                }
-            }
-            else if (old is {Stack: > 1})
-            {
-                SMonitor.Log($"onGrangeChange: old {old.ParentSheetIndex} stack {old?.Stack}", LogLevel.Debug);
-
-                if (!old.Equals(i))
-                {
-                    SMonitor.Log($"onGrangeChange: item {i.ParentSheetIndex} old {old?.ParentSheetIndex} return false",
-                        LogLevel.Debug);
-                    return false;
-                }
-            }
-
-            var itemToAdd = onRemoval && (old == null || old.Equals(i)) ? null : i;
-            SMonitor.Log($"onGrangeChange: force-add {itemToAdd?.ParentSheetIndex} at {position}", LogLevel.Debug);
-
-            addItemToGrangeDisplay(itemToAdd, position, true);
-            return true;
-        }
-
-        private void OnLaunched(object sender, GameLaunchedEventArgs e)
-        {
-            Config = Helper.ReadConfig<ModConfig>();
-            Helper.WriteConfig(Config);
-
-            var api = Helper.ModRegistry.GetApi<GenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
-            if (api is null) return;
-            api.RegisterModConfig(ModManifest, () => Config = new ModConfig(), () => Helper.WriteConfig(Config));
-            api.SetDefaultIngameOptinValue(ModManifest, true);
-
-            api.RegisterSimpleOption(ModManifest, "Grumpy", "", () => Config.Grumpy, val => Config.Grumpy = val);
-            api.RegisterClampedOption(ModManifest, "Dialog Chance", "Dialog Chance", () => Config.DialogChance,
-                val => Config.DialogChance = val, 0.0f, 1.0f, 0.05f);
-            api.RegisterClampedOption(ModManifest, "Junimo Language Chance",
-                "Chance for dialog to appear in Junimo language", () => Config.JunimoTextChance,
-                val => Config.JunimoTextChance = val, 0.0f, 1.0f, 0.50f);
-            api.RegisterSimpleOption(ModManifest, "Extra debug output", "", () => Config.ExtraDebugOutput,
-                val => Config.ExtraDebugOutput = val);
-
-            ContentPatcherAPI =
-                this.Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>("Pathoschild.ContentPatcher");
-            ContentPatcherAPI.RegisterToken(ModManifest, "FarmersMarketOpen",
-                () => { return Context.IsWorldReady ? new[] {IsMarketDayJustForToken() ? "true" : "false"} : null; });
-        }
-
-        private static bool IsMarketDay()
-        {
-            if (MarketDayConditions is null || !MarketDayConditions.IsReady)
-            {
-                SMonitor.Log($"IsMarketDay: MarketDayConditions null", LogLevel.Warn);
-                return false;
-            }
-
-            MarketDayConditions.UpdateContext();
-            return MarketDayConditions.IsMatch;
-        }
-
-        private bool IsMarketDayJustForToken()
-        {
-            if (MarketDayConditions is null)
-            {
-                SMonitor.Log($"IsMarketDayJustForToken: MarketDayConditions null", LogLevel.Warn);
-                return false;
-            }
-
-            if (!MarketDayConditions.IsReady)
-            {
-                SMonitor.Log($"IsMarketDayJustForToken: MarketDayConditions not ready", LogLevel.Warn);
-                return false;
-            }
-
-            MarketDayConditions.UpdateContext();
-            SMonitor.Log($"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} MarketDayConditions {MarketDayConditions.IsMatch}", LogLevel.Info);
-
-
-            var rawConditions = new Dictionary<string, string>
-            {
-                ["DayOfWeek"] = "Saturday",
-                ["Weather"] = "Sun, Wind",
-                ["HasValue:{{DayEvent}}"] = "false"
-            };
-            var spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
-                ModManifest,
-                rawConditions,
-                new SemanticVersion("1.20.0")
-            );
-            spareMarketDayConditions.UpdateContext();
-            SMonitor.Log($"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} spareMarketDayConditions {spareMarketDayConditions.IsMatch}",
-                LogLevel.Info);
-
-
-            rawConditions = new Dictionary<string, string>
-            {
-                ["DayOfWeek"] = "Saturday",
-            };
-            spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
-                ModManifest,
-                rawConditions,
-                new SemanticVersion("1.20.0")
-            );
-            spareMarketDayConditions.UpdateContext();
-            SMonitor.Log($"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} DayOfWeek {spareMarketDayConditions.IsMatch}",
-                LogLevel.Info);
-
-            rawConditions = new Dictionary<string, string>
-            {
-                ["Weather"] = "Sun, Wind",
-            };
-            spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
-                ModManifest,
-                rawConditions,
-                new SemanticVersion("1.20.0")
-            );
-            spareMarketDayConditions.UpdateContext();
-            SMonitor.Log($"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} Weather {spareMarketDayConditions.IsMatch}",
-                LogLevel.Info);
-            
-            rawConditions = new Dictionary<string, string>
-            {
-                ["HasValue:{{DayEvent}}"] = "false"
-            };
-            spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
-                ModManifest,
-                rawConditions,
-                new SemanticVersion("1.20.0")
-            );
-            spareMarketDayConditions.UpdateContext();
-            SMonitor.Log($"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} DayEvent {spareMarketDayConditions.IsMatch}",
-                LogLevel.Info);
-            
-
-            
-            return MarketDayConditions.IsMatch;
-        }
-
         // aedenthorn
-        private static int GetGrangeScore()
+        private int GetGrangeScore()
         {
             int pointsEarned = 14;
             Dictionary<int, bool> categoriesRepresented = new Dictionary<int, bool>();
@@ -858,7 +703,7 @@ namespace FarmersMarket
                     }
 
                     pointsEarned += (i as SObject).Quality + 1;
-                    int num = (i as SObject).sellToStorePrice(-1L);
+                    int num = (i as SObject).sellToStorePrice();
                     if (num >= 20)
                     {
                         pointsEarned++;
@@ -964,19 +809,6 @@ namespace FarmersMarket
             return pointsEarned;
         }
 
-        private static Color GetPointsColor(int score)
-        {
-            if (score >= 90)
-                return new Color(120, 255, 120);
-            if (score >= 75)
-                return Color.Yellow;
-            if (score >= 60)
-                return new Color(255, 200, 0);
-            if (score < 0)
-                return Color.MediumPurple;
-            return Color.Red;
-        }
-
         private static double GetPointsMultiplier(int score)
         {
             return score switch
@@ -988,6 +820,389 @@ namespace FarmersMarket
                 _ => 0
             };
         }
+
+        private void Log(string message, LogLevel level)
+        {
+            FarmersMarket.SMonitor.Log($"[{Name}] {message}", level);
+        }
+
+        private string Get(string key)
+        {
+            return FarmersMarket.SMod.Helper.Translation.Get(key);
+        }
+
+        private static string Get(string key, object tokens)
+        {
+            return FarmersMarket.SMod.Helper.Translation.Get(key, tokens);
+        }
+    }
+
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class FarmersMarket : Mod
+    {
+        internal const double VISIT_CHANCE = 0.95;
+
+        internal const int PLAYER_STORE_X = 23;
+        internal const int PLAYER_STORE_Y = 63;
+        private static ContentPatcher.IContentPatcherAPI ContentPatcherAPI;
+        private static IManagedConditions MarketDayConditions;
+        internal static ModConfig Config;
+        internal static IMonitor SMonitor;
+        internal static Mod SMod;
+
+        internal static StoresListData StoresData;
+
+        internal static List<Store> Stores = new();
+
+        /// <summary>The mod entry point, called after the mod is first loaded.</summary>
+        /// <param name="helper">Provides simplified APIs for writing mods.</param>
+        public override void Entry(IModHelper helper)
+        {
+            SMonitor = Monitor;
+            SMod = this;
+
+            Helper.Events.GameLoop.GameLaunched += OnLaunched;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+            Helper.Events.GameLoop.DayStarted += OnDayStarted;
+            Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
+            // Helper.Events.GameLoop.TimeChanged += OnTimeChanged;
+            Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking;
+            Helper.Events.GameLoop.TimeChanged += OnTimeChanged;
+            Helper.Events.GameLoop.DayEnding += OnDayEnding;
+            Helper.Events.GameLoop.Saving += OnSaving;
+            Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            Helper.Events.Display.RenderedWorld += OnRenderedWorld;
+
+            var harmony = new Harmony("ceruleandeep.FarmersMarket");
+            harmony.PatchAll();
+
+            helper.ConsoleCommands.Add("fm_destroy", "Destroy furniture", DestroyAllFurniture);
+        }
+
+        /// <summary>Raised after the game is saved</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        void OnSaving(object sender, SavingEventArgs e)
+        {
+            Helper.WriteConfig(Config);
+        }
+
+        /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        void OnSaveLoaded(object sender, EventArgs e)
+        {
+            // reload the config to pick up any changes made in GMCM on the title screen
+            Config = Helper.ReadConfig<ModConfig>();
+        }
+
+        void OnDayStarted(object sender, EventArgs e)
+        {
+            var rawConditions = new Dictionary<string, string>
+            {
+                ["DayOfWeek"] = "Saturday",
+                ["Weather"] = "Sun, Wind",
+                ["HasValue:{{DayEvent}}"] = "false"
+            };
+            MarketDayConditions = ContentPatcherAPI.ParseConditions(
+                ModManifest,
+                rawConditions,
+                new SemanticVersion("1.20.0")
+            );
+
+            Stores = new List<Store>();
+            Utility.Shuffle(Game1.random, StoresData.Stores);
+            for (var j = 0; j < StoresData.StoreLocations.Count; j++)
+            {
+                var storeData = StoresData.Stores[j];
+                var (x, y) = StoresData.StoreLocations[j];
+                var store = new Store(storeData.NpcName, false, (int) x, (int) y)
+                {
+                    StoreColor = storeData.Color,
+                    SignObjectIndex = storeData.SignObject,
+                    Stock = storeData.Stock
+                };
+
+                SMonitor.Log($"Adding a store for {store.Name}", LogLevel.Debug);
+                Stores.Add(store);
+            }
+
+            Stores.Add(new Store("Player", true, PLAYER_STORE_X, PLAYER_STORE_Y));
+            foreach (var store in Stores) store.OnDayStarted(IsMarketDay());
+        }
+
+        void OnTimeChanged(object sender, EventArgs e)
+        {
+            if (Game1.timeOfDay % 100 > 0) return;
+            foreach (var store in Stores) store.OnTimeChanged();
+        }
+
+        void OnDayEnding(object sender, EventArgs e)
+        {
+            foreach (var store in Stores) store.OnDayEnding();
+        }
+
+        private void DestroyAllFurniture(string command, string[] args)
+        {
+            SMonitor.Log($"DestroyAllFurniture", LogLevel.Debug);
+
+            var toRemove = new Dictionary<Vector2, SObject>();
+
+            var location = Game1.getLocationFromName("Town");
+            foreach (var (tile, item) in location.Objects.Pairs)
+            {
+                if (item.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeStorage", out _))
+                {
+                    SMonitor.Log($"    GrangeStorage at {item.TileLocation}", LogLevel.Debug);
+                    toRemove[tile] = item;
+                }
+
+                if (item.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeSign", out _))
+                {
+                    SMonitor.Log($"    GrangeSign at {item.TileLocation}", LogLevel.Debug);
+                    toRemove[tile] = item;
+                }
+            }
+
+            foreach (var (tile, item) in toRemove)
+            {
+                if (item is not Chest && item is not Sign) continue;
+                SMonitor.Log($"    Removing {item.displayName} from {tile}", LogLevel.Debug);
+                location.Objects.Remove(tile);
+            }
+
+            foreach (var store in Stores)
+            {
+                store.StorageChest = null;
+                store.GrangeSign = null;
+            }
+        }
+
+        // private void EnsureChestHidden()
+        // {
+        //     SMonitor.Log($"EnsureChestHidden: I have been instructed to move the furniture", LogLevel.Debug);
+        //
+        //     var location = Game1.getLocationFromName("Town");
+        //     GetReferencesToFurniture();
+        //
+        //     SMonitor.Log($"EnsureChestHidden: StorageChest from {StorageChest.TileLocation} to {HiddenChestPosition}",
+        //         LogLevel.Debug);
+        //     location.setObject(HiddenChestPosition, StorageChest);
+        //     location.objects.Remove(VisibleChestPosition);
+        //     // location.moveObject((int)StorageChest.TileLocation.X, (int)StorageChest.TileLocation.Y, (int)HiddenChestPosition.X, (int)HiddenChestPosition.Y);
+        //     StorageChest.modData[$"{ModManifest.UniqueID}/MovedYou"] = "yes";
+        //
+        //     SMonitor.Log($"EnsureChestHidden: GrangeSign from {GrangeSign.TileLocation} to {HiddenSignPosition}",
+        //         LogLevel.Debug);
+        //     location.moveObject((int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
+        //         (int) HiddenSignPosition.X, (int) HiddenSignPosition.Y);
+        //
+        //     // location.setObject(HiddenSignPosition, GrangeSign);
+        //     //
+        //     // location.removeObject(VisibleChestPosition, false);
+        //     // location.removeObject(VisibleSignPosition, false);
+        //     //
+        //
+        //     // location.setObject(HiddenChestPosition, StorageChest);
+        //     // location.objects[HiddenSignPosition] = GrangeSign;
+        //     // location.setObject(VisibleChestPosition, null);
+        //     // location.objects[VisibleSignPosition] = null;
+        // }
+
+        void OnUpdateTicking(object sender, UpdateTickingEventArgs e)
+        {
+            if (!e.IsMultipleOf(10)) return;
+            if (!Context.IsWorldReady) return;
+            if (!IsMarketDay()) return;
+
+            foreach (var store in Stores)
+            {
+                store.OnUpdateTicking();
+            }
+        }
+
+        private void OnOneSecondUpdateTicking(object sender, OneSecondUpdateTickingEventArgs e)
+        {
+            if (!Context.IsWorldReady) return;
+            if (!IsMarketDay()) return;
+
+            foreach (var store in Stores)
+            {
+                store.OnOneSecondUpdateTicking();
+            }
+        }
+
+
+        private static void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
+        {
+            if (!IsMarketDay()) return;
+            foreach (var store in Stores)
+            {
+                store.OnRenderedWorld(e);
+            }
+        }
+
+        /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
+        {
+            if (!Context.IsWorldReady) return;
+            if (Game1.activeClickableMenu is not null) return;
+
+            var (x, y) = e.Cursor.Tile;
+
+            if (e.Button.IsUseToolButton())
+            {
+                if (Game1.currentLocation.objects.TryGetValue(new Vector2(x, y), out var objectAt))
+                {
+                    if (objectAt.modData.ContainsKey($"{ModManifest.UniqueID}/GrangeStorage") ||
+                        objectAt.modData.ContainsKey($"{ModManifest.UniqueID}/GrangeSign"))
+                    {
+                        // Helper.Input.Suppress(e.Button);
+                        return;
+                    }
+                }
+            }
+
+            if (e.Button.IsActionButton())
+            {
+                if (!IsMarketDay()) return;
+
+                var tileIndexAt = Game1.currentLocation.getTileIndexAt((int) x, (int) y, "Buildings");
+                if (tileIndexAt is < 349 or > 351) return;
+
+                foreach (var store in Stores)
+                {
+                    store.OnActionButton(e);
+                }
+            }
+        }
+
+        private void OnLaunched(object sender, GameLaunchedEventArgs e)
+        {
+            Config = Helper.ReadConfig<ModConfig>();
+
+            StoresData = this.Helper.Data.ReadJsonFile<StoresListData>("Assets/stores.json") ?? new StoresListData();
+
+            SMonitor.Log($"NPC stores:", LogLevel.Info);
+            foreach (var store in StoresData.Stores)
+            {
+                SMonitor.Log($"    Store {store.NpcName} symbol {store.SignObject} color {store.Color}",
+                    LogLevel.Debug);
+            }
+
+            var api = Helper.ModRegistry.GetApi<GenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+            if (api is null) return;
+            api.RegisterModConfig(ModManifest, () => Config = new ModConfig(), () => Helper.WriteConfig(Config));
+            api.SetDefaultIngameOptinValue(ModManifest, true);
+
+
+            ContentPatcherAPI =
+                Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>("Pathoschild.ContentPatcher");
+            // ContentPatcherAPI.RegisterToken(ModManifest, "FarmersMarketOpen",
+            //     () => { return Context.IsWorldReady ? new[] {IsMarketDayJustForToken() ? "true" : "false"} : null; });
+        }
+
+        internal static bool IsMarketDay()
+        {
+            return Game1.dayOfMonth % 7 == 6 &&
+                   !Game1.isRaining &&
+                   !Game1.isSnowing &&
+                   !Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
+            //
+            // if (MarketDayConditions is null || !MarketDayConditions.IsReady)
+            // {
+            //     SMonitor.Log($"IsMarketDay: MarketDayConditions null", LogLevel.Warn);
+            //     return false;
+            // }
+            //
+            // MarketDayConditions.UpdateContext();
+            // return MarketDayConditions.IsMatch;
+        }
+
+        // private bool IsMarketDayJustForToken()
+        // {
+        //     if (MarketDayConditions is null)
+        //     {
+        //         SMonitor.Log($"IsMarketDayJustForToken: MarketDayConditions null", LogLevel.Warn);
+        //         return false;
+        //     }
+        //
+        //     if (!MarketDayConditions.IsReady)
+        //     {
+        //         SMonitor.Log($"IsMarketDayJustForToken: MarketDayConditions not ready", LogLevel.Warn);
+        //         return false;
+        //     }
+        //
+        //     MarketDayConditions.UpdateContext();
+        //     SMonitor.Log(
+        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} MarketDayConditions {MarketDayConditions.IsMatch}",
+        //         LogLevel.Info);
+        //
+        //
+        //     var rawConditions = new Dictionary<string, string>
+        //     {
+        //         ["DayOfWeek"] = "Saturday",
+        //         ["Weather"] = "Sun, Wind",
+        //         ["HasValue:{{DayEvent}}"] = "false"
+        //     };
+        //     var spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
+        //         ModManifest,
+        //         rawConditions,
+        //         new SemanticVersion("1.20.0")
+        //     );
+        //     spareMarketDayConditions.UpdateContext();
+        //     SMonitor.Log(
+        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} spareMarketDayConditions {spareMarketDayConditions.IsMatch}",
+        //         LogLevel.Info);
+        //
+        //
+        //     rawConditions = new Dictionary<string, string>
+        //     {
+        //         ["DayOfWeek"] = "Saturday",
+        //     };
+        //     spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
+        //         ModManifest,
+        //         rawConditions,
+        //         new SemanticVersion("1.20.0")
+        //     );
+        //     spareMarketDayConditions.UpdateContext();
+        //     SMonitor.Log(
+        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} DayOfWeek {spareMarketDayConditions.IsMatch}",
+        //         LogLevel.Info);
+        //
+        //     rawConditions = new Dictionary<string, string>
+        //     {
+        //         ["Weather"] = "Sun, Wind",
+        //     };
+        //     spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
+        //         ModManifest,
+        //         rawConditions,
+        //         new SemanticVersion("1.20.0")
+        //     );
+        //     spareMarketDayConditions.UpdateContext();
+        //     SMonitor.Log(
+        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} Weather {spareMarketDayConditions.IsMatch}",
+        //         LogLevel.Info);
+        //
+        //     rawConditions = new Dictionary<string, string>
+        //     {
+        //         ["HasValue:{{DayEvent}}"] = "false"
+        //     };
+        //     spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
+        //         ModManifest,
+        //         rawConditions,
+        //         new SemanticVersion("1.20.0")
+        //     );
+        //     spareMarketDayConditions.UpdateContext();
+        //     SMonitor.Log(
+        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} DayEvent {spareMarketDayConditions.IsMatch}",
+        //         LogLevel.Info);
+        //
+        //
+        //     return MarketDayConditions.IsMatch;
+        // }
 
         private string Get(string key)
         {
