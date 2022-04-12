@@ -5,5 +5,10 @@
     "silver": "Nice {{itemName}}",
     "gold": "< Great {{itemName}}",
     "iridium": "Superb {{itemName}}",
-    "no-stock": "No stock!"
+    "no-stock": "No stock!",
+    "spruik": "Check out my stall!",
+    "default-stall-description": "Welcome to {{NpcName}}'s market stall",
+    "sales-desc": "* {{ItemName}} sold to {{NpcName}} for {{Price}}g ({{Mult}}%)",
+    "no-sales-today": "No sales today",
+    "daily-summary": "Sales Today for {{FarmName}} Farm Stall^^Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Average bonus: {{AverageMult}}^^Items sold:^{{SalesSummary}}"
 }

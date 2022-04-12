@@ -12,8 +12,11 @@ namespace FarmersMarket
     public class StoreData
     {
         public string NpcName { get; set; }
+        public string Description { get; set; }
         public int SignObject { get; set; }
         public Color Color { get; set; }
-        public Dictionary<string, int> Stock { get; set; }
+        
+        public double PurchasePriceMultiplier { get; set; } = 1.0;
+        public Dictionary<string, int[]> Stock { get; set; }
     }
 }

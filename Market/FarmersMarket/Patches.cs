@@ -14,39 +14,52 @@ namespace FarmersMarket
     public class Prefix_findPathForNPCSchedules
     {
         public static bool Prefix(PathFindController __instance, ref Point startPoint, Point endPoint,
-            GameLocation location, int limit, ref Stack<Point> __result)
+            GameLocation location, int limit, Character ___character, ref Stack<Point> __result)
         {
             if (location.Name != "Town") return true;
             if (!FarmersMarket.IsMarketDay()) return true;
 
+            // FarmersMarket.SMonitor.Log(
+            //     $"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}",
+            //     LogLevel.Warn);
+
+            // var originalPath = OriginalFindPathForNPCSchedules(startPoint, endPoint, location, limit).ToList();
+            // var original = string.Join(", ", originalPath);
+            // FarmersMarket.SMonitor.Log($"    Original path: {original}", LogLevel.Debug);
+
+
             var placesToVisit = new List<Point>();
 
-            if (Game1.random.NextDouble() < FarmersMarket.VISIT_CHANCE + Game1.player.DailyLuck)
+            var openStores = new Dictionary<string, Point>();
+            foreach (var store in FarmersMarket.Stores)
             {
-                placesToVisit.Add(new Point(FarmersMarket.PLAYER_STORE_X + Game1.random.Next(3),
-                    FarmersMarket.PLAYER_STORE_Y + 4));
+                openStores[store.Name] = new Point(store.X + 3, store.Y + 2);
             }
 
-            foreach (var place in FarmersMarket.StoresData.StoreLocations)
+            if (openStores.Keys.Contains(___character.Name))
             {
-                if (Game1.random.NextDouble() < FarmersMarket.VISIT_CHANCE + Game1.player.DailyLuck)
+                // FarmersMarket.SMonitor.Log($"    {___character.Name} has a store", LogLevel.Debug);
+                placesToVisit.Add(openStores[___character.Name]);
+            }
+            else
+            {
+                if (Game1.random.NextDouble() < FarmersMarket.Config.PlayerStallVisitChance + Game1.player.DailyLuck)
                 {
-                    placesToVisit.Add(new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4));
+                    placesToVisit.Add(new Point(
+                            FarmersMarket.PLAYER_STORE_X + Game1.random.Next(3),
+                            FarmersMarket.PLAYER_STORE_Y + 4));
                 }
+                placesToVisit.AddRange(
+                    from place in FarmersMarket.StoresData.StoreLocations
+                    where Game1.random.NextDouble() < FarmersMarket.Config.NPCStallVisitChance
+                    select new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4));
             }
-
-            FarmersMarket.SMonitor.Log($"findPathForNPCSchedules {location.Name} {startPoint} -> {endPoint}",
-                LogLevel.Warn);
-
-            var originalPath = OriginalFindPathForNPCSchedules(startPoint, endPoint, location, limit).ToList();
-            var original = string.Join(", ", originalPath);
-            FarmersMarket.SMonitor.Log($"    Original path: {original}", LogLevel.Debug);
 
             Utility.Shuffle(Game1.random, placesToVisit);
             placesToVisit.Add(startPoint);
 
             var waypoints = string.Join(", ", placesToVisit);
-            FarmersMarket.SMonitor.Log($"    Waypoints: {waypoints}", LogLevel.Debug);
+            // FarmersMarket.SMonitor.Log($"    Waypoints: {waypoints}", LogLevel.Debug);
 
             // work backwards through the waypoints
             var path = new Stack<Point>();
@@ -56,7 +69,7 @@ namespace FarmersMarket
             {
                 var thisStartPoint = new Point((int) waypoint.X, (int) waypoint.Y);
 
-                FarmersMarket.SMonitor.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug);
+                // FarmersMarket.SMonitor.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug);
 
                 var legPath = OriginalFindPathForNPCSchedules(thisStartPoint, thisEndPoint, location, limit).ToList();
                 legPath.Reverse();
@@ -74,7 +87,7 @@ namespace FarmersMarket
 
             var final = string.Join(", ", path);
 
-            FarmersMarket.SMonitor.Log($"    Final Path   : {final}", LogLevel.Debug);
+            // FarmersMarket.SMonitor.Log($"    Final Path   : {final}", LogLevel.Debug);
 
             __result = path;
             return false;
