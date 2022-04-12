@@ -19,13 +19,13 @@ namespace FarmersMarket
             if (location.Name != "Town") return true;
             if (!FarmersMarket.IsMarketDay()) return true;
 
-            // FarmersMarket.SMonitor.Log(
+            // FarmersMarket.monitor.Log(
             //     $"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}",
             //     LogLevel.Warn);
 
             // var originalPath = OriginalFindPathForNPCSchedules(startPoint, endPoint, location, limit).ToList();
             // var original = string.Join(", ", originalPath);
-            // FarmersMarket.SMonitor.Log($"    Original path: {original}", LogLevel.Debug);
+            // FarmersMarket.monitor.Log($"    Original path: {original}", LogLevel.Debug);
 
 
             var placesToVisit = new List<Point>();
@@ -38,7 +38,7 @@ namespace FarmersMarket
 
             if (openStores.Keys.Contains(___character.Name))
             {
-                // FarmersMarket.SMonitor.Log($"    {___character.Name} has a store", LogLevel.Debug);
+                // FarmersMarket.monitor.Log($"    {___character.Name} has a store", LogLevel.Debug);
                 placesToVisit.Add(openStores[___character.Name]);
             }
             else
@@ -50,16 +50,16 @@ namespace FarmersMarket
                             FarmersMarket.PLAYER_STORE_Y + 4));
                 }
                 placesToVisit.AddRange(
-                    from place in FarmersMarket.StoresData.StoreLocations
+                    from place in FarmersMarket.StoresData.ShopLocations
                     where Game1.random.NextDouble() < FarmersMarket.Config.NPCStallVisitChance
                     select new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4));
             }
 
-            Utility.Shuffle(Game1.random, placesToVisit);
+            StardewValley.Utility.Shuffle(Game1.random, placesToVisit);
             placesToVisit.Add(startPoint);
 
             var waypoints = string.Join(", ", placesToVisit);
-            // FarmersMarket.SMonitor.Log($"    Waypoints: {waypoints}", LogLevel.Debug);
+            // FarmersMarket.monitor.Log($"    Waypoints: {waypoints}", LogLevel.Debug);
 
             // work backwards through the waypoints
             var path = new Stack<Point>();
@@ -69,13 +69,13 @@ namespace FarmersMarket
             {
                 var thisStartPoint = new Point((int) waypoint.X, (int) waypoint.Y);
 
-                // FarmersMarket.SMonitor.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug);
+                // FarmersMarket.monitor.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug);
 
                 var legPath = OriginalFindPathForNPCSchedules(thisStartPoint, thisEndPoint, location, limit).ToList();
                 legPath.Reverse();
 
                 var segment = string.Join(", ", legPath);
-                // FarmersMarket.SMonitor.Log($"    Reversed path: {segment}", LogLevel.Debug);
+                // FarmersMarket.monitor.Log($"    Reversed path: {segment}", LogLevel.Debug);
 
                 foreach (var pt in legPath)
                 {
@@ -87,7 +87,7 @@ namespace FarmersMarket
 
             var final = string.Join(", ", path);
 
-            // FarmersMarket.SMonitor.Log($"    Final Path   : {final}", LogLevel.Debug);
+            // FarmersMarket.monitor.Log($"    Final Path   : {final}", LogLevel.Debug);
 
             __result = path;
             return false;
@@ -101,9 +101,9 @@ namespace FarmersMarket
 
             // var p1s = string.Join(", ", p1.ToList());
             // var p2s = string.Join(", ", p2.ToList());
-            // FarmersMarket.SMonitor.Log($"p1 {p1s}", LogLevel.Debug);
-            // FarmersMarket.SMonitor.Log($"p2 {p2s}", LogLevel.Debug);
-            // FarmersMarket.SMonitor.Log($"p1 {p1.Count} p2 {p2.Count}", LogLevel.Debug);
+            // FarmersMarket.monitor.Log($"p1 {p1s}", LogLevel.Debug);
+            // FarmersMarket.monitor.Log($"p2 {p2s}", LogLevel.Debug);
+            // FarmersMarket.monitor.Log($"p1 {p1.Count} p2 {p2.Count}", LogLevel.Debug);
 
             // foreach (var pt in p1r)
             // {
@@ -111,8 +111,8 @@ namespace FarmersMarket
             // }
 
             // p2s = string.Join(", ", p2.ToList());
-            // FarmersMarket.SMonitor.Log($"p2 final {p2s} ", LogLevel.Debug);
-            // FarmersMarket.SMonitor.Log($"p2 {p2.Count} ", LogLevel.Debug);
+            // FarmersMarket.monitor.Log($"p2 final {p2s} ", LogLevel.Debug);
+            // FarmersMarket.monitor.Log($"p2 {p2.Count} ", LogLevel.Debug);
         }
 
         [HarmonyReversePatch]

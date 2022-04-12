@@ -1,3 +1,8 @@
+# Farmers Market
+
+
+## Developer notes
+
 patch summary ceruleandeep.FarmersMarket.CP
 patch summary ceruleandeep.FarmersMarket
 
