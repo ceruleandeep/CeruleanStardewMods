@@ -62,7 +62,7 @@ namespace FarmersMarket.Utility
                 return;
             }
 
-            ShopManager.ItemShops.TryGetValue(args[0], out ItemShop value);
+            ShopManager.GrangeShops.TryGetValue(args[0], out GrangeShop value);
             if (value == null)
             {
                 FarmersMarket.monitor.Log($"No shop with a name of {args[0]} was found.", LogLevel.Debug);
@@ -122,7 +122,7 @@ namespace FarmersMarket.Utility
                 return;
             }
 
-            ShopManager.ItemShops.TryGetValue(args[0], out ItemShop shop);
+            ShopManager.GrangeShops.TryGetValue(args[0], out var shop);
             if (shop == null)
             {
                 FarmersMarket.monitor.Log($"No shop with a name of {args[0]} was found.", LogLevel.Debug);
@@ -143,14 +143,14 @@ namespace FarmersMarket.Utility
         /// </summary>
         private void ListAllShops(string command, string[] args)
         {
-            if (ShopManager.ItemShops.Count == 0)
+            if (ShopManager.GrangeShops.Count == 0)
             {
                 FarmersMarket.monitor.Log($"No shops were found", LogLevel.Debug);
             }
             else
             {
                 string temp = "";
-                foreach (string k in ShopManager.ItemShops.Keys)
+                foreach (string k in ShopManager.GrangeShops.Keys)
                 {
                     temp += "\nShop: " + k;
                 }

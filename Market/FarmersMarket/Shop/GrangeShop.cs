@@ -23,19 +23,13 @@ namespace FarmersMarket.Shop
 
         public int X;
         public int Y;
-        public string Name;
-        public string Description;
-        public double PurchasePriceMultiplier = 1.0;
         public Color StoreColor;
         public int SignObjectIndex;
         // public Dictionary<string, int[]> Stock;
-        public ItemStock[] Stock;
         
         public Chest StorageChest;
         public Sign GrangeSign;
-
-        public bool PlayerStore;
-
+        
         public Vector2 VisibleChestPosition;
         public Vector2 VisibleSignPosition;
         public Vector2 HiddenChestPosition;
@@ -47,14 +41,15 @@ namespace FarmersMarket.Shop
         public Dictionary<NPC, int> recentlyLooked = new();
         public Dictionary<NPC, int> recentlyTended = new();
 
-        
-        public GrangeShop(string name, string description, bool playerStore, int X, int Y)
+        public GrangeShop()
         {
-            Name = name;
-            Description = description;
-            PlayerStore = playerStore;
-            this.X = X;
-            this.Y = Y;
+            while (GrangeDisplay.Count < 9) GrangeDisplay.Add(null);
+        }
+        
+        public void SetOrigin(Vector2 Origin)
+        {
+            this.X = (int)Origin.X;
+            this.Y = (int)Origin.Y;
             VisibleChestPosition = new Vector2(X + 3, Y + 1);
             VisibleSignPosition = new Vector2(X + 3, Y + 3);
 
@@ -69,13 +64,16 @@ namespace FarmersMarket.Shop
                 HiddenSignPosition = new Vector2(X + 5, Y + 3);
             }
 
-            while (GrangeDisplay.Count < 9) GrangeDisplay.Add(null);
-
-            if (Description is null || Description.Length == 0)
-                Description = Get("default-stall-description", new {NpcName = Name});
-            Log($"stall description: {Description} (from {description})", LogLevel.Debug);
+            //
+            // if (Quote is null || Quote.Length == 0)
+            //     Quote = Get("default-stall-description", new {NpcName = ShopName});
         }
-
+        
+        public bool IsPlayerShop()
+        {
+            return ShopName == "Player";
+        }
+        
         public void OnDayStarted(bool IsMarketDay)
         {
             Sales = new List<SalesRecord>();
@@ -89,11 +87,11 @@ namespace FarmersMarket.Shop
             if (IsMarketDay)
             {
                 Log($"Market day", LogLevel.Info);
-                if (!PlayerStore)
+                if (!IsPlayerShop())
                 {
                     StockChestForTheDay();
                 }
-                if (!PlayerStore || FarmersMarket.Config.AutoStockAtStartOfDay) RestockGrangeFromChest(true);
+                if (!IsPlayerShop() || FarmersMarket.Config.AutoStockAtStartOfDay) RestockGrangeFromChest(true);
                 ShowFurniture();
             }
             else
@@ -105,7 +103,7 @@ namespace FarmersMarket.Shop
 
         public void OnTimeChanged()
         {
-            if (PlayerStore)
+            if (IsPlayerShop())
             {
                 if (FarmersMarket.Config.RestockItemsPerHour > 0) RestockGrangeFromChest();
             }
@@ -117,7 +115,7 @@ namespace FarmersMarket.Shop
         
         public void OnDayEnding()
         {
-            if (PlayerStore)
+            if (IsPlayerShop())
             {
                 EmptyStoreIntoChest();
                 HideFurniture();
@@ -176,7 +174,7 @@ namespace FarmersMarket.Shop
             var tile = e.Cursor.Tile;
             Log($"Button pressed at {tile}", LogLevel.Debug);
             if (tile.X < X || tile.X > X + 3 || tile.Y < Y || tile.Y > Y + 4) return;
-            if (PlayerStore)
+            if (IsPlayerShop())
             {
                 Game1.activeClickableMenu = new StorageContainer(GrangeDisplay, 9, 3, onGrangeChange, StardewValley.Utility.highlightSmallObjects);
             }
@@ -189,11 +187,12 @@ namespace FarmersMarket.Shop
 
         internal void ShowShopMenu()
         {
-            Game1.activeClickableMenu = new ShopMenu(ShopStock(), 0, Name, OnPurchase)
-            {
-                portraitPerson = Game1.getCharacterFromName(Name),
-                potraitPersonDialogue = Game1.parseText(Description, Game1.dialogueFont, 304)
-            };
+            DisplayShop(true);
+            // Game1.activeClickableMenu = new ShopMenu(ShopStock(), 0, ShopName, OnPurchase)
+            // {
+            //     portraitPerson = Game1.getCharacterFromName(ShopName),
+            //     potraitPersonDialogue = Game1.parseText(Quote, Game1.dialogueFont, 304)
+            // };
         }
 
         private bool OnPurchase(ISalable item, Farmer who, int stack)
@@ -233,7 +232,7 @@ namespace FarmersMarket.Shop
                     price = stockItem.salePrice();
                 }
 
-                price = (int)Math.Max(PurchasePriceMultiplier, 0) * price;
+                price = (int)Math.Max(DefaultSellPriceMultiplier, 0) * price;
 
                 var sellItem = stockItem.getOne();
                 sellItem.Stack = 1;
@@ -278,7 +277,7 @@ namespace FarmersMarket.Shop
         {
             var (ownerX, ownerY) = new Vector2(X + 3, Y + 2);
             var location = Game1.getLocationFromName("Town");
-            var npc = location.characters.FirstOrDefault(n => n.Name == Name);
+            var npc = location.characters.FirstOrDefault(n => n.Name == ShopName);
             if (npc is null) return null;
             if (npc.getTileX() == (int) ownerX && npc.getTileY() == (int) ownerY) return npc;
             return null;
@@ -289,7 +288,7 @@ namespace FarmersMarket.Shop
             foreach (var npc in NearbyNPCs())
             {
                 // the owner
-                if (npc.Name == Name) continue;
+                if (npc.Name == ShopName) continue;
                 
                 // busy looking
                 if (npc.movementPause is > 2000 or < 500) continue;
@@ -319,7 +318,7 @@ namespace FarmersMarket.Shop
                 var item = GrangeDisplay[i];
 
                 // buy it
-                if (PlayerStore) AddToPlayerFunds(item, npc);
+                if (IsPlayerShop()) AddToPlayerFunds(item, npc);
                 GrangeDisplay[i] = null;
 
                 EmoteForPurchase(npc, item);
@@ -525,7 +524,7 @@ namespace FarmersMarket.Shop
                 if (item is not Chest chest) continue;
                 if (!chest.modData.TryGetValue($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage",
                     out var owner)) continue;
-                if (owner != Name) continue;
+                if (owner != ShopName) continue;
                 Log($"    StorageChest for {owner} at {tile} claims to be at {chest.TileLocation}", LogLevel.Debug);
                 if (tile != chest.TileLocation)
                 {
@@ -541,7 +540,7 @@ namespace FarmersMarket.Shop
                 Log($"    Creating new StorageChest at {HiddenChestPosition}", LogLevel.Debug);
                 StorageChest = new Chest(true, HiddenChestPosition, 232)
                 {
-                    modData = {[$"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage"] = Name}
+                    modData = {[$"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage"] = ShopName}
                 };
                 location.setObject(HiddenChestPosition, StorageChest);
             }
@@ -554,7 +553,7 @@ namespace FarmersMarket.Shop
                 if (!sign.modData.TryGetValue($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeSign",
                     out var owner))
                     continue;
-                if (owner != Name) continue;
+                if (owner != ShopName) continue;
                 Log($"    GrangeSign for {owner} at {tile} claims to be at {sign.TileLocation}", LogLevel.Debug);
                 GrangeSign = sign;
             }
@@ -564,7 +563,7 @@ namespace FarmersMarket.Shop
                 Log($"    Creating new GrangeSign at {HiddenSignPosition}", LogLevel.Debug);
                 GrangeSign = new Sign(HiddenSignPosition, WOOD_SIGN)
                 {
-                    modData = {[$"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeSign"] = Name}
+                    modData = {[$"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeSign"] = ShopName}
                 };
                 location.objects[HiddenSignPosition] = GrangeSign;
             }
@@ -644,7 +643,7 @@ namespace FarmersMarket.Shop
                     if (!sign.modData.TryGetValue($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeSign",
                         out var owner))
                         continue;
-                    if (owner != Name) continue;
+                    if (owner != ShopName) continue;
                     toRemove[tile] = item;
                 }
 
@@ -652,7 +651,7 @@ namespace FarmersMarket.Shop
                 {
                     if (!chest.modData.TryGetValue($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage",
                         out var owner)) continue;
-                    if (owner != Name) continue;
+                    if (owner != ShopName) continue;
                     toRemove[tile] = item;
                 }
             }
@@ -669,13 +668,23 @@ namespace FarmersMarket.Shop
 
         private void StockChestForTheDay()
         {
-            foreach (var ItemStock in Stock)
+            foreach (var (Salable, priceAndStock) in StockManager.ItemPriceAndStock)
             {
-                var stack = ItemStock.Stock;
+                // priceAndStock: price, stock, currency obj, currency stack
+                Log($"    Stock item {Salable.DisplayName} price {priceAndStock[0]} stock {priceAndStock[1]}", LogLevel.Debug);
+                var stack = Math.Min(priceAndStock[1], 13);
                 while (stack-- > 0)
                 {
-                    var idx = ItemStock.ItemIDs[Game1.random.Next(ItemStock.ItemIDs.Length)];
-                    StorageChest.addItem(new Object(idx, 1));
+                    if (Salable is Item item)
+                    {
+                        var newItem = item.getOne();
+                        newItem.Stack = 1;
+                        StorageChest.addItem(newItem);
+                    }
+                    else
+                    {
+                        Log($"    Stock item {Salable.DisplayName} is not an Item", LogLevel.Warn);
+                    }
                 }
             }
         }
@@ -684,9 +693,13 @@ namespace FarmersMarket.Shop
         {
             var restockLimitRemaining = FarmersMarket.Config.RestockItemsPerHour;
             
-            if (StorageChest.items.Count < 1) return;
             for (var j = 0; j < GrangeDisplay.Count; j++)
             {
+                if (StorageChest.items.Count == 0)
+                {
+                    Log($"RestockGrangeFromChest: {ShopName} out of stock", LogLevel.Info);
+                    return;
+                }
                 if (restockLimitRemaining <= 0) return;
                 if (GrangeDisplay[j] != null) continue;
 
@@ -979,7 +992,7 @@ namespace FarmersMarket.Shop
 
         private void Log(string message, LogLevel level)
         {
-            FarmersMarket.monitor.Log($"[{Name}] {message}", level);
+            FarmersMarket.monitor.Log($"[{ShopName}] {message}", level);
         }
 
         private string Get(string key)

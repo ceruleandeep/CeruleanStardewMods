@@ -14,7 +14,7 @@ namespace FarmersMarket.Utility
         /// <summary>
         /// Given the english string, and then a dictionary of localized versions of the string,
         /// return the string of the current selected language
-        /// Pretty much copy&pasted from Json Assets
+        /// Pretty much copy pasted from Json Assets
         /// </summary>
         /// <param name="english">the english string</param>
         /// <param name="translations">each key is a language code with the value being the translated string</param>

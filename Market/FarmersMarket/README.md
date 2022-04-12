@@ -1,5 +1,42 @@
 # Farmers Market
 
+## Credits
+
+* Uses code from ChroniclerCherry's Shop Tile Framework
+* Uses code from aedenthorn's Persistent Grange Stand
+
+## Store life cycle
+
+Day started:
+* reset the sales and visitor counters
+* reset the lists of sales and recent buyers
+* find or create the chest and sign objects
+* put some stock in the chest, if an NPC store
+* restock the shop from the chest
+* move the furniture into position
+
+When world is rendered:
+* draw the shop contents
+
+When button pressed:
+* if a player shop, open the grange menu
+* if a NPC shop, open the shop menu
+
+Every hour:
+* move some items from the chest to the shop
+
+Every update:
+* if an NPC is in front of the shop, stop to look
+
+Every 1s update:
+* if an NPC is looking, maybe sell something to them
+* if the NPC store owner is nearby, stop to tend the shop
+
+Day ended:
+* if a player shop, move the shop stock into the chest and hide the furniture
+* if a NPC shop, destroy the furniture
+
+
 
 ## Developer notes
 

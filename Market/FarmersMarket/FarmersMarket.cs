@@ -1,18 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using FarmersMarket.API;
 using FarmersMarket.Data;
+using FarmersMarket.ItemPriceAndStock;
 using FarmersMarket.Shop;
+using FarmersMarket.Utility;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Menus;
 using StardewValley.Objects;
+using xTile.ObjectModel;
 using SObject = StardewValley.Object;
 
 /*
  * TODO:
  * allow sales of non-item items
+ * add console command to reshuffle the shop choices
+ * test with animals and hats and such
+ * move shopowner standing loc
+ * add field for npc name back in
+ * somehow pick a default colour if none chosen
+ * somehow pick a default sign if none chosen
+ * find the shop locations by searching the tiles
  
  * write default translations for texts
  
@@ -37,10 +50,21 @@ namespace FarmersMarket
     // ReSharper disable once ClassNeverInstantiated.Global
     public class FarmersMarket : Mod
     {
-        internal const double VISIT_CHANCE = 0.9;
-
         internal const int PLAYER_STORE_X = 23;
         internal const int PLAYER_STORE_Y = 63;
+
+        internal static List<Vector2> ShopLocations = new()
+        {
+            new(28, 58),
+            new(28, 63),
+            new(33, 63),
+            new(33, 58),
+            new(33, 68),
+            new(28, 68),
+        };
+
+        internal static Dictionary<Vector2, GrangeShop> ShopAtTile = new(); 
+        
         private static ContentPatcher.IContentPatcherAPI ContentPatcherAPI;
         // private static IManagedConditions MarketDayConditions;
         internal static ModConfig Config;
@@ -54,17 +78,15 @@ namespace FarmersMarket
         //animal shop menus
         internal static GameLocation SourceLocation;
         private static Vector2 _playerPos = Vector2.Zero;
-
+        internal static bool VerboseLogging = true;
         
         internal static Mod SMod;
-
-        internal static ContentPack StoresData;
-
-        internal static List<GrangeShop> Stores = new();
+        
+        // internal static ContentPack StoresData;
+        // internal static List<GrangeShop> Stores = new();
         
         private IGenericModConfigMenuApi configMenu;
 
-        internal static bool VerboseLogging = true;
 
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
@@ -76,6 +98,7 @@ namespace FarmersMarket
             SMod = this;
 
             Helper.Events.GameLoop.GameLaunched += OnLaunched;
+            Helper.Events.GameLoop.GameLaunched += STF_OnLaunched;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
             Helper.Events.GameLoop.DayStarted += OnDayStarted;
             Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
@@ -85,9 +108,18 @@ namespace FarmersMarket
             Helper.Events.GameLoop.DayEnding += OnDayEnding;
             Helper.Events.GameLoop.Saving += OnSaving;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            Helper.Events.Input.ButtonPressed += STF_Input_ButtonPressed;
             Helper.Events.Display.RenderedWorld += OnRenderedWorld;
 
             ShopManager.LoadContentPacks();
+
+            var PlayerShop = new GrangeShop()
+            {
+                ShopName = "Player",
+                Quote = "Player store", 
+                ItemStocks = new ItemStock[0]
+            };
+            ShopManager.GrangeShops.Add("Player", PlayerShop);
 
             var harmony = new Harmony("ceruleandeep.FarmersMarket");
             harmony.PatchAll();
@@ -103,69 +135,114 @@ namespace FarmersMarket
             Helper.WriteConfig(Config);
         }
 
-        /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
+        /// <summary>Raised after the player loads a save slot and the world is initialised.
+        ///
+        /// For STF compat:
+        /// On a save loaded, store the language for translation purposes. Done on save loaded in
+        /// case it's changed between saves
+        /// 
+        /// Also retrieve all object informations. This is done on save loaded because that's
+        /// when JA adds custom items
+        /// </summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
         void OnSaveLoaded(object sender, EventArgs e)
         {
             // reload the config to pick up any changes made in GMCM on the title screen
             Config = Helper.ReadConfig<ModConfig>();
+            
+            // some hooks for STF
+            Translations.UpdateSelectedLanguage();
+            ShopManager.UpdateTranslations();
+
+            ItemsUtil.UpdateObjectInfoSource();
+            ShopManager.InitializeItemStocks();
+
+            ItemsUtil.RegisterItemsToRemove();
         }
 
         void OnDayStarted(object sender, EventArgs e)
         {
             monitor.Log($"OnDayStarted", LogLevel.Info);
 
-            // var rawConditions = new Dictionary<string, string>
-            // {
-            //     ["DayOfWeek"] = "Saturday",
-            //     ["Weather"] = "Sun, Wind",
-            //     ["HasValue:{{DayEvent}}"] = "false"
-            // };
-            // MarketDayConditions = ContentPatcherAPI.ParseConditions(
-            //     ModManifest,
-            //     rawConditions,
-            //     new SemanticVersion("1.20.0")
-            // );
+            // note: we build the stores the night before to stay one step ahead of the route planner
+            // i.e. BuildStores() called elsewhere;
 
-            // we build the stores the night before to stay one step ahead of the route planner
-            // BuildStores();
-            
-            foreach (var store in Stores) store.OnDayStarted(IsMarketDay());
+            // STF 
+            ShopManager.UpdateStock();
+
+            foreach (var store in ShopAtTile.Values) store.OnDayStarted(IsMarketDay());
         }
 
         private static void BuildStores()
         {
-            Stores = new List<GrangeShop>();
-            StardewValley.Utility.Shuffle(Game1.random, StoresData.Shops);
-            for (var j = 0; j < StoresData.ShopLocations.Count; j++)
+            var availableShopNames = ShopManager.GrangeShops.Keys.ToList();
+            availableShopNames.Remove("Player");
+            StardewValley.Utility.Shuffle(Game1.random, availableShopNames);
+
+            var strNames = string.Join(", ", availableShopNames);
+            monitor.Log($"BuildStores: Adding stores ({ShopLocations.Count} of {strNames})", LogLevel.Info);
+
+            foreach (var ShopLocation in ShopLocations)
             {
-                var storeData = StoresData.Shops[j];
-                var (x, y) = StoresData.ShopLocations[j];
-                var store = new GrangeShop(storeData.ShopName, storeData.Quote, false, (int) x, (int) y)
-                {
-                    StoreColor = storeData.Color,
-                    SignObjectIndex = storeData.SignObject,
-                    PurchasePriceMultiplier = storeData.DefaultSellPriceMultiplier,
-                    Stock = storeData.ItemStocks
-                };
+                if (availableShopNames.Count == 0) break;
+                var ShopName = availableShopNames[0];
+                availableShopNames.RemoveAt(0);
 
-                monitor.Log($"Adding a store for {store.Name}", LogLevel.Debug);
-                Stores.Add(store);
+                ShopAtTile[ShopLocation] = ShopManager.GrangeShops[ShopName];
+                ShopManager.GrangeShops[ShopName].SetOrigin(ShopLocation);
             }
+            
+            var PlayerShopLocation = new Vector2(PLAYER_STORE_X, PLAYER_STORE_Y);
+            ShopAtTile[PlayerShopLocation] = ShopManager.GrangeShops["Player"];
+            ShopManager.GrangeShops["Player"].SetOrigin(PlayerShopLocation);
 
-            Stores.Add(new GrangeShop("Player", null, true, PLAYER_STORE_X, PLAYER_STORE_Y));
+            // ShopAtTile[ShopLocations[0]] = ShopManager.GrangeShops["Vincent"];
+            // ShopAtTile[ShopLocations[1]] = ShopManager.GrangeShops["Alex"];
+
+            // ShopManager.GrangeShops["Vincent"].SetOrigin((int)ShopLocations[0].X, (int)ShopLocations[0].Y);
+            // ShopManager.GrangeShops["Alex"].SetOrigin((int)ShopLocations[1].X, (int)ShopLocations[1].Y);
+
+            //
+            // // Stores = new List<GrangeShop>();
+            // // StardewValley.Utility.Shuffle(Game1.random, StoresData.Shops);
+            //     
+            // for (var j = 0; j < ShopLocations.Count; j++)
+            // {
+            //     // to open a store we need its store data
+            //     // STF reads it from content packs in ModEntry (ShopManager.LoadContentPacks())
+            //     // and calls ShopManager.RegisterShops(data, contentPack);
+            //     // which adds it to ShopManager.GrangeShops
+            //     //
+            //     // well, we probably don't need to open it, STF should have done that
+            //     // we just need to assign it to a position
+            //     
+            //     var storeData = StoresData.Shops[j];
+            //     var (x, y) = StoresData.ShopLocations[j];
+            //     var store = new GrangeShop(storeData.ShopName, storeData.Quote, false, (int) x, (int) y)
+            //     {
+            //         StoreColor = storeData.Color,
+            //         SignObjectIndex = storeData.SignObject,
+            //         PurchasePriceMultiplier = storeData.DefaultSellPriceMultiplier,
+            //         Stock = storeData.ItemStocks
+            //     };
+            //
+            //     monitor.Log($"Adding a store for {store.Name}", LogLevel.Debug);
+            //     Stores.Add(store);
+            // }
+            //
+            // Stores.Add(new GrangeShop("Player", null, true, PLAYER_STORE_X, PLAYER_STORE_Y));
         }
 
         void OnTimeChanged(object sender, EventArgs e)
         {
             if (Game1.timeOfDay % 100 > 0) return;
-            foreach (var store in Stores) store.OnTimeChanged();
+            foreach (var store in ShopAtTile.Values) store.OnTimeChanged();
         }
 
         void OnDayEnding(object sender, EventArgs e)
         {
-            foreach (var store in Stores) store.OnDayEnding();
+            foreach (var store in ShopAtTile.Values) store.OnDayEnding();
 
             // get ready for tomorrow
             BuildStores();
@@ -200,7 +277,7 @@ namespace FarmersMarket
                 location.Objects.Remove(tile);
             }
 
-            foreach (var store in Stores)
+            foreach (var store in ShopManager.GrangeShops.Values)
             {
                 store.StorageChest = null;
                 store.GrangeSign = null;
@@ -244,7 +321,7 @@ namespace FarmersMarket
             if (!Context.IsWorldReady) return;
             if (!IsMarketDay()) return;
 
-            foreach (var store in Stores)
+            foreach (var store in ShopAtTile.Values)
             {
                 store.OnUpdateTicking();
             }
@@ -255,7 +332,7 @@ namespace FarmersMarket
             if (!Context.IsWorldReady) return;
             if (!IsMarketDay()) return;
 
-            foreach (var store in Stores)
+            foreach (var store in ShopAtTile.Values)
             {
                 store.OnOneSecondUpdateTicking();
             }
@@ -265,7 +342,7 @@ namespace FarmersMarket
         private static void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
         {
             if (!IsMarketDay()) return;
-            foreach (var store in Stores)
+            foreach (var store in ShopAtTile.Values)
             {
                 store.OnRenderedWorld(e);
             }
@@ -285,7 +362,6 @@ namespace FarmersMarket
             string chestOwner = null;
             string signOwner = null;
 
-            monitor.Log($"OnButtonPressed", LogLevel.Info);
             if (Game1.currentLocation.objects.TryGetValue(new Vector2(x, y), out var objectAt))
             {
                 objectAt.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeStorage", out chestOwner);
@@ -293,32 +369,7 @@ namespace FarmersMarket
                 // monitor.Log($"OnButtonPressed GrabTile {x},{y} Obj: {objectAt.displayName} Chest: {chestOwner} Sign: {signOwner} Tool: {e.Button.IsUseToolButton()} Act: {e.Button.IsActionButton()}",
                 //     LogLevel.Debug);
             }
-            else
-            {
-                // monitor.Log($"OnButtonPressed GrabTile {x},{y} Tool: {e.Button.IsUseToolButton()} Act: {e.Button.IsActionButton()}",
-                //     LogLevel.Debug);
-            }
-
-            // if (Game1.currentLocation.objects.TryGetValue(new Vector2(x, y), out var objectAtGrabTile))
-            // {
-            //     monitor.Log($"Fyi GrabTile {x},{y} is Obj: {objectAtGrabTile.displayName}", LogLevel.Debug);
-            // }
-            // else
-            // {
-            //     monitor.Log($"Fyi GrabTile {x},{y} is nothing", LogLevel.Debug);
-            // }
-
-            if (Game1.currentLocation.objects.TryGetValue(new Vector2(tx, ty), out var objectAtTile))
-            {
-                monitor.Log($"Fyi Tile {tx},{ty} is Obj: {objectAtTile.displayName}", LogLevel.Debug);
-            }
-            else
-            {
-                monitor.Log($"Fyi Tile {tx},{ty} is nothing", LogLevel.Debug);
-            }
-
-
-
+            
             if (e.Button.IsUseToolButton() && objectAt is not null)
             {
                 if (signOwner is not null) {
@@ -327,14 +378,14 @@ namespace FarmersMarket
                         // clicked on player shop sign, show the summary
                         monitor.Log($"Suppress and show summary: clicked on player shop sign, show the summary", LogLevel.Debug);
                         Helper.Input.Suppress(e.Button);
-                        Stores.Find(store => store.Name == "Player")?.ShowSummary();
+                        ShopManager.GrangeShops[signOwner].ShowSummary();
                         return;
                     }
                     
                     // clicked on NPC shop sign, open the store
                     monitor.Log($"Suppress and show shop: clicked on NPC shop sign, open the store", LogLevel.Debug);
                     Helper.Input.Suppress(e.Button);
-                    Stores.Find(store => store.Name == signOwner)?.ShowShopMenu();
+                    ShopManager.GrangeShops[signOwner].ShowShopMenu();
                     return;
                 }
 
@@ -365,7 +416,7 @@ namespace FarmersMarket
                 {
                     monitor.Log($"Suppress and show shop: keep the player out of other people's signs", LogLevel.Debug);
                     Helper.Input.Suppress(e.Button);
-                    Stores.Find(store => store.Name == signOwner)?.ShowShopMenu();
+                    ShopManager.GrangeShops[signOwner].ShowShopMenu();
                     return;
                 }
             }
@@ -375,35 +426,177 @@ namespace FarmersMarket
                 var tileIndexAt = Game1.currentLocation.getTileIndexAt((int) x, (int) y, "Buildings");
                 if (tileIndexAt is < 349 or > 351) return;
 
-                foreach (var store in Stores)
+                foreach (var store in ShopAtTile.Values)
                 {
                     store.OnActionButton(e);
                 }
             }
         }
 
+        
+        /// <summary>
+        /// When input is received, check that the player is free and used an action button
+        /// If so, attempt open the shop if it exists
+        ///
+        /// From STF/ChroniclerCherry
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void STF_Input_ButtonPressed(object sender, StardewModdingAPI.Events.ButtonPressedEventArgs e)
+        {
+            //context and button check
+            if (!Context.CanPlayerMove)
+                return;
+
+            //Resets the boolean I use to check if a menu used to move the player around came from my mod
+            //and lets me return them to their original location
+            SourceLocation = null;
+            _playerPos = Vector2.Zero;
+
+            if (Constants.TargetPlatform == GamePlatform.Android)
+            {
+                if (e.Button != SButton.MouseLeft)
+                    return;
+                if (e.Cursor.GrabTile != e.Cursor.Tile)
+                    return;
+
+                if (VerboseLogging)
+                    monitor.Log("Input detected!");
+            }
+            else if (!e.Button.IsActionButton())
+                return;
+
+            Vector2 clickedTile = Helper.Input.GetCursorPosition().GrabTile;
+
+            //check if there is a tile property on Buildings layer
+            IPropertyCollection tileProperty = TileUtility.GetTileProperty(Game1.currentLocation, "Buildings", clickedTile);
+
+            if (tileProperty == null)
+                return;
+
+            //if there is a tile property, attempt to open shop if it exists
+            CheckForShopToOpen(tileProperty,e);
+        }
+
+        /// <summary>
+        /// Checks the tile property for shops, and open them
+        /// </summary>
+        /// <param name="tileProperty"></param>
+        /// <param name="e"></param>
+        private void CheckForShopToOpen(IPropertyCollection tileProperty, StardewModdingAPI.Events.ButtonPressedEventArgs e)
+        {
+            //check if there is a Shop property on clicked tile
+            tileProperty.TryGetValue("Shop", out PropertyValue shopProperty);
+            if (VerboseLogging)
+                monitor.Log($"Shop Property value is: {shopProperty}");
+            if (shopProperty != null) //There was a `Shop` property so attempt to open shop
+            {
+                //check if the property is for a vanilla shop, and gets the shopmenu for that shop if it exists
+                IClickableMenu menu = TileUtility.CheckVanillaShop(shopProperty, out bool warpingShop);
+                if (menu != null)
+                {
+                    if (warpingShop)
+                    {
+                        SourceLocation = Game1.currentLocation;
+                        _playerPos = Game1.player.position.Get();
+                    }
+
+                    //stop the click action from going through after the menu has been opened
+                    helper.Input.Suppress(e.Button);
+                    Game1.activeClickableMenu = menu;
+
+                }
+                else //no vanilla shop found
+                {
+                    //Extract the tile property value
+                    string shopName = shopProperty.ToString();
+
+                    if (ShopManager.GrangeShops.ContainsKey(shopName))
+                    {
+                        //stop the click action from going through after the menu has been opened
+                        helper.Input.Suppress(e.Button);
+                        ShopManager.GrangeShops[shopName].DisplayShop();
+                    }
+                    else
+                    {
+                        Monitor.Log($"A Shop tile was clicked, but a shop by the name \"{shopName}\" " +
+                            $"was not found.", LogLevel.Debug);
+                    }
+                }
+            }
+            else //no shop property found
+            {
+                tileProperty.TryGetValue("AnimalShop", out shopProperty); //see if there's an AnimalShop property
+                if (shopProperty != null) //no animal shop found
+                {
+                    string shopName = shopProperty.ToString();
+                    if (ShopManager.AnimalShops.ContainsKey(shopName))
+                    {
+                        //stop the click action from going through after the menu has been opened
+                        helper.Input.Suppress(e.Button);
+                        ShopManager.AnimalShops[shopName].DisplayShop();
+                    }
+                    else
+                    {
+                        Monitor.Log($"An Animal Shop tile was clicked, but a shop by the name \"{shopName}\" " +
+                            $"was not found.", LogLevel.Debug);
+                    }
+                }
+
+            } //end shopProperty null check
+        }
         private void OnLaunched(object sender, GameLaunchedEventArgs e)
         {
-            Config = Helper.ReadConfig<ModConfig>();
+            monitor.Log($"OnLaunched", LogLevel.Info);
 
+            Config = Helper.ReadConfig<ModConfig>();
             setupGMCM();
 
-            StoresData = this.Helper.Data.ReadJsonFile<ContentPack>("Assets/stores.json") ?? new ContentPack();
+            // StoresData = this.Helper.Data.ReadJsonFile<ContentPack>("Assets/stores.json") ?? new ContentPack();
 
-            monitor.Log($"NPC stores:", LogLevel.Info);
-            foreach (var store in StoresData.Shops)
-            {
-                monitor.Log($"    GrangeShop {store.ShopName} symbol {store.SignObject} color {store.Color}",
-                    LogLevel.Debug);
-            }
+            // monitor.Log($"NPC stores:", LogLevel.Info);
+            // foreach (var store in StoresData.GrangeShops)
+            // {
+            //     monitor.Log($"    GrangeShop {store.ShopName} symbol {store.SignObject} color {store.Color}",
+            //         LogLevel.Debug);
+            // }
 
-            monitor.Log($"OnLaunched", LogLevel.Info);
             BuildStores();
 
             ContentPatcherAPI =
                 Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>("Pathoschild.ContentPatcher");
             // ContentPatcherAPI.RegisterToken(ModManifest, "FarmersMarketOpen",
             //     () => { return Context.IsWorldReady ? new[] {IsMarketDayJustForToken() ? "true" : "false"} : null; });
+        }
+
+        /// <summary>
+        /// On game launched initialize all the shops and register all external APIs
+        ///
+        /// From STF/ChroniclerCherry
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void STF_OnLaunched(object sender, GameLaunchedEventArgs e)
+        {
+            ShopManager.InitializeShops();
+
+            APIs.RegisterJsonAssets();
+            if (APIs.JsonAssets != null)
+                APIs.JsonAssets.AddedItemsToShop += JsonAssets_AddedItemsToShop;
+
+            APIs.RegisterExpandedPreconditionsUtility();
+            APIs.RegisterBFAV();
+            APIs.RegisterFAVR();
+        }
+        
+        private void JsonAssets_AddedItemsToShop(object sender, System.EventArgs e)
+        {
+            if (Game1.activeClickableMenu is ShopMenu shop)
+            {
+                shop.setItemPriceAndStock(ItemsUtil.RemoveSpecifiedJAPacks(shop.itemPriceAndStock));
+            }
         }
 
         private void setupGMCM() {

@@ -15,8 +15,8 @@ namespace FarmersMarket.Shop
     /// </summary>
     class ShopManager
     {
-        public static Dictionary<string, ItemShop> ItemShops = new Dictionary<string, ItemShop>();
-        public static Dictionary<string, AnimalShop> AnimalShops = new Dictionary<string, AnimalShop>();
+        public static Dictionary<string, GrangeShop> GrangeShops = new();
+        public static Dictionary<string, AnimalShop> AnimalShops = new();
 
         /// <summary>
         /// Takes content packs and loads them as ItemShop and AnimalShop objects
@@ -59,19 +59,19 @@ namespace FarmersMarket.Shop
         /// <param name="contentPack"></param>
         public static void RegisterShops(ContentPack data, IContentPack contentPack)
         {
-            if (data.Shops != null)
+            if (data.GrangeShops != null)
             {
-                foreach (ItemShop shopPack in data.Shops)
+                foreach (var shopPack in data.GrangeShops)
                 {
-                    if (ItemShops.ContainsKey(shopPack.ShopName))
+                    if (GrangeShops.ContainsKey(((ItemShopModel) shopPack).ShopName))
                     {
-                        FarmersMarket.monitor.Log($"{contentPack.Manifest.Name} is trying to add a Shop \"{shopPack.ShopName}\"," +
+                        FarmersMarket.monitor.Log($"{contentPack.Manifest.Name} is trying to add a Shop \"{((ItemShopModel) shopPack).ShopName}\"," +
                             $" but a shop of this name has already been added. " +
                             $"It will not be added.", LogLevel.Warn);
                         continue;
                     }
                     shopPack.ContentPack = contentPack;
-                    ItemShops.Add(shopPack.ShopName, shopPack);
+                    GrangeShops.Add(((ItemShopModel) shopPack).ShopName, shopPack);
                 }
             }
 
@@ -96,7 +96,7 @@ namespace FarmersMarket.Shop
         /// </summary>
         public static void UpdateTranslations()
         {
-            foreach (ItemShop itemShop in ItemShops.Values)
+            foreach (ItemShop itemShop in GrangeShops.Values)
             {
                 itemShop.UpdateTranslations();
             }
@@ -112,7 +112,7 @@ namespace FarmersMarket.Shop
         /// </summary>
         public static void InitializeShops()
         {
-            foreach (ItemShop itemShop in ItemShops.Values)
+            foreach (ItemShop itemShop in GrangeShops.Values)
             {
                 itemShop.Initialize();
             }
@@ -123,7 +123,7 @@ namespace FarmersMarket.Shop
         /// </summary>
         public static void InitializeItemStocks()
         {
-            foreach (ItemShop itemShop in ItemShops.Values)
+            foreach (ItemShop itemShop in GrangeShops.Values)
             {
                 itemShop.StockManager.Initialize();
             }
@@ -135,10 +135,10 @@ namespace FarmersMarket.Shop
         /// </summary>
         internal static void UpdateStock()
         {
-            if (ItemShops.Count > 0)
+            if (GrangeShops.Count > 0)
                 FarmersMarket.monitor.Log($"Refreshing stock for all custom shops...", LogLevel.Debug);
 
-            foreach (ItemShop store in ItemShops.Values)
+            foreach (ItemShop store in GrangeShops.Values)
             {
                 store.UpdateItemPriceAndStock();
                 store.UpdatePortrait();

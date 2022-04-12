@@ -27,33 +27,41 @@ namespace FarmersMarket
             // var original = string.Join(", ", originalPath);
             // FarmersMarket.monitor.Log($"    Original path: {original}", LogLevel.Debug);
 
-
+            // for now, visit every shop
+            
             var placesToVisit = new List<Point>();
-
-            var openStores = new Dictionary<string, Point>();
-            foreach (var store in FarmersMarket.Stores)
-            {
-                openStores[store.Name] = new Point(store.X + 3, store.Y + 2);
-            }
-
-            if (openStores.Keys.Contains(___character.Name))
-            {
-                // FarmersMarket.monitor.Log($"    {___character.Name} has a store", LogLevel.Debug);
-                placesToVisit.Add(openStores[___character.Name]);
-            }
-            else
-            {
-                if (Game1.random.NextDouble() < FarmersMarket.Config.PlayerStallVisitChance + Game1.player.DailyLuck)
-                {
-                    placesToVisit.Add(new Point(
-                            FarmersMarket.PLAYER_STORE_X + Game1.random.Next(3),
-                            FarmersMarket.PLAYER_STORE_Y + 4));
-                }
-                placesToVisit.AddRange(
-                    from place in FarmersMarket.StoresData.ShopLocations
-                    where Game1.random.NextDouble() < FarmersMarket.Config.NPCStallVisitChance
-                    select new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4));
-            }
+            placesToVisit.Add(new Point(
+                FarmersMarket.PLAYER_STORE_X + Game1.random.Next(3),
+                FarmersMarket.PLAYER_STORE_Y + 4));
+            placesToVisit.AddRange(
+                from place in FarmersMarket.ShopAtTile.Keys
+                where Game1.random.NextDouble() < FarmersMarket.Config.NPCStallVisitChance
+                select new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4));
+            
+            // var openStores = new Dictionary<string, Point>();
+            // foreach (var store in FarmersMarket.Stores)
+            // {
+            //     openStores[store.Name] = new Point(store.X + 3, store.Y + 2);
+            // }
+            //
+            // if (openStores.Keys.Contains(___character.Name))
+            // {
+            //     // FarmersMarket.monitor.Log($"    {___character.Name} has a store", LogLevel.Debug);
+            //     placesToVisit.Add(openStores[___character.Name]);
+            // }
+            // else
+            // {
+            //     if (Game1.random.NextDouble() < FarmersMarket.Config.PlayerStallVisitChance + Game1.player.DailyLuck)
+            //     {
+            //         placesToVisit.Add(new Point(
+            //                 FarmersMarket.PLAYER_STORE_X + Game1.random.Next(3),
+            //                 FarmersMarket.PLAYER_STORE_Y + 4));
+            //     }
+            //     placesToVisit.AddRange(
+            //         from place in FarmersMarket.ShopAtTile.Keys
+            //         where Game1.random.NextDouble() < FarmersMarket.Config.NPCStallVisitChance
+            //         select new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4));
+            // }
 
             StardewValley.Utility.Shuffle(Game1.random, placesToVisit);
             placesToVisit.Add(startPoint);

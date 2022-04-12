@@ -1,4 +1,5 @@
-﻿using FarmersMarket.ItemPriceAndStock;
+﻿using System;
+using FarmersMarket.ItemPriceAndStock;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
@@ -16,7 +17,7 @@ namespace FarmersMarket.Data
         public double DefaultSellPriceMultipler { set => DefaultSellPriceMultiplier = value; }
         public double DefaultSellPriceMultiplier { get; set; } = 1;
         public Dictionary<double, string[]> PriceMultiplierWhen { get; set; } = null;
-        public ItemStock[] ItemStocks { get; set; }
+        public ItemStock[] ItemStocks { get; set; } = Array.Empty<ItemStock>();
         public string[] When { get; set; } = null;
         public string ClosedMessage { get; set; } = null;
         public Dictionary<string, string> LocalizedQuote { get; set; }

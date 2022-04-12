@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using FarmersMarket.Data;
 using FarmersMarket.ItemPriceAndStock;
 using FarmersMarket.Utility;
@@ -103,7 +103,7 @@ namespace FarmersMarket.Shop
                     break;
             }
 
-            var shopMenu = new ShopMenu(StockManager.ItemPriceAndStock, currency: currency);
+            var shopMenu = new ShopMenu(StockManager.ItemPriceAndStock, currency);
 
             if (CategoriesToSellHere != null)
                 shopMenu.categoriesToSellHere = CategoriesToSellHere;
