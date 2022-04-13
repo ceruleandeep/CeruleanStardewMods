@@ -5,7 +5,49 @@
 * Uses code from ChroniclerCherry's Shop Tile Framework
 * Uses code from aedenthorn's Persistent Grange Stand
 
-## Store life cycle
+## TODO
+
+* check that we can move the player store around
+* make some shops as a fake content pack
+
+* test with animals and hats and such
+* add console command to reshuffle the shop choices
+
+* find the shop locations by searching the tiles
+* prevent smashing of furniture with Harmony
+* check alternate currency support for STF packs
+* tint the sign
+* boost price if item is in season
+* custom sell prices for player store with prob of purchase?
+* make sure this stuff doesn't run during the fair
+
+## License
+
+GPL3
+
+## Market Data Model
+A list of co-ordinates of the grange stands (top left corner),
+and a map of shop name -> NPC who runs the shop.
+
+```json
+{
+  "ShopLocations": [
+    "28, 58",
+    "28, 63",
+    "33, 63",
+    "33, 58",
+    "33, 68",
+    "28, 68",
+    "23, 63"
+  ],
+  "ShopOwners": {
+    "Alex": "Alex",
+    "SVColaShop": "Vincent"
+  }
+}
+```
+
+## Grange shop life cycle
 
 Day started:
 * reset the sales and visitor counters

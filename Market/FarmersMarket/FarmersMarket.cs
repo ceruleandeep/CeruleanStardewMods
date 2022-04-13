@@ -16,26 +16,6 @@ using StardewValley.Objects;
 using xTile.ObjectModel;
 using SObject = StardewValley.Object;
 
-/*
- * TODO:
- * allow sales of non-item items
- * add console command to reshuffle the shop choices
- * test with animals and hats and such
- * move shopowner standing loc
- * add field for npc name back in
- * somehow pick a default colour if none chosen
- * somehow pick a default sign if none chosen
- * find the shop locations by searching the tiles
- 
- * write default translations for texts
- 
- * prevent smashing of furniture with Harmony
- * boost price if item is in season
- * fix the drawing layer
- * custom sell prices for player store with prob of purchase?
- * make sure this stuff doesn't run during the fair
- */
-
 namespace FarmersMarket
 {
     public class SalesRecord
@@ -53,15 +33,17 @@ namespace FarmersMarket
         internal const int PLAYER_STORE_X = 23;
         internal const int PLAYER_STORE_Y = 63;
 
-        internal static List<Vector2> ShopLocations = new()
-        {
-            new(28, 58),
-            new(28, 63),
-            new(33, 63),
-            new(33, 58),
-            new(33, 68),
-            new(28, 68),
-        };
+        internal static MarketDataModel MarketData;
+        
+        // internal static List<Vector2> ShopLocations = new()
+        // {
+        //     new(28, 58),
+        //     new(28, 63),
+        //     new(33, 63),
+        //     new(33, 58),
+        //     new(33, 68),
+        //     new(28, 68),
+        // };
 
         internal static Dictionary<Vector2, GrangeShop> ShopAtTile = new(); 
         
@@ -78,7 +60,7 @@ namespace FarmersMarket
         //animal shop menus
         internal static GameLocation SourceLocation;
         private static Vector2 _playerPos = Vector2.Zero;
-        internal static bool VerboseLogging = true;
+        internal static bool VerboseLogging = false;
         
         internal static Mod SMod;
         
@@ -109,7 +91,6 @@ namespace FarmersMarket
             Helper.Events.GameLoop.Saving += OnSaving;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.Input.ButtonPressed += STF_Input_ButtonPressed;
-            Helper.Events.Display.RenderedWorld += OnRenderedWorld;
 
             ShopManager.LoadContentPacks();
 
@@ -181,9 +162,9 @@ namespace FarmersMarket
             StardewValley.Utility.Shuffle(Game1.random, availableShopNames);
 
             var strNames = string.Join(", ", availableShopNames);
-            monitor.Log($"BuildStores: Adding stores ({ShopLocations.Count} of {strNames})", LogLevel.Info);
+            monitor.Log($"BuildStores: Adding stores ({MarketData.ShopLocations.Count} of {strNames})", LogLevel.Info);
 
-            foreach (var ShopLocation in ShopLocations)
+            foreach (var ShopLocation in MarketData.ShopLocations)
             {
                 if (availableShopNames.Count == 0) break;
                 var ShopName = availableShopNames[0];
@@ -232,6 +213,11 @@ namespace FarmersMarket
             // }
             //
             // Stores.Add(new GrangeShop("Player", null, true, PLAYER_STORE_X, PLAYER_STORE_Y));
+        }
+
+        public static List<GrangeShop> ActiveShops()
+        {
+            return ShopAtTile.Values.ToList();
         }
 
         void OnTimeChanged(object sender, EventArgs e)
@@ -337,16 +323,7 @@ namespace FarmersMarket
                 store.OnOneSecondUpdateTicking();
             }
         }
-
-
-        private static void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
-        {
-            if (!IsMarketDay()) return;
-            foreach (var store in ShopAtTile.Values)
-            {
-                store.OnRenderedWorld(e);
-            }
-        }
+        
 
         /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
         /// <param name="sender">The event sender.</param>
@@ -385,7 +362,7 @@ namespace FarmersMarket
                     // clicked on NPC shop sign, open the store
                     monitor.Log($"Suppress and show shop: clicked on NPC shop sign, open the store", LogLevel.Debug);
                     Helper.Input.Suppress(e.Button);
-                    ShopManager.GrangeShops[signOwner].ShowShopMenu();
+                    ShopManager.GrangeShops[signOwner].DisplayShop(true);
                     return;
                 }
 
@@ -416,7 +393,7 @@ namespace FarmersMarket
                 {
                     monitor.Log($"Suppress and show shop: keep the player out of other people's signs", LogLevel.Debug);
                     Helper.Input.Suppress(e.Button);
-                    ShopManager.GrangeShops[signOwner].ShowShopMenu();
+                    ShopManager.GrangeShops[signOwner].DisplayShop(true);
                     return;
                 }
             }
@@ -546,6 +523,7 @@ namespace FarmersMarket
 
             } //end shopProperty null check
         }
+        
         private void OnLaunched(object sender, GameLaunchedEventArgs e)
         {
             monitor.Log($"OnLaunched", LogLevel.Info);
@@ -553,7 +531,7 @@ namespace FarmersMarket
             Config = Helper.ReadConfig<ModConfig>();
             setupGMCM();
 
-            // StoresData = this.Helper.Data.ReadJsonFile<ContentPack>("Assets/stores.json") ?? new ContentPack();
+            MarketData = Helper.Data.ReadJsonFile<MarketDataModel>("Assets/stores.json") ?? new MarketDataModel();
 
             // monitor.Log($"NPC stores:", LogLevel.Info);
             // foreach (var store in StoresData.GrangeShops)

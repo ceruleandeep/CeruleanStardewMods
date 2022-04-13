@@ -32,8 +32,9 @@ namespace FarmersMarket.Shop
         
         public Vector2 VisibleChestPosition;
         public Vector2 VisibleSignPosition;
-        public Vector2 HiddenChestPosition;
-        public Vector2 HiddenSignPosition;
+        
+        public Vector2 PlayerHiddenChestPosition = new Vector2(1337, 1337);
+        public Vector2 PlayerHiddenSignPosition = new Vector2(1337, 1338);
 
         public int VisitorsToday;
         public int GrumpyVisitorsToday;
@@ -53,16 +54,16 @@ namespace FarmersMarket.Shop
             VisibleChestPosition = new Vector2(X + 3, Y + 1);
             VisibleSignPosition = new Vector2(X + 3, Y + 3);
 
-            if (FarmersMarket.Config.HideFurniture)
-            {
-                HiddenChestPosition = new Vector2(X + 1337, Y + 1);
-                HiddenSignPosition = new Vector2(X + 1337, Y + 3);
-            }
-            else
-            {
-                HiddenChestPosition = new Vector2(X + 5, Y + 1);
-                HiddenSignPosition = new Vector2(X + 5, Y + 3);
-            }
+            // if (FarmersMarket.Config.HideFurniture)
+            // {
+            //     HiddenChestPosition = new Vector2(X + 1337, Y + 1);
+            //     HiddenSignPosition = new Vector2(X + 1337, Y + 3);
+            // }
+            // else
+            // {
+            //     HiddenChestPosition = new Vector2(X + 5, Y + 1);
+            //     HiddenSignPosition = new Vector2(X + 5, Y + 3);
+            // }
 
             //
             // if (Quote is null || Quote.Length == 0)
@@ -73,6 +74,11 @@ namespace FarmersMarket.Shop
         {
             return ShopName == "Player";
         }
+
+        public Vector2 OwnerPosition()
+        {
+            return new Vector2(X + 3, Y + 2);
+        }
         
         public void OnDayStarted(bool IsMarketDay)
         {
@@ -81,24 +87,20 @@ namespace FarmersMarket.Shop
             GrumpyVisitorsToday = 0;
             recentlyLooked = new Dictionary<NPC, int>();
             recentlyTended = new Dictionary<NPC, int>();
-            
-            GetReferencesToFurniture();
 
-            if (IsMarketDay)
+            if (!IsMarketDay) return;
+            Log($"Market day", LogLevel.Info);
+
+            GetReferencesToFurniture();
+                
+            if (!IsPlayerShop())
             {
-                Log($"Market day", LogLevel.Info);
-                if (!IsPlayerShop())
-                {
-                    StockChestForTheDay();
-                }
-                if (!IsPlayerShop() || FarmersMarket.Config.AutoStockAtStartOfDay) RestockGrangeFromChest(true);
-                ShowFurniture();
+                StockChestForTheDay();
             }
-            else
-            {
-                Log($"Apparently not a market day", LogLevel.Info);
-                HideFurniture();
-            }
+            if (!IsPlayerShop() || FarmersMarket.Config.AutoStockAtStartOfDay) RestockGrangeFromChest(true);
+
+            ShowFurniture();
+            DecorateFurniture();
         }
 
         public void OnTimeChanged()
@@ -162,13 +164,6 @@ namespace FarmersMarket.Shop
             SeeIfOwnerIsAround();
         }
 
-        internal void OnRenderedWorld(RenderedWorldEventArgs e)
-        {
-            var tileLocation = new Vector2(X, Y);
-            var drawLayer = Math.Max(0f, ((tileLocation.Y + 1) * 64 - 24) / 10000f) + tileLocation.X * 1E-05f;
-            drawGrangeItems(tileLocation, e.SpriteBatch, drawLayer);
-        }
-
         internal void OnActionButton(ButtonPressedEventArgs e)
         {
             var tile = e.Cursor.Tile;
@@ -180,20 +175,56 @@ namespace FarmersMarket.Shop
             }
             else
             {
-                ShowShopMenu();
+                DisplayShop(true);
             }
             FarmersMarket.SMod.Helper.Input.Suppress(e.Button);
         }
 
-        internal void ShowShopMenu()
+
+        /// <summary>
+        /// Opens the shop if conditions are met. If not, display the closed message
+        /// </summary>
+        public new void DisplayShop(bool debug = false)
         {
-            DisplayShop(true);
-            // Game1.activeClickableMenu = new ShopMenu(ShopStock(), 0, ShopName, OnPurchase)
-            // {
-            //     portraitPerson = Game1.getCharacterFromName(ShopName),
-            //     potraitPersonDialogue = Game1.parseText(Quote, Game1.dialogueFont, 304)
-            // };
+            FarmersMarket.monitor.Log($"Attempting to open the shop \"{ShopName}\"", LogLevel.Trace);
+
+            int currency = 0;
+            switch (StoreCurrency)
+            {
+                case "festivalScore":
+                    currency = 1;
+                    break;
+                case "clubCoins":
+                    currency = 2;
+                    break;
+            }
+
+            // var shopMenu = new ShopMenu(StockManager.ItemPriceAndStock, currency);
+            var shopMenu = new ShopMenu(ShopStock(), currency, null, OnPurchase);
+
+            if (CategoriesToSellHere != null)
+                shopMenu.categoriesToSellHere = CategoriesToSellHere;
+
+            if (_portrait != null)
+            {
+                shopMenu.portraitPerson = new NPC();
+                //only add a shop name the first time store is open each day so that items added from JA's side are only added once
+                if (!_shopOpenedToday)
+                    shopMenu.portraitPerson.Name = "STF." + ShopName;
+
+                shopMenu.portraitPerson.Portrait = _portrait;
+            }
+
+            if (Quote != null)
+            {
+                shopMenu.potraitPersonDialogue = Game1.parseText(Quote, Game1.dialogueFont, 304);
+            }
+
+            Game1.activeClickableMenu = shopMenu;
+            _shopOpenedToday = true;
         }
+        
+        
 
         private bool OnPurchase(ISalable item, Farmer who, int stack)
         {
@@ -513,10 +544,14 @@ namespace FarmersMarket.Shop
 
         private void GetReferencesToFurniture()
         {
+            if (!FarmersMarket.IsMarketDay())
+            {
+                Log("GetReferencesToFurniture called on non-market day", LogLevel.Error);
+                return;
+            }
             Log($"GetReferencesToFurniture", LogLevel.Debug);
 
             var location = Game1.getLocationFromName("Town");
-            
             
             // the storage chest
             foreach (var (tile, item) in location.Objects.Pairs)
@@ -537,12 +572,12 @@ namespace FarmersMarket.Shop
 
             if (StorageChest is null)
             {
-                Log($"    Creating new StorageChest at {HiddenChestPosition}", LogLevel.Debug);
-                StorageChest = new Chest(true, HiddenChestPosition, 232)
+                Log($"    Creating new StorageChest at {VisibleChestPosition}", LogLevel.Debug);
+                StorageChest = new Chest(true, VisibleChestPosition, 232)
                 {
                     modData = {[$"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage"] = ShopName}
                 };
-                location.setObject(HiddenChestPosition, StorageChest);
+                location.setObject(VisibleChestPosition, StorageChest);
             }
 
             
@@ -560,12 +595,12 @@ namespace FarmersMarket.Shop
 
             if (GrangeSign is null)
             {
-                Log($"    Creating new GrangeSign at {HiddenSignPosition}", LogLevel.Debug);
-                GrangeSign = new Sign(HiddenSignPosition, WOOD_SIGN)
+                Log($"    Creating new GrangeSign at {VisibleSignPosition}", LogLevel.Debug);
+                GrangeSign = new Sign(VisibleSignPosition, WOOD_SIGN)
                 {
                     modData = {[$"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeSign"] = ShopName}
                 };
-                location.objects[HiddenSignPosition] = GrangeSign;
+                location.objects[VisibleSignPosition] = GrangeSign;
             }
 
             
@@ -573,7 +608,10 @@ namespace FarmersMarket.Shop
             
             Log($"    ... StorageChest at {StorageChest.TileLocation}", LogLevel.Debug);
             Log($"    ... GrangeSign at {GrangeSign.TileLocation}", LogLevel.Debug);
+        }
 
+        private void DecorateFurniture()
+        {
             if (StoreColor.R > 0 || StoreColor.G > 0 || StoreColor.B > 0)
             {
                 Log($"    StoreColor {StoreColor}", LogLevel.Debug);
@@ -581,11 +619,21 @@ namespace FarmersMarket.Shop
                 StoreColor.A = 255;
                 StorageChest.playerChoiceColor.Value = StoreColor;
             }
-
-            if (SignObjectIndex > 0)
+            else
             {
-                Log($"    GrangeSign.displayItem.Value to {SignObjectIndex}", LogLevel.Debug);
-                GrangeSign.displayItem.Value = new Object(SignObjectIndex, 1);
+                var ci = Game1.random.Next(20);
+                var c = new DiscreteColorPicker(0, 0).getColorFromSelection(ci);
+                Log($"    StoreColor randomized to {c}", LogLevel.Debug);
+                StorageChest.playerChoiceColor.Value = c;
+            }
+
+            Item SignItem = null;
+            if (SignObjectIndex > 0) SignItem = new Object(SignObjectIndex, 1);
+            else if (StorageChest.items.Count > 0) SignItem = StorageChest.items[0].getOne();
+            if (SignItem is not null)
+            {
+                Log($"    GrangeSign.displayItem.Value to {SignItem.DisplayName}", LogLevel.Debug);
+                GrangeSign.displayItem.Value = SignItem;
                 GrangeSign.displayType.Value = 1;
             }
         }
@@ -599,8 +647,6 @@ namespace FarmersMarket.Shop
             Debug.Assert(GrangeSign.TileLocation.X > 0, "GrangeSign.TileLocation.X assigned");
             Debug.Assert(GrangeSign.TileLocation.Y > 0, "GrangeSign.TileLocation.Y assigned");
 
-            // location.setObject(VisibleChestPosition, StorageChest);
-            // location.removeObject(HiddenChestPosition, false);
             location.moveObject(
                 (int) StorageChest.TileLocation.X, (int) StorageChest.TileLocation.Y,
                 (int) VisibleChestPosition.X, (int) VisibleChestPosition.Y);
@@ -608,27 +654,22 @@ namespace FarmersMarket.Shop
             location.moveObject(
                 (int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
                 (int) VisibleSignPosition.X, (int) VisibleSignPosition.Y);
-
-            // location.moveObject((int)StorageChest.TileLocation.X, (int)StorageChest.TileLocation.Y, (int)VisibleChestPosition.X, (int)VisibleChestPosition.Y);
-            //
-            // location.setObject(VisibleChestPosition, StorageChest);
-            // location.setObject(VisibleSignPosition, GrangeSign);
-            // // location.objects[VisibleSignPosition] = GrangeSign;
-            //
-            // location.removeObject(HiddenChestPosition, false);
-            // location.removeObject(HiddenSignPosition, false);
         }
 
         private void HideFurniture()
         {
             var location = Game1.getLocationFromName("Town");
-            location.moveObject(
-                (int) StorageChest.TileLocation.X, (int) StorageChest.TileLocation.Y,
-                (int) HiddenChestPosition.X, (int) HiddenChestPosition.Y);
+            if (IsPlayerShop())
+            {
+                location.moveObject(
+                    (int) StorageChest.TileLocation.X, (int) StorageChest.TileLocation.Y,
+                    (int) PlayerHiddenChestPosition.X, (int) PlayerHiddenChestPosition.Y);
 
-            location.moveObject(
-                (int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
-                (int) HiddenSignPosition.X, (int) HiddenSignPosition.Y);
+                location.moveObject(
+                    (int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
+                    (int) PlayerHiddenSignPosition.X, (int) PlayerHiddenSignPosition.Y);
+                
+            }
         }
 
         private void DestroyFurniture()
@@ -814,7 +855,7 @@ namespace FarmersMarket.Shop
         }
 
         // aedenthorn
-        private void drawGrangeItems(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
+        internal void drawGrangeItems(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
         {
             Vector2 start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
 

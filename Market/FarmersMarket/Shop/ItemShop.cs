@@ -15,7 +15,7 @@ namespace FarmersMarket.Shop
     /// </summary>
     public class ItemShop : ItemShopModel
     {
-        private Texture2D _portrait;
+        protected Texture2D _portrait;
         public ItemPriceAndStockManager StockManager { get; set; }
 
         public IContentPack ContentPack { set; get; }
@@ -24,7 +24,7 @@ namespace FarmersMarket.Shop
         /// This is used to make sure that JA only adds items to this shop the first time it is opened each day
         /// or else items will be added every time the shop is opened
         /// </summary>
-        private bool _shopOpenedToday;
+        protected bool _shopOpenedToday;
 
         /// <summary>
         /// Initializes the stock manager, done at game loaded so that content packs have finished loading in

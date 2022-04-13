@@ -5,10 +5,32 @@ using System.Linq;
 using StardewValley;
 using Microsoft.Xna.Framework;
 using HarmonyLib;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
+using StardewValley.Objects;
 
 namespace FarmersMarket
 {
+    [HarmonyPatch(typeof(Chest))]
+    [HarmonyPatch("draw")]
+    [HarmonyPatch(new Type[] {typeof(SpriteBatch), typeof(int), typeof(int), typeof(float)})]
+    [HarmonyDebug]
+    public class Postfix_draw
+    {
+        public static void Postfix(Chest __instance, SpriteBatch spriteBatch, int x, int y)
+        {
+            // if (!__instance.modData.ContainsKey($"{FarmersMarket.SMod.ModManifest.UniqueID}/GrangeStorage")) return;
+            
+            var tileLocation = new Vector2(x-3, y-1);
+            if (! FarmersMarket.ShopAtTile.TryGetValue(tileLocation, out var grangeShop))
+            {
+                return;
+            }
+            var drawLayer = Math.Max(0f, ((tileLocation.Y + 1) * 64 - 24) / 10000f) + tileLocation.X * 1E-05f;
+            grangeShop.drawGrangeItems(tileLocation, spriteBatch, drawLayer);
+        }
+    }
+    
     [HarmonyPatch(typeof(PathFindController))]
     [HarmonyPatch("findPathForNPCSchedules")]
     public class Prefix_findPathForNPCSchedules
@@ -19,9 +41,9 @@ namespace FarmersMarket
             if (location.Name != "Town") return true;
             if (!FarmersMarket.IsMarketDay()) return true;
 
-            // FarmersMarket.monitor.Log(
-            //     $"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}",
-            //     LogLevel.Warn);
+            FarmersMarket.monitor.Log(
+                $"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}",
+                LogLevel.Warn);
 
             // var originalPath = OriginalFindPathForNPCSchedules(startPoint, endPoint, location, limit).ToList();
             // var original = string.Join(", ", originalPath);
@@ -30,14 +52,25 @@ namespace FarmersMarket
             // for now, visit every shop
             
             var placesToVisit = new List<Point>();
-            placesToVisit.Add(new Point(
-                FarmersMarket.PLAYER_STORE_X + Game1.random.Next(3),
-                FarmersMarket.PLAYER_STORE_Y + 4));
+
+            if (Game1.random.NextDouble() < FarmersMarket.Config.PlayerStallVisitChance  + Game1.player.DailyLuck)
+            {
+                placesToVisit.Add(new Point(
+                    FarmersMarket.PLAYER_STORE_X + Game1.random.Next(3),
+                    FarmersMarket.PLAYER_STORE_Y + 4));
+            }
+            
             placesToVisit.AddRange(
-                from place in FarmersMarket.ShopAtTile.Keys
+                from place in FarmersMarket.ActiveShops()
                 where Game1.random.NextDouble() < FarmersMarket.Config.NPCStallVisitChance
                 select new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4));
             
+            if (FarmersMarket.MarketData.ShopOwners.TryGetValue(___character.Name, out var OwnedShopName))
+            {
+                var OwnedShop = FarmersMarket.ActiveShops().Find(shop => shop.ShopName == OwnedShopName);
+                if (OwnedShop is not null) placesToVisit.Add(OwnedShop.OwnerPosition().ToPoint());
+            }
+
             // var openStores = new Dictionary<string, Point>();
             // foreach (var store in FarmersMarket.Stores)
             // {
@@ -67,7 +100,7 @@ namespace FarmersMarket
             placesToVisit.Add(startPoint);
 
             var waypoints = string.Join(", ", placesToVisit);
-            // FarmersMarket.monitor.Log($"    Waypoints: {waypoints}", LogLevel.Debug);
+            FarmersMarket.monitor.Log($"    Waypoints: {waypoints}", LogLevel.Debug);
 
             // work backwards through the waypoints
             var path = new Stack<Point>();
