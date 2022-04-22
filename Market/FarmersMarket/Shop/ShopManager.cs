@@ -6,6 +6,7 @@ using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FarmersMarket.API;
 
 namespace FarmersMarket.Shop
 {
@@ -63,15 +64,18 @@ namespace FarmersMarket.Shop
             {
                 foreach (var shopPack in data.GrangeShops)
                 {
-                    if (GrangeShops.ContainsKey(((ItemShopModel) shopPack).ShopName))
+                    if (GrangeShops.ContainsKey(shopPack.ShopName))
                     {
-                        FarmersMarket.monitor.Log($"{contentPack.Manifest.Name} is trying to add a Shop \"{((ItemShopModel) shopPack).ShopName}\"," +
+                        FarmersMarket.monitor.Log($"{contentPack.Manifest.Name} is trying to add a Shop \"{shopPack.ShopName}\"," +
                             $" but a shop of this name has already been added. " +
                             $"It will not be added.", LogLevel.Warn);
                         continue;
                     }
+
                     shopPack.ContentPack = contentPack;
-                    GrangeShops.Add(((ItemShopModel) shopPack).ShopName, shopPack);
+                    FarmersMarket.monitor.Log($"{contentPack.Manifest.Name} is adding \"{shopPack.ShopName}\"",
+                        LogLevel.Debug);
+                    GrangeShops.Add(shopPack.ShopName, shopPack);
                 }
             }
 

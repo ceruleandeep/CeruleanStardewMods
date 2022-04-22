@@ -1,0 +1,28 @@
+{
+    "Format": "1.22.0",
+    "Changes": [
+        {
+            "Action": "EditMap",
+            "Target": "Maps/Town",
+            "FromFile": "assets/Town_Grange.tmx",
+            "FromArea": {
+                "X": 23,
+                "Y": 58,
+                "Width": 14,
+                "Height": 14
+            },
+            "ToArea": {
+                "X": 23,
+                "Y": 58,
+                "Width": 14,
+                "Height": 14
+            },
+            "When": {
+                "DayOfWeek": "Saturday",
+                "Weather": "Sun, Wind",
+                "HasValue:{{DayEvent}}": "false",
+                "HasMod": "ceruleandeep.farmersmarket"
+            }
+        }
+    ]
+}

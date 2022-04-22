@@ -1,18 +1,32 @@
 # Farmers Market
 
+## License
+
+GPLv3
+
 ## Credits
 
 * Uses code from ChroniclerCherry's Shop Tile Framework
 * Uses code from aedenthorn's Persistent Grange Stand
 
+## Shop ideas
+* Haley sells photography
+* Emily sells random clothes
+* Wine sales especially if SVE installed
+* Sandy
+* Robin sells furniture
+* More art for Leah
+
 ## TODO
 
-* check that we can move the player store around
-* make some shops as a fake content pack
-
+* allow tool sales
 * test with animals and hats and such
-* add console command to reshuffle the shop choices
-
+* don't let NPCs buy from closed shops
+* shut the market down properly at closing time, empty the granges
+* message player on fair day
+* get shop portraits made
+* do weighted random when stocking the grange so that 1-stack items don't dominate
+* send a mail on the day before the first fair?
 * find the shop locations by searching the tiles
 * prevent smashing of furniture with Harmony
 * check alternate currency support for STF packs
@@ -20,10 +34,6 @@
 * boost price if item is in season
 * custom sell prices for player store with prob of purchase?
 * make sure this stuff doesn't run during the fair
-
-## License
-
-GPL3
 
 ## Market Data Model
 A list of co-ordinates of the grange stands (top left corner),

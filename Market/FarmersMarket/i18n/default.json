@@ -11,6 +11,7 @@
     "sales-desc": "* {{ItemName}} sold to {{NpcName}} for {{Price}}g ({{Mult}}%)",
     "no-sales-today": "No sales today",
     "daily-summary": "Sales Today for {{FarmName}} Farm Stall^^Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Average bonus: {{AverageMult}}^^Items sold:^{{SalesSummary}}",
+    "closed": "It's closed... (Open {{openingTime}} - {{closingTime}})",
     "cfg.main-settings": "Main settings",
     "cfg.auto-stock": "Auto stock",
     "cfg.auto-stock.msg": "Stock the grange shop automatically from the storage chest",

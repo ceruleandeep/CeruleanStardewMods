@@ -10,6 +10,7 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Objects;
+using StardewValley.Tools;
 using Object = StardewValley.Object;
 
 namespace FarmersMarket.Shop
@@ -24,15 +25,16 @@ namespace FarmersMarket.Shop
         public int X;
         public int Y;
         public Color StoreColor;
+
         public int SignObjectIndex;
         // public Dictionary<string, int[]> Stock;
-        
+
         public Chest StorageChest;
         public Sign GrangeSign;
-        
+
         public Vector2 VisibleChestPosition;
         public Vector2 VisibleSignPosition;
-        
+
         public Vector2 PlayerHiddenChestPosition = new Vector2(1337, 1337);
         public Vector2 PlayerHiddenSignPosition = new Vector2(1337, 1338);
 
@@ -46,11 +48,11 @@ namespace FarmersMarket.Shop
         {
             while (GrangeDisplay.Count < 9) GrangeDisplay.Add(null);
         }
-        
+
         public void SetOrigin(Vector2 Origin)
         {
-            this.X = (int)Origin.X;
-            this.Y = (int)Origin.Y;
+            this.X = (int) Origin.X;
+            this.Y = (int) Origin.Y;
             VisibleChestPosition = new Vector2(X + 3, Y + 1);
             VisibleSignPosition = new Vector2(X + 3, Y + 3);
 
@@ -69,7 +71,7 @@ namespace FarmersMarket.Shop
             // if (Quote is null || Quote.Length == 0)
             //     Quote = Get("default-stall-description", new {NpcName = ShopName});
         }
-        
+
         public bool IsPlayerShop()
         {
             return ShopName == "Player";
@@ -79,7 +81,7 @@ namespace FarmersMarket.Shop
         {
             return new Vector2(X + 3, Y + 2);
         }
-        
+
         public void OnDayStarted(bool IsMarketDay)
         {
             Sales = new List<SalesRecord>();
@@ -92,19 +94,22 @@ namespace FarmersMarket.Shop
             Log($"Market day", LogLevel.Info);
 
             GetReferencesToFurniture();
-                
+
             if (!IsPlayerShop())
             {
                 StockChestForTheDay();
             }
+
             if (!IsPlayerShop() || FarmersMarket.Config.AutoStockAtStartOfDay) RestockGrangeFromChest(true);
 
             ShowFurniture();
             DecorateFurniture();
         }
 
-        public void OnTimeChanged()
+        public void OnTimeChanged(bool IsMarketDay)
         {
+            if (!IsMarketDay) return;
+
             if (IsPlayerShop())
             {
                 if (FarmersMarket.Config.RestockItemsPerHour > 0) RestockGrangeFromChest();
@@ -114,7 +119,7 @@ namespace FarmersMarket.Shop
                 RestockGrangeFromChest();
             }
         }
-        
+
         public void OnDayEnding()
         {
             if (IsPlayerShop())
@@ -171,12 +176,14 @@ namespace FarmersMarket.Shop
             if (tile.X < X || tile.X > X + 3 || tile.Y < Y || tile.Y > Y + 4) return;
             if (IsPlayerShop())
             {
-                Game1.activeClickableMenu = new StorageContainer(GrangeDisplay, 9, 3, onGrangeChange, StardewValley.Utility.highlightSmallObjects);
+                Game1.activeClickableMenu = new StorageContainer(GrangeDisplay, 9, 3, onGrangeChange,
+                    StardewValley.Utility.highlightSmallObjects);
             }
             else
             {
-                DisplayShop(true);
+                DisplayShop();
             }
+
             FarmersMarket.SMod.Helper.Input.Suppress(e.Button);
         }
 
@@ -186,8 +193,28 @@ namespace FarmersMarket.Shop
         /// </summary>
         public new void DisplayShop(bool debug = false)
         {
-            FarmersMarket.monitor.Log($"Attempting to open the shop \"{ShopName}\"", LogLevel.Trace);
+            FarmersMarket.monitor.Log($"Attempting to open the shop \"{ShopName}\" at {Game1.timeOfDay}", LogLevel.Debug);
 
+            if (!debug && (Game1.timeOfDay < FarmersMarket.Config.OpeningTime || Game1.timeOfDay > FarmersMarket.Config.ClosingTime))
+            {
+                if (ClosedMessage != null)
+                {
+                    Game1.activeClickableMenu = new DialogueBox(ClosedMessage);
+                }
+                else
+                {
+                    var openingTime = FarmersMarket.Config.OpeningTime.ToString();
+                    openingTime = openingTime[..^2] + ":" + openingTime[^2..];
+                    
+                    var closingTime = FarmersMarket.Config.ClosingTime.ToString();
+                    closingTime = closingTime[..^2] + ":" + closingTime[^2..];
+                    
+                    Game1.activeClickableMenu = new DialogueBox(Get("closed", new {openingTime, closingTime}));
+                }
+
+                return;
+            }
+            
             int currency = 0;
             switch (StoreCurrency)
             {
@@ -205,6 +232,13 @@ namespace FarmersMarket.Shop
             if (CategoriesToSellHere != null)
                 shopMenu.categoriesToSellHere = CategoriesToSellHere;
 
+            if (_portrait is null)
+            {
+                // try to load portrait from NPC the shop is named after
+                var npc = Game1.getCharacterFromName(ShopName);
+                if (npc is not null) _portrait = npc.Portrait;
+            } 
+            
             if (_portrait != null)
             {
                 shopMenu.portraitPerson = new NPC();
@@ -223,8 +257,7 @@ namespace FarmersMarket.Shop
             Game1.activeClickableMenu = shopMenu;
             _shopOpenedToday = true;
         }
-        
-        
+
 
         private bool OnPurchase(ISalable item, Farmer who, int stack)
         {
@@ -236,44 +269,50 @@ namespace FarmersMarket.Shop
                 GrangeDisplay[j] = null;
                 return false;
             }
+
             return false;
         }
 
-        
+        int getSellPriceFromShopStock(Item item)
+        {
+            foreach (var (stockItem, priceAndQty) in StockManager.ItemPriceAndStock)
+            {
+                if (item.ParentSheetIndex != ((Item) stockItem).ParentSheetIndex || item.Category != ((Item) stockItem).Category) continue;
+                return priceAndQty[0];
+            }
+
+            return 0;
+        }
+
         /// <summary>
         /// Generate a dictionary of goods for sale and quantities, to be consumed by the game's shop menu
         /// </summary>
         private Dictionary<ISalable, int[]> ShopStock()
         {
+            // this needs to filter StockManager.ItemPriceAndStock
             var stock = new Dictionary<ISalable, int[]>();
-            
+
             foreach (var stockItem in GrangeDisplay)
             {
                 if (stockItem is null) continue;
 
                 // we won't do item quality right now
                 int specifiedQuality = 0;
-                
+
                 // we won't do sell price mult right now
-                int price;
-                if (stockItem is Object o)
-                    price = o.sellToStorePrice();
-                else
+                // var price = StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false);
+
+                var price = getSellPriceFromShopStock(stockItem);
+                if (price == 0)
                 {
-                    price = stockItem.salePrice();
+                    price = (int)(StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false) * SellPriceMultiplier(stockItem, null));
                 }
-
-                price = (int)Math.Max(DefaultSellPriceMultiplier, 0) * price;
-
+                
                 var sellItem = stockItem.getOne();
                 sellItem.Stack = 1;
-                ((Object)sellItem).Quality = specifiedQuality;
+                if (sellItem is Object o) o.Quality = specifiedQuality;
 
-                stock[sellItem] = new[]
-                {
-                    (int) (price * SellPriceMultiplier(stockItem, null)),
-                    1
-                };
+                stock[sellItem] = new[] { price, 1 };
             }
 
             return stock;
@@ -283,7 +322,7 @@ namespace FarmersMarket.Shop
         {
             var owner = OwnerNearby();
             if (owner is null) return;
-            
+
             // busy
             if (owner.movementPause is < 10000 and > 0) return;
 
@@ -291,12 +330,14 @@ namespace FarmersMarket.Shop
             if (recentlyTended.TryGetValue(owner, out var time))
             {
                 if (time > Game1.timeOfDay - 100) return;
-            };
+            }
+
+            ;
 
             owner.Halt();
             owner.faceDirection(2);
             owner.movementPause = 10000;
-            
+
             var dialog = Get("spruik");
             owner.showTextAboveHead(dialog, -1, 2, 1000);
             owner.Sprite.UpdateSourceRect();
@@ -320,7 +361,7 @@ namespace FarmersMarket.Shop
             {
                 // the owner
                 if (npc.Name == ShopName) continue;
-                
+
                 // busy looking
                 if (npc.movementPause is > 2000 or < 500) continue;
 
@@ -364,7 +405,7 @@ namespace FarmersMarket.Shop
             }
             else
             {
-                string dialog;
+                string dialog = Get("buy", new {ItemName = item.DisplayName});
                 if (npc.getGiftTasteForThisItem(item) == NPC.gift_taste_love)
                 {
                     dialog = Get("love", new {ItemName = item.DisplayName});
@@ -373,21 +414,15 @@ namespace FarmersMarket.Shop
                 {
                     dialog = Get("like", new {ItemName = item.DisplayName});
                 }
-                else if (((Object) item).Quality == Object.bestQuality)
+                else if (item is Object o)
                 {
-                    dialog = Get("iridium", new {ItemName = item.DisplayName});
-                }
-                else if (((Object) item).Quality == Object.highQuality)
-                {
-                    dialog = Get("gold", new {ItemName = item.DisplayName});
-                }
-                else if (((Object) item).Quality == Object.medQuality)
-                {
-                    dialog = Get("silver", new {ItemName = item.DisplayName});
-                }
-                else
-                {
-                    dialog = Get("buy", new {ItemName = item.DisplayName});
+                    dialog = o.Quality switch
+                    {
+                        Object.bestQuality => Get("iridium", new {ItemName = item.DisplayName}),
+                        Object.highQuality => Get("gold", new {ItemName = item.DisplayName}),
+                        Object.medQuality => Get("silver", new {ItemName = item.DisplayName}),
+                        _ => dialog
+                    };
                 }
 
                 npc.showTextAboveHead(dialog, -1, 2, 1000);
@@ -432,12 +467,18 @@ namespace FarmersMarket.Shop
                     LogLevel.Debug);
             }
         }
-        
-        public void ShowSummary() {
+
+        public void ShowSummary()
+        {
             var salesDescriptions = (
-                from sale in Sales 
-                let displayMult = Convert.ToInt32((sale.mult - 1) * 100) 
-                select Get("sales-desc", new {ItemName = sale.item.DisplayName, NpcName = sale.npc.displayName, Price = sale.price, Mult = displayMult})
+                from sale in Sales
+                let displayMult = Convert.ToInt32((sale.mult - 1) * 100)
+                select Get("sales-desc",
+                    new
+                    {
+                        ItemName = sale.item.DisplayName, NpcName = sale.npc.displayName, Price = sale.price,
+                        Mult = displayMult
+                    })
             ).ToList();
             if (salesDescriptions.Count == 0) salesDescriptions.Add(Get("no-sales-today"));
 
@@ -451,7 +492,7 @@ namespace FarmersMarket.Shop
             {
                 AverageMult = Get("no-sales-today");
             }
-            
+
             var message = Get("daily-summary",
                 new
                 {
@@ -465,7 +506,7 @@ namespace FarmersMarket.Shop
             );
             Game1.drawLetterMessage(message);
         }
-        
+
         private double SellPriceMultiplier(Item item, NPC npc)
         {
             var mult = 1.0;
@@ -485,7 +526,7 @@ namespace FarmersMarket.Shop
             }
 
             if (npc is null) return mult;
-            
+
             // * gift taste
             switch (npc.getGiftTasteForThisItem(item))
             {
@@ -549,10 +590,11 @@ namespace FarmersMarket.Shop
                 Log("GetReferencesToFurniture called on non-market day", LogLevel.Error);
                 return;
             }
+
             Log($"GetReferencesToFurniture", LogLevel.Debug);
 
             var location = Game1.getLocationFromName("Town");
-            
+
             // the storage chest
             foreach (var (tile, item) in location.Objects.Pairs)
             {
@@ -565,8 +607,8 @@ namespace FarmersMarket.Shop
                 {
                     chest.TileLocation = tile;
                     Log($"    Moving storage chest, now at {chest.TileLocation}", LogLevel.Debug);
-
                 }
+
                 StorageChest = chest;
             }
 
@@ -580,7 +622,7 @@ namespace FarmersMarket.Shop
                 location.setObject(VisibleChestPosition, StorageChest);
             }
 
-            
+
             // the grange sign
             foreach (var (tile, item) in location.Objects.Pairs)
             {
@@ -603,9 +645,9 @@ namespace FarmersMarket.Shop
                 location.objects[VisibleSignPosition] = GrangeSign;
             }
 
-            
+
             // the results
-            
+
             Log($"    ... StorageChest at {StorageChest.TileLocation}", LogLevel.Debug);
             Log($"    ... GrangeSign at {GrangeSign.TileLocation}", LogLevel.Debug);
         }
@@ -659,17 +701,16 @@ namespace FarmersMarket.Shop
         private void HideFurniture()
         {
             var location = Game1.getLocationFromName("Town");
-            if (IsPlayerShop())
-            {
-                location.moveObject(
-                    (int) StorageChest.TileLocation.X, (int) StorageChest.TileLocation.Y,
-                    (int) PlayerHiddenChestPosition.X, (int) PlayerHiddenChestPosition.Y);
+            if (StorageChest is null) return;
+            if (GrangeSign is null) return;
+            if (!IsPlayerShop()) return;
+            location.moveObject(
+                (int) StorageChest.TileLocation.X, (int) StorageChest.TileLocation.Y,
+                (int) PlayerHiddenChestPosition.X, (int) PlayerHiddenChestPosition.Y);
 
-                location.moveObject(
-                    (int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
-                    (int) PlayerHiddenSignPosition.X, (int) PlayerHiddenSignPosition.Y);
-                
-            }
+            location.moveObject(
+                (int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
+                (int) PlayerHiddenSignPosition.X, (int) PlayerHiddenSignPosition.Y);
         }
 
         private void DestroyFurniture()
@@ -712,7 +753,8 @@ namespace FarmersMarket.Shop
             foreach (var (Salable, priceAndStock) in StockManager.ItemPriceAndStock)
             {
                 // priceAndStock: price, stock, currency obj, currency stack
-                Log($"    Stock item {Salable.DisplayName} price {priceAndStock[0]} stock {priceAndStock[1]}", LogLevel.Debug);
+                Log($"    Stock item {Salable.DisplayName} price {priceAndStock[0]} stock {priceAndStock[1]}",
+                    LogLevel.Debug);
                 var stack = Math.Min(priceAndStock[1], 13);
                 while (stack-- > 0)
                 {
@@ -730,10 +772,11 @@ namespace FarmersMarket.Shop
             }
         }
 
-        private void RestockGrangeFromChest(bool fullRestock=false)
+        private void RestockGrangeFromChest(bool fullRestock = false)
         {
+            if (StorageChest is null) return;
             var restockLimitRemaining = FarmersMarket.Config.RestockItemsPerHour;
-            
+
             for (var j = 0; j < GrangeDisplay.Count; j++)
             {
                 if (StorageChest.items.Count == 0)
@@ -741,6 +784,7 @@ namespace FarmersMarket.Shop
                     Log($"RestockGrangeFromChest: {ShopName} out of stock", LogLevel.Info);
                     return;
                 }
+
                 if (restockLimitRemaining <= 0) return;
                 if (GrangeDisplay[j] != null) continue;
 
@@ -757,10 +801,9 @@ namespace FarmersMarket.Shop
                 {
                     stockItem.Stack--;
                 }
-                
+
                 if (!fullRestock) restockLimitRemaining--;
             }
-            
         }
 
         private void EmptyStoreIntoChest()
@@ -806,7 +849,8 @@ namespace FarmersMarket.Shop
                         //     $"onGrangeChange: cannot stack: helditem now {i.Stack} of {i.ParentSheetIndex}, {old.ParentSheetIndex} to inventory, rtn false",
                         //     LogLevel.Debug);
 
-                        StardewValley.Utility.addItemToInventory(old, position, container.ItemsToGrabMenu.actualInventory);
+                        StardewValley.Utility.addItemToInventory(old, position,
+                            container.ItemsToGrabMenu.actualInventory);
                         container.heldItem = i;
                         return false;
                     }

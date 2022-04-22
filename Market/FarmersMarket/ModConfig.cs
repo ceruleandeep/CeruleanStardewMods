@@ -13,5 +13,11 @@ namespace FarmersMarket
         public bool PeekIntoChests { get; set; }
         public bool RuinTheFurniture { get; set; }
         public bool HideFurniture { get; set; } = true;
+        public int DayOfMonth { get; set; } = 6;
+
+        public int OpeningTime { get; set; } = 800;
+
+        public int ClosingTime { get; set; } = 1800;
+
     }
 }

@@ -30,9 +30,6 @@ namespace FarmersMarket
     // ReSharper disable once ClassNeverInstantiated.Global
     public class FarmersMarket : Mod
     {
-        internal const int PLAYER_STORE_X = 23;
-        internal const int PLAYER_STORE_Y = 63;
-
         internal static MarketDataModel MarketData;
         
         // internal static List<Vector2> ShopLocations = new()
@@ -93,19 +90,55 @@ namespace FarmersMarket
             Helper.Events.Input.ButtonPressed += STF_Input_ButtonPressed;
 
             ShopManager.LoadContentPacks();
-
-            var PlayerShop = new GrangeShop()
-            {
-                ShopName = "Player",
-                Quote = "Player store", 
-                ItemStocks = new ItemStock[0]
-            };
-            ShopManager.GrangeShops.Add("Player", PlayerShop);
+            MakePlayerShop();
 
             var harmony = new Harmony("ceruleandeep.FarmersMarket");
             harmony.PatchAll();
 
             helper.ConsoleCommands.Add("fm_destroy", "Destroy furniture", DestroyAllFurniture);
+            helper.ConsoleCommands.Add("fm_reload", "Reload shop data", HotReload);
+        }
+
+        private static void MakePlayerShop()
+        {
+            var PlayerShop = new GrangeShop()
+            {
+                ShopName = "Player",
+                Quote = "Player store",
+                ItemStocks = new ItemStock[0]
+            };
+            ShopManager.GrangeShops.Add("Player", PlayerShop);
+        }
+
+        public void HotReload(string command, string[] args)
+        {
+            monitor.Log($"Reloading shop data", LogLevel.Info);
+
+            monitor.Log($"    Closing stores", LogLevel.Debug);
+            foreach (var store in ShopAtTile.Values)
+            {
+                store.OnDayEnding();
+                if (!store.IsPlayerShop()) ShopManager.GrangeShops.Remove(store.ShopName);
+            }
+            
+            monitor.Log($"    Loading content packs", LogLevel.Debug);
+            ShopManager.LoadContentPacks();
+            ShopManager.InitializeShops();
+
+            ItemsUtil.UpdateObjectInfoSource();
+            ShopManager.InitializeItemStocks();
+
+            ItemsUtil.RegisterItemsToRemove();
+            
+            monitor.Log($"    Updating stock", LogLevel.Debug);
+            ShopManager.UpdateStock();
+
+            // get ready for tomorrow
+            monitor.Log($"    Opening stores", LogLevel.Debug);
+            BuildStores();
+
+            foreach (var store in ShopAtTile.Values) store.OnDayStarted(IsMarketDay());
+
         }
 
         /// <summary>Raised after the game is saved</summary>
@@ -140,6 +173,9 @@ namespace FarmersMarket
             ShopManager.InitializeItemStocks();
 
             ItemsUtil.RegisterItemsToRemove();
+            
+            
+            BuildStores();
         }
 
         void OnDayStarted(object sender, EventArgs e)
@@ -157,9 +193,25 @@ namespace FarmersMarket
 
         private static void BuildStores()
         {
-            var availableShopNames = ShopManager.GrangeShops.Keys.ToList();
-            availableShopNames.Remove("Player");
+            var availableShopNames = new List<string>(); //(ShopManager.GrangeShops.Keys.ToList());
+
+            foreach (var (shopName, shop) in ShopManager.GrangeShops)
+            {
+                if (shop.When is not null)
+                {
+                    if (!APIs.Conditions.CheckConditions(shop.When))
+                    {
+                        monitor.Log($"Shop {shopName}: condition not met", LogLevel.Warn);
+                        continue;
+                    }
+                }
+                availableShopNames.Add(shopName);
+            }
+
             StardewValley.Utility.Shuffle(Game1.random, availableShopNames);
+            StardewValley.Utility.Shuffle(Game1.random, MarketData.ShopLocations);
+            availableShopNames.Remove("Player");
+            availableShopNames.Insert(0, "Player");
 
             var strNames = string.Join(", ", availableShopNames);
             monitor.Log($"BuildStores: Adding stores ({MarketData.ShopLocations.Count} of {strNames})", LogLevel.Info);
@@ -174,9 +226,9 @@ namespace FarmersMarket
                 ShopManager.GrangeShops[ShopName].SetOrigin(ShopLocation);
             }
             
-            var PlayerShopLocation = new Vector2(PLAYER_STORE_X, PLAYER_STORE_Y);
-            ShopAtTile[PlayerShopLocation] = ShopManager.GrangeShops["Player"];
-            ShopManager.GrangeShops["Player"].SetOrigin(PlayerShopLocation);
+            // var PlayerShopLocation = new Vector2(PLAYER_STORE_X, PLAYER_STORE_Y);
+            // ShopAtTile[PlayerShopLocation] = ShopManager.GrangeShops["Player"];
+            // ShopManager.GrangeShops["Player"].SetOrigin(PlayerShopLocation);
 
             // ShopAtTile[ShopLocations[0]] = ShopManager.GrangeShops["Vincent"];
             // ShopAtTile[ShopLocations[1]] = ShopManager.GrangeShops["Alex"];
@@ -223,7 +275,7 @@ namespace FarmersMarket
         void OnTimeChanged(object sender, EventArgs e)
         {
             if (Game1.timeOfDay % 100 > 0) return;
-            foreach (var store in ShopAtTile.Values) store.OnTimeChanged();
+            foreach (var store in ShopAtTile.Values) store.OnTimeChanged(IsMarketDay());
         }
 
         void OnDayEnding(object sender, EventArgs e)
@@ -539,9 +591,7 @@ namespace FarmersMarket
             //     monitor.Log($"    GrangeShop {store.ShopName} symbol {store.SignObject} color {store.Color}",
             //         LogLevel.Debug);
             // }
-
-            BuildStores();
-
+            
             ContentPatcherAPI =
                 Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>("Pathoschild.ContentPatcher");
             // ContentPatcherAPI.RegisterToken(ModManifest, "FarmersMarketOpen",
@@ -654,104 +704,12 @@ namespace FarmersMarket
         
         internal static bool IsMarketDay()
         {
-            return Game1.dayOfMonth % 7 == 6 &&
+            return Game1.dayOfMonth % 7 == Config.DayOfMonth &&
                    !Game1.isRaining &&
                    !Game1.isSnowing &&
                    !StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
-            //
-            // if (MarketDayConditions is null || !MarketDayConditions.IsReady)
-            // {
-            //     monitor.Log($"IsMarketDay: MarketDayConditions null", LogLevel.Warn);
-            //     return false;
-            // }
-            //
-            // MarketDayConditions.UpdateContext();
-            // return MarketDayConditions.IsMatch;
         }
-
-        // private bool IsMarketDayJustForToken()
-        // {
-        //     if (MarketDayConditions is null)
-        //     {
-        //         monitor.Log($"IsMarketDayJustForToken: MarketDayConditions null", LogLevel.Warn);
-        //         return false;
-        //     }
-        //
-        //     if (!MarketDayConditions.IsReady)
-        //     {
-        //         monitor.Log($"IsMarketDayJustForToken: MarketDayConditions not ready", LogLevel.Warn);
-        //         return false;
-        //     }
-        //
-        //     MarketDayConditions.UpdateContext();
-        //     monitor.Log(
-        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} MarketDayConditions {MarketDayConditions.IsMatch}",
-        //         LogLevel.Info);
-        //
-        //
-        //     var rawConditions = new Dictionary<string, string>
-        //     {
-        //         ["DayOfWeek"] = "Saturday",
-        //         ["Weather"] = "Sun, Wind",
-        //         ["HasValue:{{DayEvent}}"] = "false"
-        //     };
-        //     var spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
-        //         ModManifest,
-        //         rawConditions,
-        //         new SemanticVersion("1.20.0")
-        //     );
-        //     spareMarketDayConditions.UpdateContext();
-        //     monitor.Log(
-        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} spareMarketDayConditions {spareMarketDayConditions.IsMatch}",
-        //         LogLevel.Info);
-        //
-        //
-        //     rawConditions = new Dictionary<string, string>
-        //     {
-        //         ["DayOfWeek"] = "Saturday",
-        //     };
-        //     spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
-        //         ModManifest,
-        //         rawConditions,
-        //         new SemanticVersion("1.20.0")
-        //     );
-        //     spareMarketDayConditions.UpdateContext();
-        //     monitor.Log(
-        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} DayOfWeek {spareMarketDayConditions.IsMatch}",
-        //         LogLevel.Info);
-        //
-        //     rawConditions = new Dictionary<string, string>
-        //     {
-        //         ["Weather"] = "Sun, Wind",
-        //     };
-        //     spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
-        //         ModManifest,
-        //         rawConditions,
-        //         new SemanticVersion("1.20.0")
-        //     );
-        //     spareMarketDayConditions.UpdateContext();
-        //     monitor.Log(
-        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} Weather {spareMarketDayConditions.IsMatch}",
-        //         LogLevel.Info);
-        //
-        //     rawConditions = new Dictionary<string, string>
-        //     {
-        //         ["HasValue:{{DayEvent}}"] = "false"
-        //     };
-        //     spareMarketDayConditions = ContentPatcherAPI.ParseConditions(
-        //         ModManifest,
-        //         rawConditions,
-        //         new SemanticVersion("1.20.0")
-        //     );
-        //     spareMarketDayConditions.UpdateContext();
-        //     monitor.Log(
-        //         $"IsMarketDayJustForToken: {Game1.dayOfMonth}th {Game1.timeOfDay} DayEvent {spareMarketDayConditions.IsMatch}",
-        //         LogLevel.Info);
-        //
-        //
-        //     return MarketDayConditions.IsMatch;
-        // }
-
+        
         private string Get(string key)
         {
             return Helper.Translation.Get(key);

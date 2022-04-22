@@ -53,23 +53,25 @@ namespace FarmersMarket
             
             var placesToVisit = new List<Point>();
 
-            if (Game1.random.NextDouble() < FarmersMarket.Config.PlayerStallVisitChance  + Game1.player.DailyLuck)
+            // if (FarmersMarket.MarketData.ShopOwners.TryGetValue(___character.Name, out var OwnedShopName))
+            // {
+            //     var OwnedShop = FarmersMarket.ActiveShops().Find(shop => shop.ShopName == OwnedShopName);
+            //     if (OwnedShop is not null) placesToVisit.Add(OwnedShop.OwnerPosition().ToPoint());
+            // }
+
+            foreach (var place in FarmersMarket.ActiveShops())
             {
-                placesToVisit.Add(new Point(
-                    FarmersMarket.PLAYER_STORE_X + Game1.random.Next(3),
-                    FarmersMarket.PLAYER_STORE_Y + 4));
+                var visitPoint = new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4);
+                if (place.IsPlayerShop() && Game1.random.NextDouble() < FarmersMarket.Config.PlayerStallVisitChance)
+                {
+                    placesToVisit.Add(visitPoint);
+                }
+                if (!place.IsPlayerShop() && Game1.random.NextDouble() < FarmersMarket.Config.NPCStallVisitChance)
+                {
+                    placesToVisit.Add(visitPoint);
+                }
             }
             
-            placesToVisit.AddRange(
-                from place in FarmersMarket.ActiveShops()
-                where Game1.random.NextDouble() < FarmersMarket.Config.NPCStallVisitChance
-                select new Point((int) place.X + Game1.random.Next(3), (int) place.Y + 4));
-            
-            if (FarmersMarket.MarketData.ShopOwners.TryGetValue(___character.Name, out var OwnedShopName))
-            {
-                var OwnedShop = FarmersMarket.ActiveShops().Find(shop => shop.ShopName == OwnedShopName);
-                if (OwnedShop is not null) placesToVisit.Add(OwnedShop.OwnerPosition().ToPoint());
-            }
 
             // var openStores = new Dictionary<string, Point>();
             // foreach (var store in FarmersMarket.Stores)
