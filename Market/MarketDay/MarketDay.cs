@@ -27,12 +27,34 @@ namespace MarketDay
         public int timeOfDay;
     }
 
+    public class ShopMap
+    {
+        private static Dictionary<Vector2, GrangeShop> _ShopAtTile = new();
+        public GrangeShop this[Vector2 tile]
+        {
+            get => Get(tile);
+            set => Set(tile, value);
+        }
+
+        private static GrangeShop Get(Vector2 tile)
+        {
+            return _ShopAtTile.TryGetValue(tile, out var shop) ? shop : null;
+        }
+        private static void Set(Vector2 tile, GrangeShop value)
+        {
+            if (!Context.IsMainPlayer) throw new Exception("Only main player should set the shop map");
+            _ShopAtTile[tile] = value;
+        }
+
+        public IEnumerable<GrangeShop> Values => _ShopAtTile.Values.ToList();
+    }
+
     // ReSharper disable once ClassNeverInstantiated.Global
     public class MarketDay : Mod
     {
         internal static bool MapChangesSynced;
-        internal static List<Vector2> ShopLocations = new();
-        internal static Dictionary<Vector2, GrangeShop> ShopAtTile = new(); 
+        internal static List<Vector2> GrangeStandLocations = new();
+        internal static readonly ShopMap ShopAtTile = new();
         
         private static ContentPatcher.IContentPatcherAPI ContentPatcherAPI;
         // private static IManagedConditions MarketDayConditions;
@@ -98,6 +120,8 @@ namespace MarketDay
 
         public void HotReload(string command, string[] args)
         {
+            if (!Context.IsMainPlayer) return;
+
             monitor.Log($"Reloading shop data", LogLevel.Info);
 
             monitor.Log($"    Closing stores", LogLevel.Debug);
@@ -224,8 +248,7 @@ namespace MarketDay
         {
             if (!MapChangesSynced) throw new Exception("Map changes not synced");
             
-            var availableShopNames = new List<string>(); //(ShopManager.GrangeShops.Keys.ToList());
-
+            var availableShopNames = new List<string>();
             foreach (var (shopName, shop) in ShopManager.GrangeShops)
             {
                 if (shop.When is not null)
@@ -240,18 +263,20 @@ namespace MarketDay
             }
 
             StardewValley.Utility.Shuffle(Game1.random, availableShopNames);
-            StardewValley.Utility.Shuffle(Game1.random, ShopLocations);
+            StardewValley.Utility.Shuffle(Game1.random, GrangeStandLocations);
             availableShopNames.Remove("Player");
             availableShopNames.Insert(0, "Player");
 
             var strNames = string.Join(", ", availableShopNames);
-            monitor.Log($"BuildStores: Adding stores ({ShopLocations.Count} of {strNames})", LogLevel.Info);
+            monitor.Log($"BuildStores: Adding stores ({GrangeStandLocations.Count} of {strNames})", LogLevel.Info);
 
-            foreach (var ShopLocation in ShopLocations)
+            foreach (var ShopLocation in GrangeStandLocations)
             {
                 if (availableShopNames.Count == 0) break;
                 var ShopName = availableShopNames[0];
                 availableShopNames.RemoveAt(0);
+
+                monitor.Log($"    {ShopName} to {ShopLocation}", LogLevel.Debug);
 
                 ShopAtTile[ShopLocation] = ShopManager.GrangeShops[ShopName];
                 ShopManager.GrangeShops[ShopName].SetOrigin(ShopLocation);
@@ -260,9 +285,10 @@ namespace MarketDay
         
         void OnTimeChanged(object sender, EventArgs e)
         {
+            if (!Context.IsMainPlayer) return;
             if (!MapChangesSynced)
             {
-                ShopLocations = MapUtility.ShopTiles();
+                GrangeStandLocations = MapUtility.ShopTiles();
                 RecalculateSchedules();
                 
                 MapChangesSynced = true;
@@ -597,6 +623,7 @@ namespace MarketDay
             monitor.Log($"OnLaunched", LogLevel.Info);
 
             Config = Helper.ReadConfig<ModConfig>();
+            
             setupGMCM();
             
             ContentPatcherAPI =
@@ -615,8 +642,6 @@ namespace MarketDay
         /// <param name="e"></param>
         private void STF_OnLaunched(object sender, GameLaunchedEventArgs e)
         {
-            ShopManager.InitializeShops();
-
             APIs.RegisterJsonAssets();
             if (APIs.JsonAssets != null)
                 APIs.JsonAssets.AddedItemsToShop += JsonAssets_AddedItemsToShop;
@@ -624,6 +649,9 @@ namespace MarketDay
             APIs.RegisterExpandedPreconditionsUtility();
             APIs.RegisterBFAV();
             APIs.RegisterFAVR();
+            
+            if (!Context.IsMainPlayer) return;
+            ShopManager.InitializeShops();
         }
         
         private void JsonAssets_AddedItemsToShop(object sender, System.EventArgs e)

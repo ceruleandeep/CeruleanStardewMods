@@ -197,17 +197,17 @@ namespace MarketDay
             if (!MarketDay.IsMarketDay()) return true;
             if (!MarketDay.Config.NPCVisitors) return true;
 
-            /*
-
-[10:46:48 TRACE SMAPI] Synchronizing 'NewDay' task...
-[10:46:49 INFO  Farmers Market] findPathForNPCSchedules: spring 6 600 2213
-[10:46:49 TRACE SMAPI]    task complete.
-[10:46:49 TRACE SMAPI] Context: before save.
-[10:46:51 TRACE SMAPI] Context: after save, starting spring 6 Y1.
-[10:46:51 TRACE Content Patcher] [CP] Farmers Market edited Maps/Town.
-[10:46:51 TRACE SMAPI] Content Patcher edited Maps/Town.
-
-             */
+            if (MarketDay.GrangeStandLocations is null)
+            {
+                MarketDay.monitor.Log($"findPathForNPCSchedules: MarketDay.ShopLocations is null", LogLevel.Debug);
+                return true;
+            }
+            
+            if (MarketDay.GrangeStandLocations.Count == 0)
+            {
+                MarketDay.monitor.Log($"findPathForNPCSchedules: MarketDay.ShopLocations.Count {MarketDay.GrangeStandLocations.Count}", LogLevel.Debug);
+                return true;
+            }
 
             MarketDay.monitor.Log(
                 $"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}",
@@ -215,7 +215,7 @@ namespace MarketDay
 
             var placesToVisit = new List<Point>();
 
-            foreach (var (shopX, shopY) in MarketDay.ShopLocations)
+            foreach (var (shopX, shopY) in MarketDay.GrangeStandLocations)
             {
                 var visitPoint = new Point((int) shopX + Game1.random.Next(3), (int) shopY + 4);
                 if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);
@@ -223,9 +223,15 @@ namespace MarketDay
 
             StardewValley.Utility.Shuffle(Game1.random, placesToVisit);
             placesToVisit.Add(startPoint);
+            
+            if (placesToVisit.Count < 2)
+            {
+                MarketDay.monitor.Log($"findPathForNPCSchedules: placesToVisit.Count {placesToVisit.Count}", LogLevel.Debug);
+                return true;
+            }
 
-            // var waypoints = string.Join(", ", placesToVisit);
-            // MarketDay.monitor.Log($"    Waypoints: {waypoints}", LogLevel.Debug);
+            var waypoints = string.Join(", ", placesToVisit);
+            MarketDay.monitor.Log($"    Waypoints: {waypoints}", LogLevel.Debug);
 
             // work backwards through the waypoints
             var path = new Stack<Point>();
@@ -235,7 +241,7 @@ namespace MarketDay
             {
                 var thisStartPoint = new Point(wptX, wptY);
 
-                // MarketDay.monitor.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug);
+                MarketDay.monitor.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug);
 
                 var originalPath = OriginalFindPathForNPCSchedules(thisStartPoint, thisEndPoint, location, limit);
                 if (originalPath is null || originalPath.Count == 0) continue;
@@ -244,7 +250,7 @@ namespace MarketDay
                 legPath.Reverse();
 
                 var segment = string.Join(", ", legPath);
-                // MarketDay.monitor.Log($"    Reversed path: {segment}", LogLevel.Debug);
+                MarketDay.monitor.Log($"    Reversed path: {segment}", LogLevel.Debug);
 
                 foreach (var pt in legPath) path.Push(pt);
 
@@ -252,7 +258,7 @@ namespace MarketDay
             }
 
             var final = string.Join(", ", path);
-            // MarketDay.monitor.Log($"    Final Path   : {final}", LogLevel.Debug);
+            MarketDay.monitor.Log($"    Final Path   : {final}", LogLevel.Debug);
 
             __result = path;
             return false;
