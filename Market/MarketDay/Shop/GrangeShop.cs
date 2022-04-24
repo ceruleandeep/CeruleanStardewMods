@@ -78,7 +78,7 @@ namespace MarketDay.Shop
             return new Vector2(X + 3, Y + 2);
         }
 
-        public void OnDayStarted(bool IsMarketDay)
+        public void SetupForNewDay(bool IsMarketDay)
         {
             Sales = new List<SalesRecord>();
             VisitorsToday = 0;
@@ -199,10 +199,10 @@ namespace MarketDay.Shop
                 }
                 else
                 {
-                    var openingTime = MarketDay.Config.OpeningTime.ToString();
+                    var openingTime = (MarketDay.Config.OpeningTime*100).ToString();
                     openingTime = openingTime[..^2] + ":" + openingTime[^2..];
                     
-                    var closingTime = MarketDay.Config.ClosingTime.ToString();
+                    var closingTime = (MarketDay.Config.ClosingTime*100).ToString();
                     closingTime = closingTime[..^2] + ":" + closingTime[^2..];
                     
                     Game1.activeClickableMenu = new DialogueBox(Get("closed", new {openingTime, closingTime}));
@@ -396,8 +396,8 @@ namespace MarketDay.Shop
         }
 
         private static bool ShopClosed =>
-            Game1.timeOfDay < MarketDay.Config.OpeningTime ||
-            Game1.timeOfDay > MarketDay.Config.ClosingTime;
+            Game1.timeOfDay < MarketDay.Config.OpeningTime*100 ||
+            Game1.timeOfDay > MarketDay.Config.ClosingTime*100;
 
         private static void EmoteForPurchase(NPC npc, Item item)
         {

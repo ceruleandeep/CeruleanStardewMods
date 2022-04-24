@@ -1,16 +1,37 @@
-# Market Day: Sell Your Items
+Market Day: Sell Your Items
+===
 
-Every Saturday, Stardew Valley hosts a Farmers Market in the town square. This is your chance to showcase the best produce, crafts, and artisan goods from your farm. You'll be joined by a random assortment of your fellow villagers, all selling the things they make or grow.
+Every Saturday, Stardew Valley hosts a Farmers Market in the town square. This is your chance to showcase the best produce, crafts, and artisan goods from your farm. You'll be joined by a random assortment of your fellow villagers, all selling the things they make or grow. 
+
+Did you ever wish the Stardew Valley Fair was more interactive? This mod lets you sell your quality produce and buy the best items from other farmers.
 
 You get a shop! Arrange your goods how you like, make a sign, choose a theme color, and put on a tempting display. The better your goods and arrangement are, the more sales you'll get.
 
 Expect lots of customers. Villagers will walk past, stop and browse, and maybe let you know how they feel.
 
-If you see something nice at another villager's shop, you can walk over and buy it. Prices vary from bargains to ridiculous. It is a market after all.
+If you see something nice at another villager's shop, you can walk over and buy it. Prices will vary from bargain to ridiculous. It is a market after all.
 
 The shops are different each week. If you see something you like, don't miss out! It might not be there next week.
 
-## How to maximize your profit
+How to use 
+---
+
+* The empty shop is yours. The other shops should be in use by other characters.
+* Click on the lower edge of the grange stand to open up the shop.
+* Add up to 9 items in whatever arrangement you like.
+* Put extra items into the chest beside your shop.
+* While you're in the chest, choose a color for your shop.
+* Choose an attractive item to put on your shop's sign. It pays to advertise.
+* Profit!
+
+How to shop
+---
+
+* Click on the lower edge of the character's grange stand to open up the shop.
+* You can buy any of the items on display, if you can afford it...
+
+How to maximize your profit
+---
 
 * Grange display rules apply. If the items in your display would get a good score at the Fair, you'll make more money on Market Day.
 * Showcase your best produce on your shop's sign.
@@ -19,52 +40,76 @@ The shops are different each week. If you see something you like, don't miss out
 * Your shop is still open when you're not there, but you'll get a better price when you're nearby.
 * Stock the shop yourself if you want the absolute best layout... or put excess items in the storage chest for automatic restocking.
 
-## Villagers you might see
+Villagers you might see
+---
 
 * Vanilla: Marnie, Evelyn, Gus, Leah, Emily, Clint, Jodi, Harvey, Linus, Willy
 * SVE: Sophia, Andy, Susan
 
-## Requirements
+Configuration
+---
+
+* Use Generic Mod Config Menu. You can change various things.
+* In [CP] Market Day, you can change MarketLayout to choose different layouts. The available options are: 1 Shop, 3 Shops, 5 Shops, 7 Shops, 9 Shops
+* If you change the day of the markets, make sure you change it in Market day AND [CP] Market Day. 
+
+Requirements 
+---
 * Content Patcher
 * Expanded Preconditions Utility
-### Optional
-* Generic Mod Config Menu
-* JSON Assets
+* Generic Mod Config Menu (optional)
+* JSON Assets (optional)
 
-## Future shop ideas
+Future shop ideas
+---
 * Haley sells photography
 * Emily sells random clothes
 * Robin sells furniture
 * More art for Leah
 * Sandy
 
-## TODO
+Adding your own shops
+---
 
+Copy the format from the included shops.json to make new GrangeShops. [ItemShops from STF](https://github.com/ChroniclerCherry/stardew-valley-mods/tree/master/ShopTileFramework#create-a-content-pack) should be very compatible (because this mod reuses STF's loader code). Two more fields are available for GrangeShops:
+
+* SignObjectIndex: the [ID](https://stardewids.com/) of the item that should go on the sign. e.g. `428`
+* ShopColor: the RGBA color the storage chest should be set to. e.g. `"143, 0, 255, 255"`
+
+Future
+---
+
+* write tutorial here
 * allow tool sales
 * test with animals and hats and such
-* don't let NPCs buy from closed shops
 * shut the market down properly at closing time, empty the granges
-* message player on fair day
 * get shop portraits made
 * in-game tutorial
 * do weighted random when stocking the grange so that 1-stack items don't dominate
 * send a mail on the day before the first fair?
-* find the shop locations by searching the tiles
 * check alternate currency support for STF packs
 * tint the sign
 * boost price if item is in season
 * custom sell prices for player store with prob of purchase
 
-## License
+License
+---
 
 GPLv3
 
-## Credits
+Credits
+---
 
+* by ceruleandeep
 * Uses code from ChroniclerCherry's Shop Tile Framework
 * Uses code from aedenthorn's Persistent Grange Stand
 
-## Market Data Model
+
+Developer Notes
+===
+
+Market Data Model
+---
 A list of co-ordinates of the grange stands (top left corner),
 and a map of shop name -> NPC who runs the shop.
 
@@ -86,7 +131,8 @@ and a map of shop name -> NPC who runs the shop.
 }
 ```
 
-## Grange shop life cycle
+Grange shop life cycle
+---
 
 Day started:
 * reset the sales and visitor counters
@@ -117,7 +163,8 @@ Day ended:
 * if a player shop, move the shop stock into the chest and hide the furniture
 * if a NPC shop, destroy the furniture
 
-## NPC scheduling
+NPC scheduling
+---
 ```
 Game1::_newDayAfterFade()
 // newDaySync.barrier("removeItemsFromWorld");
@@ -131,7 +178,8 @@ Game1::_newDayAfterFade()
 -> PathFindController::findPathForNPCSchedules()
 ```
 
-## Developer notes
+etc
+---
 
 patch reload ceruleandeep.MarketDay.CP
 patch summary ceruleandeep.MarketDay.CP

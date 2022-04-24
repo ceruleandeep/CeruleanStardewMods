@@ -14,10 +14,10 @@ namespace MarketDay.Shop
     /// This class holds and manages all the shops, loading content packs to create shops
     /// And containing methods to update everything that needs to
     /// </summary>
-    class ShopManager
+    internal static class ShopManager
     {
-        public static Dictionary<string, GrangeShop> GrangeShops = new();
-        public static Dictionary<string, AnimalShop> AnimalShops = new();
+        public static readonly Dictionary<string, GrangeShop> GrangeShops = new();
+        public static readonly Dictionary<string, AnimalShop> AnimalShops = new();
 
         /// <summary>
         /// Takes content packs and loads them as ItemShop and AnimalShop objects
