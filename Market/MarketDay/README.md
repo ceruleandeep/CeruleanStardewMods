@@ -19,6 +19,9 @@ How to use
 * The empty shop is yours. The other shops should be in use by other characters.
 * Click on the lower edge of the grange stand to open up the shop.
 * Add up to 9 items in whatever arrangement you like.
+
+![Add object to Shop Grange](../art/build-grange.png?raw=true )
+
 * Put extra items into the chest beside your shop.
 * While you're in the chest, choose a color for your shop.
 * Choose an attractive item to put on your shop's sign. It pays to advertise.
