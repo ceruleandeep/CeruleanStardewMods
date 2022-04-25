@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
+using MarketDay.Shop;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Objects;
 
 namespace MarketDay.Utility
 {
@@ -38,14 +41,49 @@ namespace MarketDay.Utility
                     if (tileIndexAt != 253) continue;
                     
                     ShopLocations.Add(new Vector2(x, y));
-
-                    MarketDay.monitor.Log($"ShopTiles:    {x} {y}: {tileSheetIdAt} {tileIndexAt}", LogLevel.Debug);
                 }
             }
+
+            // var locs = string.Join(", ", ShopLocations);
+            // MarketDay.monitor.Log($"ShopTiles: {locs}", LogLevel.Debug);
 
             return ShopLocations;
         }
 
-        
+        internal static Dictionary<Vector2, GrangeShop> ShopAtTile()
+        {
+            var town = Game1.getLocationFromName("Town");
+            var shopsAtTiles = new Dictionary<Vector2, GrangeShop>();
+
+            foreach (var tile in ShopTiles())
+            {
+                // MarketDay.monitor.Log($"ShopAtTile: {tile}", LogLevel.Debug);
+
+                var signTile = tile + new Vector2(3, 3);
+                if (!town.objects.TryGetValue(signTile, out var obj) || obj is not Sign sign) continue;
+                // MarketDay.monitor.Log($"    {signTile} is Sign", LogLevel.Debug);
+
+                if (sign.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out var signOwner))
+                {
+                    // MarketDay.monitor.Log($"        signOwner {signOwner}", LogLevel.Debug);
+
+                    shopsAtTiles[tile] = ShopManager.GrangeShops[signOwner];
+                }
+            }
+
+            return shopsAtTiles;
+        }
+
+        internal static string Owner(Item item)
+        {
+            item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.GrangeChestKey}", out var grangeChestOwner);
+            item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}", out var stockChestOwner);
+            item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out var signOwner);
+            string owner = null;
+            if (grangeChestOwner is not null) owner = grangeChestOwner;
+            if (stockChestOwner is not null) owner = stockChestOwner;
+            if (signOwner is not null) owner = signOwner;
+            return owner;
+        }
     }
 }

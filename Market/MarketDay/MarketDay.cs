@@ -27,34 +27,11 @@ namespace MarketDay
         public int timeOfDay;
     }
 
-    public class ShopMap
-    {
-        private static Dictionary<Vector2, GrangeShop> _ShopAtTile = new();
-        public GrangeShop this[Vector2 tile]
-        {
-            get => Get(tile);
-            set => Set(tile, value);
-        }
-
-        private static GrangeShop Get(Vector2 tile)
-        {
-            return _ShopAtTile.TryGetValue(tile, out var shop) ? shop : null;
-        }
-        private static void Set(Vector2 tile, GrangeShop value)
-        {
-            if (!Context.IsMainPlayer) throw new Exception("Only main player should set the shop map");
-            _ShopAtTile[tile] = value;
-        }
-
-        public IEnumerable<GrangeShop> Values => _ShopAtTile.Values.ToList();
-    }
-
     // ReSharper disable once ClassNeverInstantiated.Global
     public class MarketDay : Mod
     {
         internal static bool MapChangesSynced;
-        internal static List<Vector2> GrangeStandLocations = new();
-        internal static readonly ShopMap ShopAtTile = new();
+        // internal static readonly ShopMap ShopAtTile = new();
         
         private static ContentPatcher.IContentPatcherAPI ContentPatcherAPI;
         // private static IManagedConditions MarketDayConditions;
@@ -84,27 +61,34 @@ namespace MarketDay
             SMod = this;
 
             Helper.Events.GameLoop.GameLaunched += OnLaunched;
-            Helper.Events.GameLoop.GameLaunched += STF_OnLaunched;
-            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
-            Helper.Events.GameLoop.DayStarted += OnDayStarted;
+            Helper.Events.GameLoop.GameLaunched += OnLaunched_STFRegistrations;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_ReadConfig_InitSTF;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
+            Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateSTFStock_SendPrompt;
             Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
-            Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking;
-            Helper.Events.GameLoop.TimeChanged += OnTimeChanged;
-            Helper.Events.GameLoop.DayEnding += OnDayEnding;
-            Helper.Events.GameLoop.Saving += OnSaving;
-            Helper.Events.GameLoop.Saved += OnSaved;
-            Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_SyncMapOpenShops;
+            Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_InteractWithNPCs;
+            Helper.Events.GameLoop.TimeChanged += OnTimeChanged_RestockThroughDay;
+            Helper.Events.GameLoop.DayEnding += OnDayEnding_EmptyGrangeAndDestroyFurniture;
+            Helper.Events.GameLoop.Saving += OnSaving_WriteConfig;
+            Helper.Events.GameLoop.Saved += OnSaved_DoNothing;
+            Helper.Events.Input.ButtonPressed += OnButtonPressed_ShowShopOrGrangeOrStats;
             Helper.Events.Input.ButtonPressed += STF_Input_ButtonPressed;
 
-            ShopManager.LoadContentPacks();
-            MakePlayerShop();
+            Entry_InitSTF();
 
             var harmony = new Harmony("ceruleandeep.MarketDay");
             harmony.PatchAll();
 
-            helper.ConsoleCommands.Add("fm_destroy", "Destroy furniture", DestroyAllFurniture);
+            helper.ConsoleCommands.Add("fm_furniture", "Remove stray furniture", RemoveStrayFurniture);
             helper.ConsoleCommands.Add("fm_reload", "Reload shop data", HotReload);
             helper.ConsoleCommands.Add("fm_tiles", "List shop tiles", ListShopTiles);
+        }
+
+        private static void Entry_InitSTF()
+        {
+            ShopManager.LoadContentPacks();
+            MakePlayerShop();
         }
 
         private static void MakePlayerShop()
@@ -113,53 +97,43 @@ namespace MarketDay
             {
                 ShopName = "Player",
                 Quote = "Player store",
-                ItemStocks = new ItemStock[0]
+                ItemStocks = Array.Empty<ItemStock>()
             };
             ShopManager.GrangeShops.Add("Player", PlayerShop);
         }
 
-        public void HotReload(string command, string[] args)
+        private static void HotReload(string command, string[] args)
         {
             if (!Context.IsMainPlayer) return;
 
-            monitor.Log($"Reloading shop data", LogLevel.Info);
+            Log($"Reloading shop data", LogLevel.Info);
 
-            monitor.Log($"    Closing stores", LogLevel.Debug);
-            foreach (var store in ShopAtTile.Values)
-            {
-                store.OnDayEnding();
-            }
+            Log($"    Closing {MapUtility.ShopAtTile().Values.Count} stores", LogLevel.Debug);
+            OnDayEnding_EmptyGrangeAndDestroyFurniture(null, null);
 
-            monitor.Log($"    Removing non-player stores", LogLevel.Debug);
+            Log($"    Removing non-player stores", LogLevel.Debug);
             foreach (var (ShopName, shop) in ShopManager.GrangeShops)
-            {
-                if (!shop.IsPlayerShop()) ShopManager.GrangeShops.Remove(ShopName);
-            }
-            
-            monitor.Log($"    Loading content packs", LogLevel.Debug);
-            ShopManager.LoadContentPacks();
-            ShopManager.InitializeShops();
+                ShopManager.GrangeShops.Remove(ShopName);
 
-            ItemsUtil.UpdateObjectInfoSource();
-            ShopManager.InitializeItemStocks();
+            Log($"    Loading content packs", LogLevel.Debug);
+            Entry_InitSTF();
+            OnSaveLoaded_ReadConfig_InitSTF(null, null);
+            OnSaveLoaded_DestroyFurniture(null, null);
 
-            ItemsUtil.RegisterItemsToRemove();
-            
-            monitor.Log($"    Updating stock", LogLevel.Debug);
-            ShopManager.UpdateStock();
+            Log($"    Updating stock", LogLevel.Debug);
+            OnDayStarted_UpdateSTFStock_SendPrompt(null, null);
 
-            monitor.Log($"    Opening stores", LogLevel.Debug);
-            AssignShopsToGrangeLocations();
-            foreach (var store in ShopAtTile.Values) store.SetupForNewDay(IsMarketDay());
+            Log($"    Opening stores", LogLevel.Debug);
+            OnOneSecondUpdateTicking_SyncMapOpenShops(null, null);
         }
 
-        public static void ListShopTiles(string command, string[] args)
+        private static void ListShopTiles(string command, string[] args)
         {
-            monitor.Log($"ListShopTiles: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
+            Log($"ListShopTiles: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
             var town = Game1.getLocationFromName("Town");
             if (town is null)
             {
-                monitor.Log($"    Town location not available", LogLevel.Error);
+                Log($"    Town location not available", LogLevel.Error);
                 return;
             }
 
@@ -176,7 +150,7 @@ namespace MarketDay
                     var tileIndexAt = town.getTileIndexAt(x, y, "Buildings");
                     if (tileIndexAt != 253) continue;
 
-                    monitor.Log($"    {x} {y}: {tileSheetIdAt} {tileIndexAt}", LogLevel.Debug);
+                    Log($"    {x} {y}: {tileSheetIdAt} {tileIndexAt}", LogLevel.Debug);
                 }
             }
         }
@@ -184,20 +158,20 @@ namespace MarketDay
         /// <summary>Raised after the game is saved</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
-        void OnSaving(object sender, SavingEventArgs e)
+        private void OnSaving_WriteConfig(object sender, SavingEventArgs e)
         {
-            monitor.Log($"OnSaving: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
+            Log($"OnSaving: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
             ListShopTiles("", null);
             Helper.WriteConfig(Config);
-            monitor.Log($"OnSaving: complete", LogLevel.Debug);
+            Log($"OnSaving: complete", LogLevel.Debug);
 
         }
 
-        void OnSaved(object sender, SavedEventArgs e)
+        private static void OnSaved_DoNothing(object sender, SavedEventArgs e)
         {
-            monitor.Log($"OnSaved: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
+            Log($"OnSaved: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
             ListShopTiles("", null);
-            monitor.Log($"OnSaved: complete", LogLevel.Debug);
+            Log($"OnSaved: complete", LogLevel.Debug);
         }
 
         /// <summary>Raised after the player loads a save slot and the world is initialised.
@@ -211,40 +185,109 @@ namespace MarketDay
         /// </summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
-        void OnSaveLoaded(object sender, EventArgs e)
+        private static void OnSaveLoaded_ReadConfig_InitSTF(object sender, EventArgs e)
         {
             // reload the config to pick up any changes made in GMCM on the title screen
-            Config = Helper.ReadConfig<ModConfig>();
+            Config = helper.ReadConfig<ModConfig>();
             
             // some hooks for STF
             Translations.UpdateSelectedLanguage();
             ShopManager.UpdateTranslations();
 
             ItemsUtil.UpdateObjectInfoSource();
+
+            ShopManager.InitializeShops();
             ShopManager.InitializeItemStocks();
 
             ItemsUtil.RegisterItemsToRemove();
         }
+        
+        private static void OnSaveLoaded_DestroyFurniture(object sender, EventArgs e)
+        {
+            // get a clean slate in case previous debugging runs have left furniture lying around
+            RemoveStrayFurniture();
+        }
 
-        void OnDayStarted(object sender, EventArgs e)
+        private static void OnDayStarted_UpdateSTFStock_SendPrompt(object sender, EventArgs e)
         {
             MapChangesSynced = false;
+            if (!IsMarketDay()) return;
 
             // STF 
             ShopManager.UpdateStock();
             
             // send market day prompt
-            if (IsMarketDay())
-            {
-                var openingTime = (Config.OpeningTime*100).ToString();
-                openingTime = openingTime[..^2] + ":" + openingTime[^2..];
+            var openingTime = (Config.OpeningTime*100).ToString();
+            openingTime = openingTime[..^2] + ":" + openingTime[^2..];
                 
-                var prompt = Get("market-day", new {openingTime});
-                MessageUtility.SendMessage(prompt);
+            var prompt = Get("market-day", new {openingTime});
+            MessageUtility.SendMessage(prompt);
+        }
+
+        private static void OnUpdateTicking(object sender, UpdateTickingEventArgs e)
+        {
+            if (!e.IsMultipleOf(10)) return;
+            if (!Context.IsWorldReady) return;
+        }
+
+        private static void OnOneSecondUpdateTicking_SyncMapOpenShops(object sender, OneSecondUpdateTickingEventArgs e)
+        {
+            if (!Context.IsWorldReady) return;
+            if (!Context.IsMainPlayer) return;
+            if (!IsMarketDay()) return;
+
+            if (!MapChangesSynced) SyncMapChangesAndOpenShops();
+        }
+        
+        private static void OnOneSecondUpdateTicking_InteractWithNPCs(object sender, OneSecondUpdateTickingEventArgs e)
+        {
+            if (!Context.IsWorldReady) return;
+            if (!Context.IsMainPlayer) return;
+            if (!IsMarketDay()) return;
+
+            foreach (var store in MapUtility.ShopAtTile().Values)
+            {
+                store.InteractWithNearbyNPCs();
             }
         }
 
-        private static void AssignShopsToGrangeLocations()
+        private static void OnTimeChanged_RestockThroughDay(object sender, EventArgs e)
+        {
+            if (Game1.timeOfDay % 100 > 0) return;
+            foreach (var store in MapUtility.ShopAtTile().Values) store.RestockThroughDay(IsMarketDay());
+        }
+
+        private static void SyncMapChangesAndOpenShops()
+        {
+            if (!IsMarketDay()) return;
+            if (!Context.IsMainPlayer) return;
+            
+            if (MapUtility.ShopTiles() is null)
+            {
+                Log($"OnDayStartedAndMapLoaded: MarketDay.ShopLocations is null, called too early", LogLevel.Warn);
+                return;
+            }
+            
+            if (MapUtility.ShopTiles().Count == 0)
+            {
+                Log($"OnDayStartedAndMapLoaded: MarketDay.ShopLocations.Count {MapUtility.ShopTiles().Count}, called too early", LogLevel.Warn);
+                return;
+            }
+            
+            RecalculateSchedules();
+            MapChangesSynced = true;
+            OpenShops();
+        }
+        
+        private static void RecalculateSchedules()
+        {
+            foreach (var npc in StardewValley.Utility.getAllCharacters())
+            {
+                if (npc.isVillager()) npc.Schedule = npc.getSchedule(Game1.dayOfMonth);
+            }
+        }
+
+        private static void OpenShops()
         {
             if (!MapChangesSynced) throw new Exception("Map changes not synced");
             
@@ -255,7 +298,7 @@ namespace MarketDay
                 {
                     if (!APIs.Conditions.CheckConditions(shop.When))
                     {
-                        monitor.Log($"Shop {shopName}: opening condition not met", LogLevel.Warn);
+                        Log($"Shop {shopName}: opening condition not met", LogLevel.Warn);
                         continue;
                     }
                 }
@@ -263,81 +306,62 @@ namespace MarketDay
             }
 
             StardewValley.Utility.Shuffle(Game1.random, availableShopNames);
-            StardewValley.Utility.Shuffle(Game1.random, GrangeStandLocations);
+            StardewValley.Utility.Shuffle(Game1.random, MapUtility.ShopTiles());
             availableShopNames.Remove("Player");
             availableShopNames.Insert(0, "Player");
 
             var strNames = string.Join(", ", availableShopNames);
-            monitor.Log($"BuildStores: Adding stores ({GrangeStandLocations.Count} of {strNames})", LogLevel.Info);
+            Log($"BuildStores: Adding stores ({MapUtility.ShopTiles().Count} of {strNames})", LogLevel.Info);
 
-            foreach (var ShopLocation in GrangeStandLocations)
+            foreach (var ShopLocation in MapUtility.ShopTiles())
             {
                 if (availableShopNames.Count == 0) break;
                 var ShopName = availableShopNames[0];
                 availableShopNames.RemoveAt(0);
-
-                monitor.Log($"    {ShopName} to {ShopLocation}", LogLevel.Debug);
-
-                ShopAtTile[ShopLocation] = ShopManager.GrangeShops[ShopName];
-                ShopManager.GrangeShops[ShopName].SetOrigin(ShopLocation);
+                ShopManager.GrangeShops[ShopName].OpenAt(ShopLocation);
             }
         }
-        
-        void OnTimeChanged(object sender, EventArgs e)
+
+        private static void OnDayEnding_EmptyGrangeAndDestroyFurniture(object sender, EventArgs e)
         {
+            Log($"OnDayEnding: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
+            if (!IsMarketDay()) return;
             if (!Context.IsMainPlayer) return;
-            if (!MapChangesSynced)
-            {
-                GrangeStandLocations = MapUtility.ShopTiles();
-                RecalculateSchedules();
-                
-                MapChangesSynced = true;
-
-                AssignShopsToGrangeLocations();
-                foreach (var store in ShopAtTile.Values) store.SetupForNewDay(IsMarketDay());
-            }
             
-            if (Game1.timeOfDay % 100 > 0) return;
-            foreach (var store in ShopAtTile.Values) store.OnTimeChanged(IsMarketDay());
-        }
-
-        void RecalculateSchedules()
-        {
-            foreach (NPC npc in StardewValley.Utility.getAllCharacters())
-            {
-                if (npc.isVillager())
-                    npc.Schedule = npc.getSchedule(Game1.dayOfMonth);
-            }
-        }
-
-        void OnDayEnding(object sender, EventArgs e)
-        {
-            monitor.Log($"OnDayEnding: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
-            ListShopTiles("", null);
-            foreach (var store in ShopAtTile.Values) store.OnDayEnding();
+            foreach (var store in MapUtility.ShopAtTile().Values) store.EmptyGrangeAndDestroyFurniture();
+            RemoveStrayFurniture();
             
-            ListShopTiles("", null);
-            monitor.Log($"OnDayEnding: complete", LogLevel.Debug);
+            Log($"OnDayEnding: complete", LogLevel.Debug);
         }
 
-        private void DestroyAllFurniture(string command, string[] args)
+        private static void RemoveStrayFurniture(string command=null, string[] args=null)
         {
-            monitor.Log($"DestroyAllFurniture", LogLevel.Trace);
+            if (!Context.IsWorldReady) return;
+            if (!Context.IsMainPlayer) return;
+
+            Log($"DestroyAllFurniture", LogLevel.Trace);
 
             var toRemove = new Dictionary<Vector2, SObject>();
-
             var location = Game1.getLocationFromName("Town");
+            string owner;
+            
             foreach (var (tile, item) in location.Objects.Pairs)
             {
-                if (item.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeStorage", out _))
+                if (item.modData.TryGetValue($"{SMod.ModManifest.UniqueID}/{GrangeShop.GrangeChestKey}", out owner))
                 {
-                    monitor.Log($"    GrangeStorage at {item.TileLocation}", LogLevel.Trace);
+                    Log($"    {owner} {GrangeShop.GrangeChestKey} at {item.TileLocation}", LogLevel.Trace);
                     toRemove[tile] = item;
                 }
 
-                if (item.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeSign", out _))
+                if (item.modData.TryGetValue($"{SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}", out owner))
                 {
-                    monitor.Log($"    GrangeSign at {item.TileLocation}", LogLevel.Trace);
+                    Log($"    {owner} {GrangeShop.StockChestKey} at {item.TileLocation}", LogLevel.Trace);
+                    toRemove[tile] = item;
+                }
+
+                if (item.modData.TryGetValue($"{SMod.ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out owner))
+                {
+                    Log($"    {owner} {GrangeShop.ShopSignKey} at {item.TileLocation}", LogLevel.Trace);
                     toRemove[tile] = item;
                 }
             }
@@ -345,76 +369,16 @@ namespace MarketDay
             foreach (var (tile, item) in toRemove)
             {
                 if (item is not Chest && item is not Sign) continue;
-                monitor.Log($"    Removing {item.displayName} from {tile}", LogLevel.Trace);
+                Log($"    Removing {item} from {tile}", LogLevel.Trace);
                 location.Objects.Remove(tile);
             }
-
-            foreach (var store in ShopManager.GrangeShops.Values)
-            {
-                store.StorageChest = null;
-                store.GrangeSign = null;
-            }
         }
 
-        // private void EnsureChestHidden()
-        // {
-        //     monitor.Log($"EnsureChestHidden: I have been instructed to move the furniture", LogLevel.Debug);
-        //
-        //     var location = Game1.getLocationFromName("Town");
-        //     GetReferencesToFurniture();
-        //
-        //     monitor.Log($"EnsureChestHidden: StorageChest from {StorageChest.TileLocation} to {HiddenChestPosition}",
-        //         LogLevel.Debug);
-        //     location.setObject(HiddenChestPosition, StorageChest);
-        //     location.objects.Remove(VisibleChestPosition);
-        //     // location.moveObject((int)StorageChest.TileLocation.X, (int)StorageChest.TileLocation.Y, (int)HiddenChestPosition.X, (int)HiddenChestPosition.Y);
-        //     StorageChest.modData[$"{ModManifest.UniqueID}/MovedYou"] = "yes";
-        //
-        //     monitor.Log($"EnsureChestHidden: GrangeSign from {GrangeSign.TileLocation} to {HiddenSignPosition}",
-        //         LogLevel.Debug);
-        //     location.moveObject((int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
-        //         (int) HiddenSignPosition.X, (int) HiddenSignPosition.Y);
-        //
-        //     // location.setObject(HiddenSignPosition, GrangeSign);
-        //     //
-        //     // location.removeObject(VisibleChestPosition, false);
-        //     // location.removeObject(VisibleSignPosition, false);
-        //     //
-        //
-        //     // location.setObject(HiddenChestPosition, StorageChest);
-        //     // location.objects[HiddenSignPosition] = GrangeSign;
-        //     // location.setObject(VisibleChestPosition, null);
-        //     // location.objects[VisibleSignPosition] = null;
-        // }
-
-        void OnUpdateTicking(object sender, UpdateTickingEventArgs e)
-        {
-            if (!e.IsMultipleOf(10)) return;
-            if (!Context.IsWorldReady) return;
-            if (!IsMarketDay()) return;
-
-            foreach (var store in ShopAtTile.Values)
-            {
-                store.OnUpdateTicking();
-            }
-        }
-
-        private void OnOneSecondUpdateTicking(object sender, OneSecondUpdateTickingEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-            if (!IsMarketDay()) return;
-
-            foreach (var store in ShopAtTile.Values)
-            {
-                store.OnOneSecondUpdateTicking();
-            }
-        }
-        
 
         /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
-        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
+        private void OnButtonPressed_ShowShopOrGrangeOrStats(object sender, ButtonPressedEventArgs e)
         {
             if (!Context.IsWorldReady) return;
             if (Game1.activeClickableMenu is not null) return;
@@ -424,14 +388,12 @@ namespace MarketDay
 
             if (Config.DebugKeybinds) CheckDebugKeybinds(e);
             
-            string chestOwner = null;
             string signOwner = null;
-
-
+            
+            if (Game1.currentLocation is null) return;
             if (Game1.currentLocation.objects.TryGetValue(new Vector2(x, y), out var objectAt))
             {
-                objectAt.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeStorage", out chestOwner);
-                objectAt.modData.TryGetValue($"{ModManifest.UniqueID}/GrangeSign", out signOwner);
+                objectAt.modData.TryGetValue($"{ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out signOwner);
             }
             
             if (e.Button.IsUseToolButton() && objectAt is not null)
@@ -446,7 +408,6 @@ namespace MarketDay
                     }
                     
                     // clicked on NPC shop sign, open the store
-                    // monitor.Log($"Suppress and show shop: clicked on NPC shop sign, open the store", LogLevel.Debug);
                     Helper.Input.Suppress(e.Button);
                     ShopManager.GrangeShops[signOwner].DisplayShop(true);
                     return;
@@ -456,11 +417,18 @@ namespace MarketDay
             if (e.Button.IsActionButton()) {
                 // refer clicks on grange tiles to each store
                 var tileIndexAt = Game1.currentLocation.getTileIndexAt((int) x, (int) y, "Buildings");
+                Log($"ActionButton {tileIndexAt}", LogLevel.Debug);
                 if (tileIndexAt is < 349 or > 351) return;
 
-                foreach (var store in ShopAtTile.Values)
+                var signTile = new Vector2(352 - tileIndexAt + x, y);
+                Log($"    checking {signTile}", LogLevel.Debug);
+                if (Game1.currentLocation.objects.TryGetValue(signTile, out var sign) && sign is Sign)
                 {
-                    store.OnActionButton(e);
+                    sign.modData.TryGetValue($"{ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out var shopOwner);
+                    Log($"OnButtonPressed ActionButton for {shopOwner}", LogLevel.Debug);
+
+                    var shop = ShopManager.GrangeShops[shopOwner];
+                    shop.OnActionButton(e);
                 }
             }
         }
@@ -476,7 +444,7 @@ namespace MarketDay
             string oldOutput = Game1.debugOutput;
             if (e.Button == Config.WarpKeybind)
             {
-                Monitor.Log("Warping", LogLevel.Debug);
+                Log("Warping", LogLevel.Debug);
 
                 var debugCommand = Game1.player.currentLocation.Name == "Town"
                     ? "warp FarmHouse"
@@ -484,7 +452,7 @@ namespace MarketDay
                 Game1.game1.parseDebugInput(debugCommand);
 
                 // show result
-                monitor.Log(Game1.debugOutput != oldOutput
+                Log(Game1.debugOutput != oldOutput
                     ? $"> {Game1.debugOutput}"
                     : $"Sent debug command '{debugCommand}' to the game, but there was no output.", LogLevel.Info);
 
@@ -499,7 +467,7 @@ namespace MarketDay
 
             if (e.Button == Config.StatusKeybind)
             {
-                Monitor.Log("Status:", LogLevel.Debug);
+                Log("Status:", LogLevel.Debug);
                 Helper.Input.Suppress(e.Button);
             }
         }
@@ -532,8 +500,7 @@ namespace MarketDay
                 if (e.Cursor.GrabTile != e.Cursor.Tile)
                     return;
 
-                if (VerboseLogging)
-                    monitor.Log("Input detected!");
+                if (VerboseLogging) Log("Input detected!", LogLevel.Trace);
             }
             else if (!e.Button.IsActionButton())
                 return;
@@ -558,9 +525,8 @@ namespace MarketDay
         private void CheckForShopToOpen(IPropertyCollection tileProperty, StardewModdingAPI.Events.ButtonPressedEventArgs e)
         {
             //check if there is a Shop property on clicked tile
-            tileProperty.TryGetValue("Shop", out PropertyValue shopProperty);
-            if (VerboseLogging)
-                monitor.Log($"Shop Property value is: {shopProperty}");
+            tileProperty.TryGetValue("Shop", out var shopProperty);
+            if (VerboseLogging) Log($"Shop Property value is: {shopProperty}", LogLevel.Trace);
             if (shopProperty != null) //There was a `Shop` property so attempt to open shop
             {
                 //check if the property is for a vanilla shop, and gets the shopmenu for that shop if it exists
@@ -591,7 +557,7 @@ namespace MarketDay
                     }
                     else
                     {
-                        Monitor.Log($"A Shop tile was clicked, but a shop by the name \"{shopName}\" " +
+                        Log($"A Shop tile was clicked, but a shop by the name \"{shopName}\" " +
                             $"was not found.", LogLevel.Debug);
                     }
                 }
@@ -610,7 +576,7 @@ namespace MarketDay
                     }
                     else
                     {
-                        Monitor.Log($"An Animal Shop tile was clicked, but a shop by the name \"{shopName}\" " +
+                        Log($"An Animal Shop tile was clicked, but a shop by the name \"{shopName}\" " +
                             $"was not found.", LogLevel.Debug);
                     }
                 }
@@ -620,7 +586,7 @@ namespace MarketDay
         
         private void OnLaunched(object sender, GameLaunchedEventArgs e)
         {
-            monitor.Log($"OnLaunched", LogLevel.Info);
+            Log($"OnLaunched", LogLevel.Info);
 
             Config = Helper.ReadConfig<ModConfig>();
             
@@ -640,7 +606,7 @@ namespace MarketDay
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void STF_OnLaunched(object sender, GameLaunchedEventArgs e)
+        private void OnLaunched_STFRegistrations(object sender, GameLaunchedEventArgs e)
         {
             APIs.RegisterJsonAssets();
             if (APIs.JsonAssets != null)
@@ -649,9 +615,6 @@ namespace MarketDay
             APIs.RegisterExpandedPreconditionsUtility();
             APIs.RegisterBFAV();
             APIs.RegisterFAVR();
-            
-            if (!Context.IsMainPlayer) return;
-            ShopManager.InitializeShops();
         }
         
         private void JsonAssets_AddedItemsToShop(object sender, System.EventArgs e)
@@ -802,15 +765,16 @@ namespace MarketDay
                    !Game1.isSnowing &&
                    !StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
         }
-        
-        private string Get(string key)
+
+        private static string Get(string key, object tokens)
         {
-            return Helper.Translation.Get(key);
+            return helper.Translation.Get(key, tokens);
         }
 
-        private string Get(string key, object tokens)
+        internal static void Log(string message, LogLevel level)
         {
-            return Helper.Translation.Get(key, tokens);
+            monitor.Log($"[{Game1.player.Name}] {message}", level);
         }
+
     }
 }

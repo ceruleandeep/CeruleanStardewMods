@@ -111,6 +111,19 @@ Credits
 Developer Notes
 ===
 
+Debugging notes
+---
+
+NPC pathfinding to visit shops is OFF by default, in case it crashes. Go into GMCM and turn on NPC visitor pathfinding when you're ready to test it
+
+Other things you can turn on/off with GMCM:
+* Peek into shop chests
+* Ruin the furniture
+* Debug keybinds: when enabled,
+  * V opens the GMCM config
+  * R reloads the datafiles and restarts the market
+  * Z warps you between the Town and the Farmhouse 
+
 Market Data Model
 ---
 A list of co-ordinates of the grange stands (top left corner),
@@ -137,6 +150,24 @@ and a map of shop name -> NPC who runs the shop.
 Grange shop life cycle
 ---
 
+State:
+* MarketDay
+  MapChangesSynced
+  
+* ItemShop
+  STF things
+* GrangeShop
+  recentlyLooked (LOCAL)
+  recentlyTended (LOCAL)
+  Sales (LOCAL)
+* DayStockChest
+  Visitors today
+  Sales today
+* DisplayChest
+* ShopSign
+* StockManager (LOCAL)
+
+
 Day started:
 * reset the sales and visitor counters
 * reset the lists of sales and recent buyers
@@ -144,6 +175,34 @@ Day started:
 * put some stock in the chest, if an NPC store
 * restock the shop from the chest
 * move the furniture into position
+
+Second moment of day:
+    Sync map changes
+        Main player:
+            Cache grange locations off patched map
+            Recalculate NPC schedules
+            Assign shops to grange locations
+        All players:
+            For each store:
+                Setup for new day
+
+Store setup each market day:
+    Get references to furniture
+    Main player:
+        Reset stats
+        Stock chest
+        Stock grange
+        Show the furniture
+        Decorate the furniture
+
+Every ten-minutes:
+    Get references to furniture
+
+Every hour:
+    Main player:
+        NPC shop: restock
+        Player shop: restock if allowed
+
 
 When world is rendered:
 * draw the shop contents

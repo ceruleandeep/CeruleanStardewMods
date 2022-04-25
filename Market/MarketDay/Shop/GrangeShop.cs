@@ -20,92 +20,79 @@ namespace MarketDay.Shop
         private const int WOOD_SIGN = 37;
         private const double BUY_CHANCE = 0.25;
 
-        public readonly List<Item> GrangeDisplay = new();
+        private const int DisplayChestHidingOffsetY = 36;
 
-        public int X;
-        public int Y;
+        public Vector2 Origin => StockChest.TileLocation - new Vector2(3, 1);
 
-        public Chest StorageChest;
-        public Sign GrangeSign;
+        public const string GrangeChestKey = "GrangeDisplay";
+        public Chest GrangeChest => FindDisplayChest();
 
-        public Vector2 VisibleChestPosition;
-        public Vector2 VisibleSignPosition;
+        public const string StockChestKey = "GrangeStorage";
+        public Chest StockChest => FindStorageChest();
 
-        public Vector2 PlayerHiddenChestPosition = new Vector2(1337, 1337);
-        public Vector2 PlayerHiddenSignPosition = new Vector2(1337, 1338);
+        public const string ShopSignKey = "GrangeSign";
+        public Sign ShopSign => FindSign();
 
-        public int VisitorsToday;
-        public int GrumpyVisitorsToday;
-        public List<SalesRecord> Sales = new();
+        public const string VisitorsTodayKey = "VisitorsToday";
+        public const string GrumpyVisitorsTodayKey = "GrumpyVisitorsToday";
+
         public Dictionary<NPC, int> recentlyLooked = new();
         public Dictionary<NPC, int> recentlyTended = new();
+        public List<SalesRecord> Sales = new();
 
-        public GrangeShop()
-        {
-            while (GrangeDisplay.Count < 9) GrangeDisplay.Add(null);
-        }
-
-        public void SetOrigin(Vector2 Origin)
-        {
-            this.X = (int) Origin.X;
-            this.Y = (int) Origin.Y;
-            VisibleChestPosition = new Vector2(X + 3, Y + 1);
-            VisibleSignPosition = new Vector2(X + 3, Y + 3);
-
-            // if (MarketDay.Config.HideFurniture)
-            // {
-            //     HiddenChestPosition = new Vector2(X + 1337, Y + 1);
-            //     HiddenSignPosition = new Vector2(X + 1337, Y + 3);
-            // }
-            // else
-            // {
-            //     HiddenChestPosition = new Vector2(X + 5, Y + 1);
-            //     HiddenSignPosition = new Vector2(X + 5, Y + 3);
-            // }
-
-            //
-            // if (Quote is null || Quote.Length == 0)
-            //     Quote = Get("default-stall-description", new {NpcName = ShopName});
-        }
-
+        // state queries
         public bool IsPlayerShop()
         {
             return ShopName == "Player";
         }
+        private static bool OutsideOpeningHours =>
+            Game1.timeOfDay < MarketDay.Config.OpeningTime*100 ||
+            Game1.timeOfDay > MarketDay.Config.ClosingTime*100;
 
-        public Vector2 OwnerPosition()
+        public void OpenAt(Vector2 Origin)
         {
-            return new Vector2(X + 3, Y + 2);
-        }
+            Debug.Assert(Context.IsMainPlayer, "OpenAt: only main player can open shops");
 
-        public void SetupForNewDay(bool IsMarketDay)
-        {
-            Sales = new List<SalesRecord>();
-            VisitorsToday = 0;
-            GrumpyVisitorsToday = 0;
+            Log($"Opening at {Origin}", LogLevel.Info);
+
+            MakeFurniture(Origin);
+
             recentlyLooked = new Dictionary<NPC, int>();
             recentlyTended = new Dictionary<NPC, int>();
+            Sales = new List<SalesRecord>();
 
-            if (!IsMarketDay) return;
-            Log($"Market day", LogLevel.Trace);
-
-            GetReferencesToFurniture();
-
-            if (!IsPlayerShop())
-            {
-                StockChestForTheDay();
-            }
-
+            StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"] = "0";
+            StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"] = "0";
+            
+            if (!IsPlayerShop()) StockChestForTheDay();
             if (!IsPlayerShop() || MarketDay.Config.AutoStockAtStartOfDay) RestockGrangeFromChest(true);
 
-            ShowFurniture();
             DecorateFurniture();
         }
 
-        public void OnTimeChanged(bool IsMarketDay)
+        private static Vector2 AvailableTileForFurniture(int minX, int minY)
         {
-            if (!IsMarketDay) return;
+            var location = Game1.getLocationFromName("Town");
+            var freeTile = new Vector2(minX, minY);
+            while (location.Objects.ContainsKey(freeTile))
+            {
+                freeTile += Vector2.UnitX;
+            }
 
+            return freeTile;
+        }
+
+
+        private Vector2 OwnerPosition()
+        {
+            return Origin + new Vector2(3, 2);
+        }
+        
+        public void RestockThroughDay(bool IsMarketDay)
+        {
+            if (!Context.IsMainPlayer) return;
+            if (!IsMarketDay) return;
+            
             if (IsPlayerShop())
             {
                 if (MarketDay.Config.RestockItemsPerHour > 0) RestockGrangeFromChest();
@@ -116,21 +103,43 @@ namespace MarketDay.Shop
             }
         }
 
-        public void OnDayEnding()
+        public void EmptyGrangeAndDestroyFurniture()
         {
+            if (!Context.IsMainPlayer) return;
+
+            Log($"    OnDayEnding [{IsPlayerShop()}]", LogLevel.Error);
+
             if (IsPlayerShop())
             {
                 EmptyStoreIntoChest();
-                HideFurniture();
+                EmptyPlayerDayStorageChest();
             }
-            else
+            DestroyFurniture();
+        }
+
+        private void EmptyPlayerDayStorageChest()
+        {
+            Log("Here we would move all the player's stuff to L+F or shipping bin", LogLevel.Warn);
+            if (StockChest is null)
             {
-                DestroyFurniture();
+                Log("EmptyPlayerDayStorageChest: DayStockChest is null", LogLevel.Error);
+                return;
+            }
+            if (StockChest.items.Count <= 0) return;
+            for (var i = 0; i < StockChest.items.Count; i++)
+            {
+                var item = StockChest.items[i];
+                StockChest.items[i] = null;
+                if (item == null) continue;
+                Game1.player.team.returnedDonations.Add(item);
+                Game1.player.team.newLostAndFoundItems.Value = true;
             }
         }
 
-        public void OnUpdateTicking()
+        public void CheckForBrowsingNPCs()
         {
+            Debug.Assert(Context.IsMainPlayer, "CheckForBrowsingNPCs: only main player can access recentlyLooked");
+
             // var nearby = new List<string>();
             // foreach (var npc in NearbyNPCs()) nearby.Add($"{npc.displayName} ({npc.movementPause})");
             // monitor.Log($"Nearby NPCs: {string.Join(", ", nearby)}", LogLevel.Debug);
@@ -155,30 +164,35 @@ namespace MarketDay.Shop
                 npc.movementPause = 5000;
                 recentlyLooked[npc] = Game1.timeOfDay;
 
-                VisitorsToday++;
+                var visitors = int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"]);
+                visitors++;
+                StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"] = $"{visitors}";
             }
         }
 
-        internal void OnOneSecondUpdateTicking()
+        internal void InteractWithNearbyNPCs()
         {
+            if (!Context.IsMainPlayer) return;
+            CheckForBrowsingNPCs();
             SellSomethingToOnlookers();
             SeeIfOwnerIsAround();
         }
 
         internal void OnActionButton(ButtonPressedEventArgs e)
         {
-            var tile = e.Cursor.Tile;
-            Log($"Button pressed at {tile}", LogLevel.Debug);
-            if (tile.X < X || tile.X > X + 3 || tile.Y < Y || tile.Y > Y + 4) return;
+            if (GrangeChest is null)
+            {
+                Log($"DisplayChest is null", LogLevel.Error);
+                return;
+            }
+            
             if (IsPlayerShop())
             {
-                Game1.activeClickableMenu = new StorageContainer(GrangeDisplay, 9, 3, onGrangeChange,
+                
+                Game1.activeClickableMenu = new StorageContainer(GrangeChest.items, 9, 3, onGrangeChange,
                     StardewValley.Utility.highlightSmallObjects);
             }
-            else
-            {
-                DisplayShop();
-            }
+            else DisplayShop();
 
             MarketDay.SMod.Helper.Input.Suppress(e.Button);
         }
@@ -191,7 +205,7 @@ namespace MarketDay.Shop
         {
             MarketDay.monitor.Log($"Attempting to open the shop \"{ShopName}\" at {Game1.timeOfDay}", LogLevel.Debug);
 
-            if (!debug && ShopClosed)
+            if (!debug && OutsideOpeningHours)
             {
                 if (ClosedMessage != null)
                 {
@@ -257,12 +271,12 @@ namespace MarketDay.Shop
 
         private bool OnPurchase(ISalable item, Farmer who, int stack)
         {
-            for (var j = 0; j < GrangeDisplay.Count; j++)
+            for (var j = 0; j < GrangeChest.items.Count; j++)
             {
                 if (item is not Item i) continue;
-                if (GrangeDisplay[j] is null) continue;
-                if (GrangeDisplay[j].ParentSheetIndex != i.ParentSheetIndex) continue;
-                GrangeDisplay[j] = null;
+                if (GrangeChest.items[j] is null) continue;
+                if (GrangeChest.items[j].ParentSheetIndex != i.ParentSheetIndex) continue;
+                GrangeChest.items[j] = null;
                 return false;
             }
 
@@ -288,7 +302,13 @@ namespace MarketDay.Shop
             // this needs to filter StockManager.ItemPriceAndStock
             var stock = new Dictionary<ISalable, int[]>();
 
-            foreach (var stockItem in GrangeDisplay)
+            if (GrangeChest is null)
+            {
+                Log("ShopStock: DisplayChest is null", LogLevel.Warn);
+                return stock;
+            }
+            
+            foreach (var stockItem in GrangeChest.items)
             {
                 if (stockItem is null) continue;
 
@@ -316,19 +336,19 @@ namespace MarketDay.Shop
 
         private void SeeIfOwnerIsAround()
         {
+            Debug.Assert(Context.IsMainPlayer, "SeeIfOwnerIsAround: only main player can access recentlyTended");
+
             var owner = OwnerNearby();
             if (owner is null) return;
 
             // busy
             if (owner.movementPause is < 10000 and > 0) return;
 
-            // already bought
+            // already tended
             if (recentlyTended.TryGetValue(owner, out var time))
             {
                 if (time > Game1.timeOfDay - 100) return;
             }
-
-            ;
 
             owner.Halt();
             owner.faceDirection(2);
@@ -343,7 +363,7 @@ namespace MarketDay.Shop
 
         private NPC OwnerNearby()
         {
-            var (ownerX, ownerY) = new Vector2(X + 3, Y + 2);
+            var (ownerX, ownerY) = OwnerPosition();
             var location = Game1.getLocationFromName("Town");
             var npc = location.characters.FirstOrDefault(n => n.Name == ShopName);
             if (npc is null) return null;
@@ -353,7 +373,7 @@ namespace MarketDay.Shop
 
         private void SellSomethingToOnlookers()
         {
-            if (ShopClosed) return;
+            if (OutsideOpeningHours) return;
             
             foreach (var npc in NearbyNPCs())
             {
@@ -371,11 +391,15 @@ namespace MarketDay.Shop
 
                 // check stock                
                 // also remove items the NPC dislikes
-                var available = GrangeDisplay.Where(gi => gi is not null && ItemPreferenceIndex(gi, npc) > 0).ToList();
+                var available = GrangeChest.items.Where(gi => gi is not null && ItemPreferenceIndex(gi, npc) > 0).ToList();
                 if (available.Count == 0)
                 {
                     // no stock
-                    GrumpyVisitorsToday++;
+                    var grumpy =
+                        int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"]);
+                    grumpy++;
+                    StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"] = $"{grumpy}";
+
                     npc.doEmote(12);
                     return;
                 }
@@ -384,20 +408,17 @@ namespace MarketDay.Shop
                 available.Sort((a, b) =>
                     ItemPreferenceIndex(a, npc).CompareTo(ItemPreferenceIndex(b, npc)));
 
-                var i = GrangeDisplay.IndexOf(available[0]);
-                var item = GrangeDisplay[i];
+                var i = GrangeChest.items.IndexOf(available[0]);
+                var item = GrangeChest.items[i];
 
                 // buy it
                 if (IsPlayerShop()) AddToPlayerFunds(item, npc);
-                GrangeDisplay[i] = null;
+                GrangeChest.items[i] = null;
 
                 EmoteForPurchase(npc, item);
             }
         }
 
-        private static bool ShopClosed =>
-            Game1.timeOfDay < MarketDay.Config.OpeningTime*100 ||
-            Game1.timeOfDay > MarketDay.Config.ClosingTime*100;
 
         private static void EmoteForPurchase(NPC npc, Item item)
         {
@@ -434,6 +455,8 @@ namespace MarketDay.Shop
 
         private void AddToPlayerFunds(Item item, NPC npc)
         {
+            Debug.Assert(Context.IsMainPlayer, "AddToPlayerFunds: only main player can access Sales");
+
             var mult = SellPriceMultiplier(item, npc);
             var obj = (Object) item;
             if (obj is null) return;
@@ -459,6 +482,11 @@ namespace MarketDay.Shop
 
         public void ShowSummary()
         {
+            if (!Context.IsMainPlayer)
+            {
+                Log($"ShowSummary: summary for farmhands cannot list items sold", LogLevel.Warn);
+            }
+            
             var salesDescriptions = (
                 from sale in Sales
                 let displayMult = Convert.ToInt32((sale.mult - 1) * 100)
@@ -482,6 +510,9 @@ namespace MarketDay.Shop
                 AverageMult = Get("no-sales-today");
             }
 
+            var VisitorsToday = StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"];
+            var GrumpyVisitorsToday =
+                StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"];
             var message = Get("daily-summary",
                 new
                 {
@@ -507,7 +538,7 @@ namespace MarketDay.Shop
             if (Game1.player.currentLocation.Name == "Town") mult += 0.2;
 
             // * value of item on sign
-            if (GrangeSign.displayItem.Value is Object o)
+            if (ShopSign.displayItem.Value is Object o)
             {
                 var signSellPrice = o.sellToStorePrice();
                 signSellPrice = Math.Min(signSellPrice, 1000);
@@ -562,83 +593,140 @@ namespace MarketDay.Shop
             if (location is null) return new List<NPC>();
 
             var nearby = (from npc in location.characters
-                where npc.getTileX() >= X && npc.getTileX() <= X + 2 && npc.getTileY() == Y + 4
+                where npc.getTileX() >= Origin.X && npc.getTileX() <= Origin.X + 2 && npc.getTileY() == Origin.Y + 4
                 select npc).ToList();
             return nearby;
         }
 
         private bool RecentlyBought(NPC npc)
         {
+            Debug.Assert(Context.IsMainPlayer, "RecentlyBought: only main player can access Sales");
+
             return Sales.Any(sale => sale.npc == npc && sale.timeOfDay > Game1.timeOfDay - 100);
         }
 
-        private void GetReferencesToFurniture()
+        internal void MakeFurniture(Vector2 OriginTile)
         {
-            if (!MarketDay.IsMarketDay())
+            Log($"MakeFurniture [{OriginTile}]", LogLevel.Trace);
+
+            if (StockChest is not null && GrangeChest is not null && ShopSign is not null)
             {
-                Log("GetReferencesToFurniture called on non-market day", LogLevel.Error);
+                Log($"    All furniture in place: {StockChest.TileLocation} {GrangeChest.TileLocation} {ShopSign.TileLocation}", LogLevel.Trace);
                 return;
             }
 
-            Log($"GetReferencesToFurniture", LogLevel.Trace);
-
+            if (!MarketDay.IsMarketDay())
+            {
+                Log("MakeFurniture called on non-market day", LogLevel.Error);
+                return;
+            }
+            
             var location = Game1.getLocationFromName("Town");
 
             // the storage chest
-            foreach (var (tile, item) in location.Objects.Pairs)
-            {
-                if (item is not Chest chest) continue;
-                if (!chest.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeStorage",
-                    out var owner)) continue;
-                if (owner != ShopName) continue;
-                Log($"    StorageChest for {owner} at {tile} claims to be at {chest.TileLocation}", LogLevel.Trace);
-                if (tile != chest.TileLocation)
-                {
-                    chest.TileLocation = tile;
-                    Log($"    Moving storage chest, now at {chest.TileLocation}", LogLevel.Trace);
-                }
+            if (StockChest is null) 
+                if (Context.IsMainPlayer) MakeStorageChest(location, OriginTile);
+                else Log($"    StorageChest still null", LogLevel.Warn);
 
-                StorageChest = chest;
-            }
-
-            if (StorageChest is null)
-            {
-                Log($"    Creating new StorageChest at {VisibleChestPosition}", LogLevel.Trace);
-                StorageChest = new Chest(true, VisibleChestPosition, 232)
-                {
-                    modData = {[$"{MarketDay.SMod.ModManifest.UniqueID}/GrangeStorage"] = ShopName}
-                };
-                location.setObject(VisibleChestPosition, StorageChest);
-            }
-
+            // the display chest
+            if (GrangeChest is null) 
+                if (Context.IsMainPlayer) MakeDisplayChest(location);
+                else Log($"    DisplayChest still null", LogLevel.Warn);
 
             // the grange sign
+            if (ShopSign is null) 
+                if (Context.IsMainPlayer) MakeSign(location, OriginTile);
+                else Log($"    {ShopSignKey} still null", LogLevel.Warn);
+
+            // the results
+            Log($"    ... StorageChest at {StockChest?.TileLocation}", LogLevel.Trace);
+            Log($"    ... DisplayChest at {GrangeChest?.TileLocation}", LogLevel.Trace);
+            Log($"    ... {ShopSignKey} at {ShopSign?.TileLocation}", LogLevel.Trace);
+        }
+
+        private Sign FindSign()
+        {
+            var location = Game1.getLocationFromName("Town");
+
             foreach (var (tile, item) in location.Objects.Pairs)
             {
                 if (item is not Sign sign) continue;
-                if (!sign.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeSign",
+                if (!sign.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{ShopSignKey}",
                     out var owner))
                     continue;
                 if (owner != ShopName) continue;
-                Log($"    GrangeSign for {owner} at {tile} claims to be at {sign.TileLocation}", LogLevel.Trace);
-                GrangeSign = sign;
+                return sign;
             }
 
-            if (GrangeSign is null)
+            return null;
+        }
+
+        private Chest FindStorageChest()
+        {
+            var location = Game1.getLocationFromName("Town");
+
+            foreach (var (tile, item) in location.Objects.Pairs)
             {
-                Log($"    Creating new GrangeSign at {VisibleSignPosition}", LogLevel.Trace);
-                GrangeSign = new Sign(VisibleSignPosition, WOOD_SIGN)
-                {
-                    modData = {[$"{MarketDay.SMod.ModManifest.UniqueID}/GrangeSign"] = ShopName}
-                };
-                location.objects[VisibleSignPosition] = GrangeSign;
+                if (item is not Chest chest) continue;
+                if (!chest.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{StockChestKey}",
+                    out var owner)) continue;
+                if (owner != ShopName) continue;
+                chest.TileLocation = tile; // ensure the chest thinks it's where the location thinks it is
+                return chest;
             }
 
+            return null;
+        }
 
-            // the results
+        private Chest FindDisplayChest()
+        {
+            var location = Game1.getLocationFromName("Town");
+            foreach (var (tile, item) in location.Objects.Pairs)
+            {
+                if (item is not Chest chest) continue;
+                if (!chest.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeChestKey}",
+                    out var owner)) continue;
+                if (owner != ShopName) continue;
+                return chest;
+            }
 
-            Log($"    ... StorageChest at {StorageChest.TileLocation}", LogLevel.Trace);
-            Log($"    ... GrangeSign at {GrangeSign.TileLocation}", LogLevel.Trace);
+            return null;
+        }
+
+        private void MakeSign(GameLocation location, Vector2 OriginTile)
+        {
+            var VisibleSignPosition = OriginTile + new Vector2(3, 3);
+
+            Log($"    Creating new {ShopSignKey} at {VisibleSignPosition}", LogLevel.Trace);
+            var sign = new Sign(VisibleSignPosition, WOOD_SIGN)
+            {
+                modData = {[$"{MarketDay.SMod.ModManifest.UniqueID}/{ShopSignKey}"] = ShopName}
+            };
+            location.objects[VisibleSignPosition] = sign;
+        }
+
+        private void MakeDisplayChest(GameLocation location)
+        {
+            var freeTile = AvailableTileForFurniture(11778, DisplayChestHidingOffsetY);
+            Log($"    Creating new DisplayChest at {freeTile}", LogLevel.Trace);
+            var chest = new Chest(true, freeTile, 232)
+            {
+                modData = {[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeChestKey}"] = ShopName}
+            };
+            location.setObject(freeTile, chest);
+            while (GrangeChest.items.Count < 9) GrangeChest.items.Add(null);
+        }
+
+        private void MakeStorageChest(GameLocation location, Vector2 OriginTile)
+        {
+            var VisibleChestPosition = OriginTile + new Vector2(3, 1);
+            
+            Log($"    Creating new StorageChest at {VisibleChestPosition}", LogLevel.Trace);
+            var chest = new Chest(true, VisibleChestPosition, 232)
+            {
+                modData = {[$"{MarketDay.SMod.ModManifest.UniqueID}/{StockChestKey}"] = ShopName}
+            };
+            location.setObject(VisibleChestPosition, chest);
         }
 
         private void DecorateFurniture()
@@ -648,93 +736,71 @@ namespace MarketDay.Shop
                 Log($"    ShopColor {ShopColor}", LogLevel.Debug);
                 var color = ShopColor;
                 color.A = 255;
-                StorageChest.playerChoiceColor.Value = color;
+                StockChest.playerChoiceColor.Value = color;
             }
             else
             {
                 var ci = Game1.random.Next(20);
                 var c = new DiscreteColorPicker(0, 0).getColorFromSelection(ci);
                 Log($"    ShopColor randomized to {c}", LogLevel.Trace);
-                StorageChest.playerChoiceColor.Value = c;
+                StockChest.playerChoiceColor.Value = c;
             }
 
             Log($"    SignObjectIndex {SignObjectIndex}", LogLevel.Trace);
-            Item SignItem = GrangeDisplay.Find(item => item is not null);
-            if (SignItem is null && StorageChest.items.Count > 0) SignItem = StorageChest.items[0].getOne();
+            Item SignItem = GrangeChest.items.ToList().Find(item => item is not null);
+            if (SignItem is null && StockChest.items.Count > 0) SignItem = StockChest.items[0].getOne();
             if (SignObjectIndex > 0) SignItem = new Object(SignObjectIndex, 1);
 
             if (SignItem is null) return;
-            Log($"    GrangeSign.displayItem.Value to {SignItem.DisplayName}", LogLevel.Trace);
-            GrangeSign.displayItem.Value = SignItem;
-            GrangeSign.displayType.Value = 1;
+            Log($"    {ShopSignKey}.displayItem.Value to {SignItem.DisplayName}", LogLevel.Trace);
+            ShopSign.displayItem.Value = SignItem;
+            ShopSign.displayType.Value = 1;
         }
 
-        private void ShowFurniture()
-        {
-            var location = Game1.getLocationFromName("Town");
-
-            Debug.Assert(StorageChest is not null, "StorageChest is not null");
-            Debug.Assert(GrangeSign is not null, "GrangeSign is not null");
-            Debug.Assert(GrangeSign.TileLocation.X > 0, "GrangeSign.TileLocation.X assigned");
-            Debug.Assert(GrangeSign.TileLocation.Y > 0, "GrangeSign.TileLocation.Y assigned");
-
-            location.moveObject(
-                (int) StorageChest.TileLocation.X, (int) StorageChest.TileLocation.Y,
-                (int) VisibleChestPosition.X, (int) VisibleChestPosition.Y);
-
-            location.moveObject(
-                (int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
-                (int) VisibleSignPosition.X, (int) VisibleSignPosition.Y);
-        }
-
-        private void HideFurniture()
-        {
-            var location = Game1.getLocationFromName("Town");
-            if (StorageChest is null) return;
-            if (GrangeSign is null) return;
-            if (!IsPlayerShop()) return;
-            location.moveObject(
-                (int) StorageChest.TileLocation.X, (int) StorageChest.TileLocation.Y,
-                (int) PlayerHiddenChestPosition.X, (int) PlayerHiddenChestPosition.Y);
-
-            location.moveObject(
-                (int) GrangeSign.TileLocation.X, (int) GrangeSign.TileLocation.Y,
-                (int) PlayerHiddenSignPosition.X, (int) PlayerHiddenSignPosition.Y);
-        }
-
+        // private void MoveFurnitureToVisible()
+        // {
+        //     var location = Game1.getLocationFromName("Town");
+        //     var VisibleChestPosition = new Vector2(X + 3, Y + 1);
+        //     var VisibleSignPosition = new Vector2(X + 3, Y + 3);
+        //
+        //     Debug.Assert(DayStockChest is not null, "StorageChest is not null");
+        //     Debug.Assert(ShopSign is not null, "{ShopSignKey} is not null");
+        //     Debug.Assert(ShopSign.TileLocation.X > 0, "GrangeSign.TileLocation.X assigned");
+        //     Debug.Assert(ShopSign.TileLocation.Y > 0, "GrangeSign.TileLocation.Y assigned");
+        //
+        //     location.moveObject(
+        //         (int) DayStockChest.TileLocation.X, (int) DayStockChest.TileLocation.Y,
+        //         (int) VisibleChestPosition.X, (int) VisibleChestPosition.Y);
+        //
+        //     location.moveObject(
+        //         (int) ShopSign.TileLocation.X, (int) ShopSign.TileLocation.Y,
+        //         (int) VisibleSignPosition.X, (int) VisibleSignPosition.Y);
+        // }
+        
         private void DestroyFurniture()
         {
+            Log($"    DestroyFurniture: {ShopName}", LogLevel.Error);
+
             var toRemove = new Dictionary<Vector2, Object>();
 
             var location = Game1.getLocationFromName("Town");
             foreach (var (tile, item) in location.Objects.Pairs)
             {
-                if (item is Sign sign)
+                foreach (var key in new List<string>{"{ShopSignKey}", "{DayStockChestKey}", "{DisplayChestKey}"})
                 {
-                    if (!sign.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeSign",
-                        out var owner))
-                        continue;
-                    if (owner != ShopName) continue;
-                    toRemove[tile] = item;
-                }
-
-                if (item is Chest chest)
-                {
-                    if (!chest.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeStorage",
+                    if (!item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{key}",
                         out var owner)) continue;
                     if (owner != ShopName) continue;
+                    Log($"    Scheduling {item.displayName} from {tile}", LogLevel.Debug);
                     toRemove[tile] = item;
-                }
+                } 
             }
 
-            foreach (var (tile, item) in toRemove)
+            foreach (var (tile, itemToRemove) in toRemove)
             {
-                Log($"    Removing {item.displayName} from {tile}", LogLevel.Trace);
+                Log($"    Removing {itemToRemove.displayName} from {tile}", LogLevel.Debug);
                 location.Objects.Remove(tile);
             }
-
-            StorageChest = null;
-            GrangeSign = null;
         }
 
         private void StockChestForTheDay()
@@ -750,7 +816,7 @@ namespace MarketDay.Shop
                     {
                         var newItem = item.getOne();
                         newItem.Stack = 1;
-                        StorageChest.addItem(newItem);
+                        StockChest.addItem(newItem);
                     }
                     else
                     {
@@ -762,28 +828,37 @@ namespace MarketDay.Shop
 
         private void RestockGrangeFromChest(bool fullRestock = false)
         {
-            if (StorageChest is null) return;
-            var restockLimitRemaining = MarketDay.Config.RestockItemsPerHour;
-
-            for (var j = 0; j < GrangeDisplay.Count; j++)
+            if (StockChest is null)
             {
-                if (StorageChest.items.Count == 0)
+                Log($"RestockGrangeFromChest: StorageChest is null", LogLevel.Warn);
+                return;
+            }
+            if (GrangeChest is null)
+            {
+                Log($"RestockGrangeFromChest: DisplayChest is null", LogLevel.Warn);
+                return;
+            }
+            var restockLimitRemaining = MarketDay.Config.RestockItemsPerHour;
+            
+            for (var j = 0; j < GrangeChest.items.Count; j++)
+            {
+                if (StockChest.items.Count == 0)
                 {
                     Log($"RestockGrangeFromChest: {ShopName} out of stock", LogLevel.Info);
                     return;
                 }
-
+                
                 if (restockLimitRemaining <= 0) return;
-                if (GrangeDisplay[j] != null) continue;
+                if (GrangeChest.items[j] != null) continue;
 
-                var stockItem = StorageChest.items[Game1.random.Next(StorageChest.items.Count)];
+                var stockItem = StockChest.items[Game1.random.Next(StockChest.items.Count)];
                 var grangeItem = stockItem.getOne();
                 grangeItem.Stack = 1;
                 addItemToGrangeDisplay(grangeItem, j, false);
 
                 if (stockItem.Stack == 1)
                 {
-                    StorageChest.items.Remove(stockItem);
+                    StockChest.items.Remove(stockItem);
                 }
                 else
                 {
@@ -796,11 +871,11 @@ namespace MarketDay.Shop
 
         private void EmptyStoreIntoChest()
         {
-            for (var j = 0; j < GrangeDisplay.Count; j++)
+            for (var j = 0; j < GrangeChest.items.Count; j++)
             {
-                if (GrangeDisplay[j] == null) continue;
-                StorageChest.addItem(GrangeDisplay[j]);
-                GrangeDisplay[j] = null;
+                if (GrangeChest.items[j] == null) continue;
+                StockChest.addItem(GrangeChest.items[j]);
+                GrangeChest.items[j] = null;
             }
         }
 
@@ -875,21 +950,23 @@ namespace MarketDay.Shop
 
         private void addItemToGrangeDisplay(Item i, int position, bool force)
         {
-            while (GrangeDisplay.Count < 9) GrangeDisplay.Add(null);
+            while (GrangeChest.items.Count < 9) GrangeChest.items.Add(null);
             // Log($"addItemToGrangeDisplay: item {i?.ParentSheetIndex} position {position} force {force}",
             //     LogLevel.Debug);
 
             if (position < 0) return;
-            if (position >= GrangeDisplay.Count) return;
-            if (GrangeDisplay[position] != null && !force) return;
+            if (position >= GrangeChest.items.Count) return;
+            if (GrangeChest.items[position] != null && !force) return;
 
-            GrangeDisplay[position] = i;
+            GrangeChest.items[position] = i;
         }
 
         // aedenthorn
         internal void drawGrangeItems(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
         {
-            Vector2 start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
+            if (GrangeChest is null) return;
+            
+            var start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
 
             // if (Config.ShowCurrentScoreOnGrange)
             // {
@@ -902,12 +979,12 @@ namespace MarketDay.Shop
             // }
 
             start.X += 4f;
-            int xCutoff = (int) start.X + 168;
+            var xCutoff = (int) start.X + 168;
             start.Y += 8f;
 
-            for (int j = 0; j < GrangeDisplay.Count; j++)
+            for (var j = 0; j < GrangeChest.items.Count; j++)
             {
-                if (GrangeDisplay[j] != null)
+                if (GrangeChest.items[j] != null)
                 {
                     start.Y += 42f;
                     start.X += 4f;
@@ -916,7 +993,7 @@ namespace MarketDay.Shop
                         Vector2.Zero, 4f, SpriteEffects.None, layerDepth + 0.02f);
                     start.Y -= 42f;
                     start.X -= 4f;
-                    GrangeDisplay[j].drawInMenu(spriteBatch, start, 1f, 1f,
+                    GrangeChest.items[j].drawInMenu(spriteBatch, start, 1f, 1f,
                         layerDepth + 0.0201f + j / 10000f, StackDrawType.Hide);
                 }
 
@@ -935,7 +1012,7 @@ namespace MarketDay.Shop
             int pointsEarned = 14;
             Dictionary<int, bool> categoriesRepresented = new Dictionary<int, bool>();
             int nullsCount = 0;
-            foreach (Item i in GrangeDisplay)
+            foreach (Item i in GrangeChest.items)
             {
                 if (i != null && i is Object)
                 {
@@ -1065,7 +1142,7 @@ namespace MarketDay.Shop
 
         private void Log(string message, LogLevel level)
         {
-            MarketDay.monitor.Log($"[{ShopName}] {message}", level);
+            MarketDay.monitor.Log($"[{Game1.player.Name}] [{ShopName}] {message}", level);
         }
 
         private string Get(string key)

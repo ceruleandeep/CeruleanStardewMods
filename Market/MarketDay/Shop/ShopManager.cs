@@ -116,7 +116,7 @@ namespace MarketDay.Shop
         /// </summary>
         public static void InitializeShops()
         {
-            foreach (ItemShop itemShop in GrangeShops.Values)
+            foreach (var itemShop in GrangeShops.Values)
             {
                 itemShop.Initialize();
             }
@@ -127,8 +127,13 @@ namespace MarketDay.Shop
         /// </summary>
         public static void InitializeItemStocks()
         {
-            foreach (ItemShop itemShop in GrangeShops.Values)
+            foreach (GrangeShop itemShop in GrangeShops.Values)
             {
+                if (itemShop.StockManager is null)
+                {
+                    MarketDay.Log($"InitializeItemStocks: StockManager for {itemShop.ShopName} is null", LogLevel.Warn);
+                    return;
+                }
                 itemShop.StockManager.Initialize();
             }
         }
@@ -142,7 +147,7 @@ namespace MarketDay.Shop
             if (GrangeShops.Count > 0)
                 MarketDay.monitor.Log($"Refreshing stock for all custom shops...", LogLevel.Debug);
 
-            foreach (ItemShop store in GrangeShops.Values)
+            foreach (GrangeShop store in GrangeShops.Values)
             {
                 store.UpdateItemPriceAndStock();
                 store.UpdatePortrait();

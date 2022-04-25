@@ -5,6 +5,7 @@ using StardewValley;
 using Microsoft.Xna.Framework;
 using HarmonyLib;
 using MarketDay.Shop;
+using MarketDay.Utility;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley.Objects;
@@ -20,27 +21,19 @@ namespace MarketDay
         public static bool Prefix(Chest __instance, Farmer who, bool justCheckingForActivity, ref bool __result)
         {
             if (justCheckingForActivity) return true;
+            var owner = MapUtility.Owner(__instance);
             MarketDay.monitor.Log(
-                $"Prefix_Chest_checkForAction {__instance} {__instance.DisplayName} {__instance.TileLocation}",
+                $"Prefix_Chest_checkForAction checking {__instance} {__instance.DisplayName} owner {owner} at {__instance.TileLocation}",
                 LogLevel.Debug);
-
-            __instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeStorage", out var chestOwner);
-            __instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeSign", out var signOwner);
-
-            MarketDay.monitor.Log(
-                $"Prefix_Chest_checkForAction checking use access to {__instance} {__instance.DisplayName} at {__instance.TileLocation} [PeekIntoChests={MarketDay.Config.PeekIntoChests}]",
-                LogLevel.Debug);
+            
+            if (owner is null) return true;
+            if (owner == "Player" || MarketDay.Config.PeekIntoChests) return true;
 
             MarketDay.monitor.Log(
-                $"{MarketDay.SMod.ModManifest.UniqueID} {chestOwner} {signOwner}",
+                $"Prefix_Chest_checkForAction preventing action on object at {__instance.TileLocation} owned by {owner}",
                 LogLevel.Debug);
-
-            //if (MarketDay.Config.PeekIntoChests) return true;
-            if (signOwner is null && chestOwner is null) return true;
-
-            if (chestOwner == "Player" || MarketDay.Config.PeekIntoChests) return true;
-            MarketDay.monitor.Log($"Suppress and shake: stop player opening chests", LogLevel.Debug);
-            who.currentLocation.playSound("hammer");
+            
+            who.currentLocation.playSound("clank");
             __instance.shakeTimer = 500;
             __result = false;
             return false;
@@ -56,24 +49,18 @@ namespace MarketDay
         public static bool Prefix(Sign __instance, Farmer who, bool justCheckingForActivity, ref bool __result)
         {
             if (justCheckingForActivity) return true;
+            var owner = MapUtility.Owner(__instance);
             MarketDay.monitor.Log(
-                $"Prefix_Sign_checkForAction {__instance} {__instance.DisplayName} {__instance.TileLocation}",
+                $"Prefix_Sign_checkForAction checking {__instance} {__instance.DisplayName} owner {owner} at {__instance.TileLocation}",
                 LogLevel.Debug);
 
-            __instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeStorage", out var chestOwner);
-            __instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeSign", out var signOwner);
-
+            if (owner is null or "Player") return true;
+            
             MarketDay.monitor.Log(
-                $"Prefix_Sign_checkForAction checking use access to {__instance} {__instance.DisplayName} at {__instance.TileLocation} [PeekIntoChests={MarketDay.Config.PeekIntoChests}]",
+                $"Prefix_Sign_checkForAction preventing action on object at {__instance.TileLocation} owned by {owner}",
                 LogLevel.Debug);
-
-            MarketDay.monitor.Log(
-                $"{MarketDay.SMod.ModManifest.UniqueID} {chestOwner} {signOwner}",
-                LogLevel.Debug);
-
-            if (signOwner is null || signOwner == "Player") return true;
-            MarketDay.monitor.Log($"Suppress and shake: stop player opening signs", LogLevel.Debug);
-            who.currentLocation.playSound("hammer");
+            
+            who.currentLocation.playSound("clank");
             __instance.shakeTimer = 500;
             __result = false;
             return false;
@@ -84,47 +71,26 @@ namespace MarketDay
     // does not trip for Signs
     [HarmonyPatch(typeof(Object))]
     [HarmonyPatch("performUseAction")]
-    public class Prefix_performUseAction
+    public class Prefix_Object_performUseAction
     {
         public static bool Prefix(Object __instance, GameLocation location, ref bool __result)
         {
+            var owner = MapUtility.Owner(__instance);
             MarketDay.monitor.Log(
-                $"Prefix_performUseAction checking use access to {__instance} {__instance.DisplayName} at {__instance.TileLocation}",
+                $"Prefix_Object_performUseAction checking {__instance} {__instance.DisplayName} owner {owner} at {__instance.TileLocation}",
                 LogLevel.Debug);
+            
+            if (owner is null) return true;
+            if (owner == "Player" || MarketDay.Config.PeekIntoChests) return true;
 
-            if (__instance is Sign sign)
-            {
-                if (sign.modData.ContainsKey($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeSign"))
-                {
-                    MarketDay.monitor.Log(
-                        $"Prefix_performToolAction preventing damage to sign at {__instance.TileLocation}",
-                        LogLevel.Debug);
-                    location.playSound("hammer");
-                    __instance.shakeTimer = 100;
-                    __result = false;
-                    return false;
-                }
-            }
-
-            if (__instance is Chest chest)
-            {
-                if (chest.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeChest", out var chestOwner))
-                {
-                    MarketDay.monitor.Log(
-                        $"Prefix_performUseAction checking access to chest {chestOwner} at {__instance.TileLocation}",
-                        LogLevel.Debug);
-                    if (chestOwner is not null && chestOwner != "Player" && !MarketDay.Config.PeekIntoChests)
-                    {
-                        MarketDay.monitor.Log($"Suppress and shake: stop player opening chests", LogLevel.Debug);
-                        location.playSound("hammer");
-                        __instance.shakeTimer = 500;
-                        __result = false;
-                        return false;
-                    }
-                }
-            }
-
-            return true;
+            MarketDay.monitor.Log(
+                $"Prefix_Object_performUseAction preventing use of object at {__instance.TileLocation} owned by {owner}",
+                LogLevel.Debug);
+            
+            location.playSound("clank");
+            __instance.shakeTimer = 500;
+            __result = false;
+            return false;
         }
     }
 
@@ -132,28 +98,22 @@ namespace MarketDay
     //    this one works leave it alone
     [HarmonyPatch(typeof(Object))]
     [HarmonyPatch("performToolAction")]
-    public class Prefix_performToolAction
+    public class Prefix_Object_performToolAction
     {
         public static bool Prefix(Object __instance, GameLocation location, ref bool __result)
         {
-            __instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeStorage", out var chestOwner);
-            __instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeSign", out var signOwner);
-
+            var owner = MapUtility.Owner(__instance);
             MarketDay.monitor.Log(
-                $"Prefix_performToolAction checking tool access to {__instance} {__instance.DisplayName} at {__instance.TileLocation} [RuinTheFurniture={MarketDay.Config.RuinTheFurniture}]",
-                LogLevel.Debug);
-
-            MarketDay.monitor.Log(
-                $"{MarketDay.SMod.ModManifest.UniqueID} {chestOwner} {signOwner}",
+                $"Prefix_Object_performToolAction checking {__instance} {__instance.DisplayName} owner {owner} at {__instance.TileLocation}",
                 LogLevel.Debug);
 
             if (MarketDay.Config.RuinTheFurniture) return true;
-            if (signOwner is null && chestOwner is null) return true;
+            if (owner is null) return true;
 
             MarketDay.monitor.Log(
-                $"Prefix_performToolAction preventing damage to object at {__instance.TileLocation}",
+                $"Prefix_Object_performToolAction preventing damage to object at {__instance.TileLocation} owned by {owner}",
                 LogLevel.Debug);
-            location.playSound("hammer");
+            location.playSound("clank");
             __instance.shakeTimer = 100;
             __result = false;
             return false;
@@ -168,9 +128,9 @@ namespace MarketDay
     {
         public static void Postfix(Chest __instance, SpriteBatch spriteBatch, int x, int y)
         {
-            if (!__instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/GrangeStorage",
+            if (!__instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}",
                 out var shopName)) return;
-
+            
             // get shop for shopName
             if (!ShopManager.GrangeShops.TryGetValue(shopName, out var grangeShop))
             {
@@ -180,7 +140,7 @@ namespace MarketDay
                 return;
             }
 
-            var tileLocation = new Vector2(grangeShop.X, grangeShop.Y);
+            var tileLocation = grangeShop.Origin;
             var drawLayer = Math.Max(0f, ((tileLocation.Y + 1) * 64 - 24) / 10000f) + tileLocation.X * 1E-05f;
             grangeShop.drawGrangeItems(tileLocation, spriteBatch, drawLayer);
         }
@@ -197,15 +157,15 @@ namespace MarketDay
             if (!MarketDay.IsMarketDay()) return true;
             if (!MarketDay.Config.NPCVisitors) return true;
 
-            if (MarketDay.GrangeStandLocations is null)
+            if (MapUtility.ShopTiles() is null)
             {
                 MarketDay.monitor.Log($"findPathForNPCSchedules: MarketDay.ShopLocations is null", LogLevel.Debug);
                 return true;
             }
             
-            if (MarketDay.GrangeStandLocations.Count == 0)
+            if (MapUtility.ShopTiles().Count == 0)
             {
-                MarketDay.monitor.Log($"findPathForNPCSchedules: MarketDay.ShopLocations.Count {MarketDay.GrangeStandLocations.Count}", LogLevel.Debug);
+                MarketDay.monitor.Log($"findPathForNPCSchedules: MarketDay.ShopLocations.Count {MapUtility.ShopTiles().Count}", LogLevel.Debug);
                 return true;
             }
 
@@ -215,7 +175,7 @@ namespace MarketDay
 
             var placesToVisit = new List<Point>();
 
-            foreach (var (shopX, shopY) in MarketDay.GrangeStandLocations)
+            foreach (var (shopX, shopY) in MapUtility.ShopTiles())
             {
                 var visitPoint = new Point((int) shopX + Game1.random.Next(3), (int) shopY + 4);
                 if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);
