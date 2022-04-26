@@ -26,22 +26,21 @@ namespace MarketDay
             MarketDay.Log(
                 $"Prefix_Chest_checkForAction checking {__instance} {__instance.DisplayName} owner {owner} at {__instance.TileLocation}",
                 LogLevel.Debug, true);
-            
+
             if (owner is null) return true;
             if (owner == "Player" || MarketDay.Config.PeekIntoChests) return true;
 
             MarketDay.Log(
                 $"Prefix_Chest_checkForAction preventing action on object at {__instance.TileLocation} owned by {owner}",
                 LogLevel.Debug, true);
-            
+
             who.currentLocation.playSound("clank");
             __instance.shakeTimer = 500;
             __result = false;
             return false;
-
         }
     }
-    
+
     //     public override bool checkForAction(Farmer who, bool justCheckingForActivity = false)
     [HarmonyPatch(typeof(Sign))]
     [HarmonyPatch("checkForAction")]
@@ -56,11 +55,11 @@ namespace MarketDay
                 LogLevel.Debug, true);
 
             if (owner is null or "Player") return true;
-            
+
             MarketDay.Log(
                 $"Prefix_Sign_checkForAction preventing action on object at {__instance.TileLocation} owned by {owner}",
                 LogLevel.Debug, true);
-            
+
             who.currentLocation.playSound("clank");
             __instance.shakeTimer = 500;
             __result = false;
@@ -80,14 +79,14 @@ namespace MarketDay
             MarketDay.Log(
                 $"Prefix_Object_performUseAction checking {__instance} {__instance.DisplayName} owner {owner} at {__instance.TileLocation}",
                 LogLevel.Debug, true);
-            
+
             if (owner is null) return true;
             if (owner == "Player" || MarketDay.Config.PeekIntoChests) return true;
 
             MarketDay.Log(
                 $"Prefix_Object_performUseAction preventing use of object at {__instance.TileLocation} owned by {owner}",
                 LogLevel.Debug, true);
-            
+
             location.playSound("clank");
             __instance.shakeTimer = 500;
             __result = false;
@@ -131,7 +130,7 @@ namespace MarketDay
         {
             if (!__instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}",
                 out var shopName)) return;
-            
+
             // get shop for shopName
             if (!ShopManager.GrangeShops.TryGetValue(shopName, out var grangeShop))
             {
@@ -154,58 +153,77 @@ namespace MarketDay
         public static bool Prefix(PathFindController __instance, Point startPoint, Point endPoint,
             GameLocation location, int limit, Character ___character, ref Stack<Point> __result)
         {
-            if (location is not Town) return true;
-            if (___character is null) return true;
-            if (!MarketDay.IsMarketDay()) return true;
-            if (!MarketDay.Config.NPCVisitors) return true;
-            if (MapUtility.ShopTiles() is null) { MarketDay.Log($"findPathForNPCSchedules: ShopTiles null", LogLevel.Trace); return true;}
-            if (MapUtility.ShopTiles().Count == 0) { MarketDay.Log($"findPathForNPCSchedules: ShopTiles 0", LogLevel.Trace); return true;}
-            
-            MarketDay.Log($"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}", LogLevel.Trace);
-
-            var placesToVisit = new List<Point>();
-
-            foreach (var (shopX, shopY) in MapUtility.ShopTiles())
+            try
             {
-                var visitPoint = new Point((int) shopX + Game1.random.Next(3), (int) shopY + 4);
-                if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);
+                if (location is not Town) return true;
+                if (___character is null) return true;
+                if (!MarketDay.IsMarketDay()) return true;
+                if (!MarketDay.Config.NPCVisitors) return true;
+                if (MapUtility.ShopTiles() is null)
+                {
+                    MarketDay.Log($"findPathForNPCSchedules: ShopTiles null", LogLevel.Trace);
+                    return true;
+                }
+
+                if (MapUtility.ShopTiles().Count == 0)
+                {
+                    MarketDay.Log($"findPathForNPCSchedules: ShopTiles 0", LogLevel.Trace);
+                    return true;
+                }
+
+                MarketDay.Log(
+                    $"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}",
+                    LogLevel.Trace);
+
+                var placesToVisit = new List<Point>();
+
+                foreach (var (shopX, shopY) in MapUtility.ShopTiles())
+                {
+                    var visitPoint = new Point((int) shopX + Game1.random.Next(3), (int) shopY + 4);
+                    if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);
+                }
+
+                StardewValley.Utility.Shuffle(Game1.random, placesToVisit);
+                placesToVisit.Add(startPoint);
+                if (placesToVisit.Count < 2) return true;
+
+                var waypoints = string.Join(", ", placesToVisit);
+                MarketDay.Log($"    Waypoints: {waypoints}", LogLevel.Debug, true);
+
+                // work backwards through the waypoints
+                __result = new Stack<Point>();
+
+                var thisEndPoint = endPoint;
+                foreach (var (wptX, wptY) in placesToVisit)
+                {
+                    var thisStartPoint = new Point(wptX, wptY);
+
+                    MarketDay.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug, true);
+
+                    var originalPath = Schedule.findPathForNPCSchedules(thisStartPoint, thisEndPoint, location, limit);
+                    if (originalPath is null || originalPath.Count == 0) continue;
+
+                    var legPath = originalPath.ToList();
+                    legPath.Reverse();
+
+                    var segment = string.Join(", ", legPath);
+                    MarketDay.Log($"    Reversed path: {segment}", LogLevel.Debug, true);
+
+                    foreach (var pt in legPath) __result.Push(pt);
+
+                    thisEndPoint = thisStartPoint;
+                }
+
+                var final = string.Join(", ", __result);
+                MarketDay.Log($"    Final Path   : {final}", LogLevel.Debug, true);
+
+                return false;
             }
-
-            StardewValley.Utility.Shuffle(Game1.random, placesToVisit);
-            placesToVisit.Add(startPoint);
-            if (placesToVisit.Count < 2) return true;
-
-            var waypoints = string.Join(", ", placesToVisit);
-            MarketDay.Log($"    Waypoints: {waypoints}", LogLevel.Debug, true);
-
-            // work backwards through the waypoints
-            __result = new Stack<Point>();
-            
-            var thisEndPoint = endPoint;
-            foreach (var (wptX, wptY) in placesToVisit)
+            catch (Exception ex)
             {
-                var thisStartPoint = new Point(wptX, wptY);
-
-                MarketDay.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug, true);
-
-                var originalPath = Schedule.findPathForNPCSchedules(thisStartPoint, thisEndPoint, location, limit);
-                if (originalPath is null || originalPath.Count == 0) continue;
-                
-                var legPath = originalPath.ToList();
-                legPath.Reverse();
-
-                var segment = string.Join(", ", legPath);
-                MarketDay.Log($"    Reversed path: {segment}", LogLevel.Debug, true);
-
-                foreach (var pt in legPath) __result.Push(pt);
-
-                thisEndPoint = thisStartPoint;
+                MarketDay.Log($"Failed in {nameof(Prefix_findPathForNPCSchedules)}:\n{ex}", LogLevel.Error);
+                return true; // run original logic
             }
-
-            var final = string.Join(", ", __result);
-            MarketDay.Log($"    Final Path   : {final}", LogLevel.Debug, true);
-
-            return false;
         }
     }
 }
