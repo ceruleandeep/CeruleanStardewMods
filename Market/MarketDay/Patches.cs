@@ -8,6 +8,7 @@ using MarketDay.Shop;
 using MarketDay.Utility;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
+using StardewValley.Locations;
 using StardewValley.Objects;
 using Object = StardewValley.Object;
 
@@ -153,8 +154,8 @@ namespace MarketDay
         public static bool Prefix(PathFindController __instance, Point startPoint, Point endPoint,
             GameLocation location, int limit, Character ___character, ref Stack<Point> __result)
         {
-            if (location is null) return true;
-            if (location.Name != "Town") return true;
+            if (location is not Town) return true;
+            if (___character is null) return true;
             if (!MarketDay.IsMarketDay()) return true;
             if (!MarketDay.Config.NPCVisitors) return true;
             if (MapUtility.ShopTiles() is null) return true;
