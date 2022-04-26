@@ -158,8 +158,8 @@ namespace MarketDay
             if (___character is null) return true;
             if (!MarketDay.IsMarketDay()) return true;
             if (!MarketDay.Config.NPCVisitors) return true;
-            if (MapUtility.ShopTiles() is null) return true;
-            if (MapUtility.ShopTiles().Count == 0) return true;
+            if (MapUtility.ShopTiles() is null) { MarketDay.Log($"findPathForNPCSchedules: ShopTiles null", LogLevel.Trace); return true;}
+            if (MapUtility.ShopTiles().Count == 0) { MarketDay.Log($"findPathForNPCSchedules: ShopTiles 0", LogLevel.Trace); return true;}
             
             MarketDay.Log($"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}", LogLevel.Trace);
 
@@ -179,9 +179,9 @@ namespace MarketDay
             MarketDay.Log($"    Waypoints: {waypoints}", LogLevel.Debug, true);
 
             // work backwards through the waypoints
-            var path = new Stack<Point>();
+            __result = new Stack<Point>();
+            
             var thisEndPoint = endPoint;
-
             foreach (var (wptX, wptY) in placesToVisit)
             {
                 var thisStartPoint = new Point(wptX, wptY);
@@ -197,15 +197,14 @@ namespace MarketDay
                 var segment = string.Join(", ", legPath);
                 MarketDay.Log($"    Reversed path: {segment}", LogLevel.Debug, true);
 
-                foreach (var pt in legPath) path.Push(pt);
+                foreach (var pt in legPath) __result.Push(pt);
 
                 thisEndPoint = thisStartPoint;
             }
 
-            var final = string.Join(", ", path);
+            var final = string.Join(", ", __result);
             MarketDay.Log($"    Final Path   : {final}", LogLevel.Debug, true);
 
-            __result = path;
             return false;
         }
     }

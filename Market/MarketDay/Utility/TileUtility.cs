@@ -24,11 +24,7 @@ namespace MarketDay.Utility
         /// 
         public  static IPropertyCollection GetTileProperty(GameLocation map, string layer, Vector2 tile)
         {
-            if (map == null)
-                return null;
-
-            Tile checkTile = map.Map.GetLayer(layer).Tiles[(int)tile.X, (int)tile.Y];
-
+            var checkTile = map?.Map.GetLayer(layer).Tiles[(int)tile.X, (int)tile.Y];
             return checkTile?.Properties;
         }
 

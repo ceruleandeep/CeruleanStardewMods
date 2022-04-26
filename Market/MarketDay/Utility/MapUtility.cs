@@ -22,12 +22,12 @@ namespace MarketDay.Utility
         {
             List<Vector2> ShopLocations = new();
             var town = Game1.getLocationFromName("Town");
-            if (town is null)
+            if (town?.map?.Layers is null || town.map.Layers.Count < 1)
             {
-                MarketDay.Log($"ShopTiles: Town location not available", LogLevel.Error);
+                MarketDay.Log($"ShopTiles: Town location or map not available", LogLevel.Error);
                 return ShopLocations;
             }
-
+            
             var layerWidth = town.map.Layers[0].LayerWidth;
             var layerHeight = town.map.Layers[0].LayerHeight;
 
@@ -39,19 +39,12 @@ namespace MarketDay.Utility
                     var v = new Vector2(x, y);
                     var tileProperty = TileUtility.GetTileProperty(town, "Back", v);
                     if (tileProperty is null) continue;
-                    // foreach (var p in tileProperty)
-                    // {
-                    //     MarketDay.Log($"    {v}: {p.Key} {p.Value}", LogLevel.Error);
-                    // }
                     if (tileProperty.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}.GrangeShop", out var shopProperty))
                     {
                         ShopLocations.Add(v);
                     }
                 }
             }
-
-            // var locs = string.Join(", ", ShopLocations);
-            // MarketDay.monitor.Log($"ShopTiles: {locs}", LogLevel.Debug);
 
             return ShopLocations;
         }
