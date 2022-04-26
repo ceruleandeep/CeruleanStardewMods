@@ -53,7 +53,7 @@ namespace MarketDay.Shop
         {
             Debug.Assert(Context.IsMainPlayer, "OpenAt: only main player can open shops");
 
-            Log($"Opening at {Origin}", LogLevel.Info);
+            Log($"Opening at {Origin}", LogLevel.Trace);
 
             MakeFurniture(Origin);
 
@@ -63,9 +63,12 @@ namespace MarketDay.Shop
 
             StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"] = "0";
             StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"] = "0";
-            
-            if (!IsPlayerShop()) StockChestForTheDay();
-            if (!IsPlayerShop() || MarketDay.Config.AutoStockAtStartOfDay) RestockGrangeFromChest(true);
+
+            if (!IsPlayerShop())
+            {
+                StockChestForTheDay();
+                RestockGrangeFromChest(true);
+            }
 
             DecorateFurniture();
         }
@@ -138,20 +141,9 @@ namespace MarketDay.Shop
 
         public void CheckForBrowsingNPCs()
         {
+            if (OutsideOpeningHours) return;
+
             Debug.Assert(Context.IsMainPlayer, "CheckForBrowsingNPCs: only main player can access recentlyLooked");
-
-            // var nearby = new List<string>();
-            // foreach (var npc in NearbyNPCs()) nearby.Add($"{npc.displayName} ({npc.movementPause})");
-            // monitor.Log($"Nearby NPCs: {string.Join(", ", nearby)}", LogLevel.Debug);
-
-            // var looks = new List<string>();
-            // foreach (var (rl, time) in recentlyLooked) looks.Add($"{rl.displayName} {time}");
-            // monitor.Log($"Recent looks: {string.Join(", ", looks)}", LogLevel.Debug);
-
-            // var buys = new List<string>();
-            // foreach (var record in Sales) buys.AddItem($"{record.npc.displayName} {record.timeOfDay}");
-            // monitor.Log($"Recent buys: {string.Join(", ", buys)}", LogLevel.Debug);
-
             foreach (var npc in NearbyNPCs().Where(npc => npc.movementPause <= 0 && !RecentlyBought(npc)))
             {
                 if (recentlyLooked.TryGetValue(npc, out var time))
@@ -203,7 +195,7 @@ namespace MarketDay.Shop
         /// </summary>
         public new void DisplayShop(bool debug = false)
         {
-            MarketDay.monitor.Log($"Attempting to open the shop \"{ShopName}\" at {Game1.timeOfDay}", LogLevel.Debug);
+            MarketDay.Log($"Attempting to open the shop \"{ShopName}\" at {Game1.timeOfDay}", LogLevel.Debug, true);
 
             if (!debug && OutsideOpeningHours)
             {
@@ -336,6 +328,8 @@ namespace MarketDay.Shop
 
         private void SeeIfOwnerIsAround()
         {
+            if (OutsideOpeningHours) return;
+
             Debug.Assert(Context.IsMainPlayer, "SeeIfOwnerIsAround: only main player can access recentlyTended");
 
             var owner = OwnerNearby();
@@ -570,6 +564,8 @@ namespace MarketDay.Shop
 
         private static double ItemPreferenceIndex(Item item, NPC npc)
         {
+            if (item is null || npc is null) return 1.0;
+            
             // * gift taste
             switch (npc.getGiftTasteForThisItem(item))
             {
@@ -733,7 +729,6 @@ namespace MarketDay.Shop
         {
             if (ShopColor.R > 0 || ShopColor.G > 0 || ShopColor.B > 0)
             {
-                Log($"    ShopColor {ShopColor}", LogLevel.Debug);
                 var color = ShopColor;
                 color.A = 255;
                 StockChest.playerChoiceColor.Value = color;
@@ -844,7 +839,7 @@ namespace MarketDay.Shop
             {
                 if (StockChest.items.Count == 0)
                 {
-                    Log($"RestockGrangeFromChest: {ShopName} out of stock", LogLevel.Info);
+                    Log($"RestockGrangeFromChest: {ShopName} out of stock", LogLevel.Debug, true);
                     return;
                 }
                 
@@ -1140,8 +1135,9 @@ namespace MarketDay.Shop
             };
         }
 
-        private void Log(string message, LogLevel level)
+        private void Log(string message, LogLevel level, bool VerboseOnly = false)
         {
+            if (VerboseOnly && !MarketDay.Config.VerboseLogging) return;
             MarketDay.monitor.Log($"[{Game1.player.Name}] [{ShopName}] {message}", level);
         }
 

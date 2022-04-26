@@ -79,21 +79,39 @@ Copy the format from the included shops.json to make new GrangeShops. [ItemShops
 * SignObjectIndex: the [ID](https://stardewids.com/) of the item that should go on the sign. e.g. `428`
 * ShopColor: the RGBA color the storage chest should be set to. e.g. `"143, 0, 255, 255"`
 
+What I think I know about grange shop design:
+* The shops are for high-quality artisan products. 
+* Sell things the NPCs make, not things they use. Emily definitely sells clothes, might sell cloth, definitely doesn't sell wool. 
+* If the NPC has an existing shop, don't copy it. If people want to buy ore from Clint they can go to the blacksmith. Ore isn't an artisan good.
+* Now that I think about it, Willy should be selling seasonal fish, not fishing tackle. 
+* If the NPC has a hobby or an interest, that could make a more interesting store than their day job.
+* Think about seasonal produce to add variety and realism. The shop conditions support it.
+
 Future
 ---
 
+* item quality
 * write tutorial here
-* allow tool sales
-* test with animals and hats and such
+* sell animals
 * shut the market down properly at closing time, empty the granges
 * get shop portraits made
 * in-game tutorial
-* do weighted random when stocking the grange so that 1-stack items don't dominate
 * send a mail on the day before the first fair?
 * check alternate currency support for STF packs
 * tint the sign
 * boost price if item is in season
 * custom sell prices for player store with prob of purchase
+
+Option for random number of shops every market day
+Make a shop with your spouse/roommate
+Leo's island shop
+Demetrius's machine shop
+Caroline's tea shop
+Pierre's rich shop (greedy Pierre)
+Elliot's book shop (so you don't need to find them buried in the ground)
+Gunther's artifact shop
+Option to disable a shop
+
 
 License
 ---
@@ -124,30 +142,8 @@ Other things you can turn on/off with GMCM:
   * R reloads the datafiles and restarts the market
   * Z warps you between the Town and the Farmhouse 
 
-Market Data Model
----
-A list of co-ordinates of the grange stands (top left corner),
-and a map of shop name -> NPC who runs the shop.
 
-```json
-{
-  "ShopLocations": [
-    "28, 58",
-    "28, 63",
-    "33, 63",
-    "33, 58",
-    "33, 68",
-    "28, 68",
-    "23, 63"
-  ],
-  "ShopOwners": {
-    "Alex": "Alex",
-    "SVColaShop": "Vincent"
-  }
-}
-```
-
-Grange shop life cycle
+Grange shop state
 ---
 
 State:
@@ -167,6 +163,8 @@ State:
 * ShopSign
 * StockManager (LOCAL)
 
+Grange shop life cycle (outdated)
+---
 
 Day started:
 * reset the sales and visitor counters

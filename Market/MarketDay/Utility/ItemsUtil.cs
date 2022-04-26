@@ -88,15 +88,36 @@ namespace MarketDay.Utility
         /// <param name="name">name of the item</param>
         /// <param name="itemType"></param>
         /// <returns></returns>
-        public static int GetIndexByName(string name, string itemType= "Object")
+        public static int GetIndexByName(string name, string itemType = "Object")
         {
-            foreach (KeyValuePair<int, string> kvp in ObjectInfoSource[itemType])
+            foreach (var (index, objectData) in ObjectInfoSource[itemType])
             {
-                if (kvp.Value.Split('/')[0] == name)
+                if (objectData.Split('/')[0] == name)
                 {
-                    return kvp.Key;
+                    return index;
                 }
             }
+            return -1;
+        }
+        
+        /// <summary>
+        /// Get the itemID given a pattern and the object information that item belongs to
+        /// </summary>
+        /// <param name="needle">pattern to search for</param>
+        /// <param name="itemType"></param>
+        /// <returns></returns>
+        public static int GetIndexByMatch(string needle, string itemType = "Object")
+        {
+            var candidates = new List<int>();
+            foreach (var (index, objectData) in ObjectInfoSource[itemType])
+            {
+                if (objectData.Split('/')[0].Contains(needle))
+                {
+                    candidates.Add(index);
+                }
+            }
+
+            if (candidates.Count > 0) return candidates[Game1.random.Next(candidates.Count)];
             return -1;
         }
 

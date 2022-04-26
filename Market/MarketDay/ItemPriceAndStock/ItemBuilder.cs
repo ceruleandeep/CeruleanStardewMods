@@ -36,14 +36,13 @@ namespace MarketDay.ItemPriceAndStock
         /// <returns></returns>
         public bool AddItemToStock(string itemName, double priceMultiplier = 1)
         {
-            int id = ItemsUtil.GetIndexByName(itemName, _itemStock.ItemType);
-            if (id < 0)
-            {
-                MarketDay.monitor.Log($"{_itemStock.ItemType} named \"{itemName}\" could not be added to the Shop {_itemStock.ShopName}", LogLevel.Trace);
-                return false;
-            }
+            var id = itemName.StartsWith("%") ? 
+                ItemsUtil.GetIndexByMatch(itemName[1..], _itemStock.ItemType) 
+                : ItemsUtil.GetIndexByName(itemName, _itemStock.ItemType);
+            if (id >= 0) return AddItemToStock(id, priceMultiplier);
+            MarketDay.Log($"{_itemStock.ItemType} named \"{itemName}\" could not be added to the Shop {_itemStock.ShopName}", LogLevel.Trace);
+            return false;
 
-            return AddItemToStock(id, priceMultiplier);
         }
 
         /// <summary>
@@ -55,12 +54,11 @@ namespace MarketDay.ItemPriceAndStock
         public bool AddItemToStock(int itemId, double priceMultiplier = 1)
         {
 
-            if (MarketDay.VerboseLogging)
-                MarketDay.monitor.Log($"Adding item ID {itemId} to {_itemStock.ShopName}", LogLevel.Debug);
+            MarketDay.Log($"Adding item ID {itemId} to {_itemStock.ShopName}", LogLevel.Debug, true);
 
             if (itemId < 0)
             {
-                MarketDay.monitor.Log($"{_itemStock.ItemType} of ID {itemId} could not be added to the Shop {_itemStock.ShopName}", LogLevel.Trace);
+                MarketDay.Log($"{_itemStock.ItemType} of ID {itemId} could not be added to the Shop {_itemStock.ShopName}", LogLevel.Trace);
                 return false;
             }
 
@@ -79,7 +77,7 @@ namespace MarketDay.ItemPriceAndStock
             {
                 if (!ItemsUtil.RecipesList.Contains(item.Name))
                 {
-                    MarketDay.monitor.Log($"{item.Name} is not a valid recipe and won't be added.", LogLevel.Trace);
+                    MarketDay.Log($"{item.Name} is not a valid recipe and won't be added.", LogLevel.Trace);
                     return false;
                 }
             }

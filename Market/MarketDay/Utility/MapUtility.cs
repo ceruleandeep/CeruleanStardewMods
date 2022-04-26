@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Objects;
+using xTile.ObjectModel;
 
 namespace MarketDay.Utility
 {
@@ -23,7 +24,7 @@ namespace MarketDay.Utility
             var town = Game1.getLocationFromName("Town");
             if (town is null)
             {
-                MarketDay.monitor.Log($"ShopTiles: Town location not available", LogLevel.Error);
+                MarketDay.Log($"ShopTiles: Town location not available", LogLevel.Error);
                 return ShopLocations;
             }
 
@@ -35,12 +36,17 @@ namespace MarketDay.Utility
             {
                 for (var y = 0; y < layerHeight; y++)
                 {
-                    var tileSheetIdAt = town.getTileSheetIDAt(x, y, "Buildings");
-                    if (tileSheetIdAt != "z_MarketDay") continue;
-                    var tileIndexAt = town.getTileIndexAt(x, y, "Buildings");
-                    if (tileIndexAt != 253) continue;
-                    
-                    ShopLocations.Add(new Vector2(x, y));
+                    var v = new Vector2(x, y);
+                    var tileProperty = TileUtility.GetTileProperty(town, "Back", v);
+                    if (tileProperty is null) continue;
+                    // foreach (var p in tileProperty)
+                    // {
+                    //     MarketDay.Log($"    {v}: {p.Key} {p.Value}", LogLevel.Error);
+                    // }
+                    if (tileProperty.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}.GrangeShop", out var shopProperty))
+                    {
+                        ShopLocations.Add(v);
+                    }
                 }
             }
 
@@ -72,6 +78,27 @@ namespace MarketDay.Utility
             }
 
             return shopsAtTiles;
+        }
+
+        public static GrangeShop ShopNearTile(Vector2 tile)
+        {
+            MarketDay.Log($"ShopNearTile {tile}", LogLevel.Debug, true);
+
+            for (var x=1; x <= 3; x++)
+            {
+                for (var y=-2; y <= 1; y++)
+                {
+                    var search = tile + new Vector2(x, y);
+                    MarketDay.Log($"    ShopNearTile {x} {y} {search}", LogLevel.Debug, true);
+                    if (!Game1.currentLocation.objects.TryGetValue(search, out var chest) || chest is not Chest) continue;
+                    chest.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}", out var shopOwner);
+                    MarketDay.Log($"    ShopNearTile {shopOwner}", LogLevel.Debug, true);
+                    var shop = ShopManager.GrangeShops[shopOwner];
+                    return shop;
+                }
+            }
+
+            return null;
         }
 
         internal static string Owner(Item item)

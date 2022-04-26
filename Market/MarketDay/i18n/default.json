@@ -32,6 +32,8 @@
     "cfg.ruin-furniture.msg": "Allow player to break shop chests and signs",
     "cfg.hide-furniture": "Hide furniture",
     "cfg.hide-furniture.msg": "Hide player shop chest somewhere actually inaccessible between market days",
+    "cfg.verbose-logging": "Verbose logging",
+    "cfg.verbose-logging.msg": "Generate extra log messages for debugging",
     "cfg.debug-keybinds": "Debug keybinds",
     "cfg.debug-keybinds.msg": "Enable these debugging keybinds which might clash with your other mods",
     "cfg.npc-visitors": "NPC visitor pathfinding",

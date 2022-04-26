@@ -78,7 +78,7 @@ namespace MarketDay.Shop
         /// </summary>
         public void DisplayShop(bool debug = false)
         {
-            MarketDay.monitor.Log($"Attempting to open the shop \"{ShopName}\"", LogLevel.Trace);
+            MarketDay.Log($"Attempting to open the shop \"{ShopName}\"", LogLevel.Trace);
 
             //if conditions aren't met, display closed message if there is one
             //skips condition checking if debug mode

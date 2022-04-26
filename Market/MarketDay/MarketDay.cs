@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -33,7 +33,6 @@ namespace MarketDay
         internal static bool MapChangesSynced;
         // internal static readonly ShopMap ShopAtTile = new();
         
-        private static ContentPatcher.IContentPatcherAPI ContentPatcherAPI;
         // private static IManagedConditions MarketDayConditions;
         internal static ModConfig Config;
 
@@ -65,7 +64,7 @@ namespace MarketDay
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_ReadConfig_InitSTF;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateSTFStock_SendPrompt;
-            Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
+            // Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_SyncMapOpenShops;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_InteractWithNPCs;
             Helper.Events.GameLoop.TimeChanged += OnTimeChanged_RestockThroughDay;
@@ -129,16 +128,18 @@ namespace MarketDay
 
         private static void ListShopTiles(string command, string[] args)
         {
-            Log($"ListShopTiles: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
+            Log($"ListShopTiles: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
             var town = Game1.getLocationFromName("Town");
             if (town is null)
             {
                 Log($"    Town location not available", LogLevel.Error);
                 return;
             }
-
+            
             var layerWidth = town.map.Layers[0].LayerWidth;
             var layerHeight = town.map.Layers[0].LayerHeight;
+
+            Log($"    Map dimensions {layerWidth} {layerHeight}", LogLevel.Trace);
 
             // top left corner is z_MarketDay 253
             for (var x = 0; x < layerWidth; x++)
@@ -146,11 +147,11 @@ namespace MarketDay
                 for (var y = 0; y < layerHeight; y++)
                 {
                     var tileSheetIdAt = town.getTileSheetIDAt(x, y, "Buildings");
-                    if (tileSheetIdAt != "z_MarketDay") continue;
+                    if (! tileSheetIdAt.StartsWith("z_MarketDay")) continue;
                     var tileIndexAt = town.getTileIndexAt(x, y, "Buildings");
                     if (tileIndexAt != 253) continue;
 
-                    Log($"    {x} {y}: {tileSheetIdAt} {tileIndexAt}", LogLevel.Debug);
+                    Log($"    {x} {y}: {tileSheetIdAt} {tileIndexAt}", LogLevel.Trace);
                 }
             }
         }
@@ -160,18 +161,18 @@ namespace MarketDay
         /// <param name="e">The event arguments.</param>
         private void OnSaving_WriteConfig(object sender, SavingEventArgs e)
         {
-            Log($"OnSaving: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
+            Log($"OnSaving: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
             ListShopTiles("", null);
             Helper.WriteConfig(Config);
-            Log($"OnSaving: complete", LogLevel.Debug);
+            Log($"OnSaving: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
 
         }
 
         private static void OnSaved_DoNothing(object sender, SavedEventArgs e)
         {
-            Log($"OnSaved: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
+            Log($"OnSaved: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
             ListShopTiles("", null);
-            Log($"OnSaved: complete", LogLevel.Debug);
+            Log($"OnSaved: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
 
         /// <summary>Raised after the player loads a save slot and the world is initialised.
@@ -204,13 +205,22 @@ namespace MarketDay
         
         private static void OnSaveLoaded_DestroyFurniture(object sender, EventArgs e)
         {
+            Log($"OnSaveLoaded_DestroyFurniture: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+
             // get a clean slate in case previous debugging runs have left furniture lying around
             RemoveStrayFurniture();
+            
+            Log($"OnSaveLoaded_DestroyFurniture: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+
         }
 
         private static void OnDayStarted_UpdateSTFStock_SendPrompt(object sender, EventArgs e)
         {
+            Log($"OnDayStarted: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+
             MapChangesSynced = false;
+            Log($"OnDayStarted: MapChangesSynced set {MapChangesSynced}", LogLevel.Trace);
+
             if (!IsMarketDay()) return;
 
             // STF 
@@ -222,13 +232,15 @@ namespace MarketDay
                 
             var prompt = Get("market-day", new {openingTime});
             MessageUtility.SendMessage(prompt);
+            
+            Log($"OnDayStarted: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
 
-        private static void OnUpdateTicking(object sender, UpdateTickingEventArgs e)
-        {
-            if (!e.IsMultipleOf(10)) return;
-            if (!Context.IsWorldReady) return;
-        }
+        // private static void OnUpdateTicking(object sender, UpdateTickingEventArgs e)
+        // {
+        //     if (!e.IsMultipleOf(10)) return;
+        //     if (!Context.IsWorldReady) return;
+        // }
 
         private static void OnOneSecondUpdateTicking_SyncMapOpenShops(object sender, OneSecondUpdateTickingEventArgs e)
         {
@@ -262,21 +274,27 @@ namespace MarketDay
             if (!IsMarketDay()) return;
             if (!Context.IsMainPlayer) return;
             
+            Log($"SyncMapChangesAndOpenShops: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+
             if (MapUtility.ShopTiles() is null)
             {
-                Log($"OnDayStartedAndMapLoaded: MarketDay.ShopLocations is null, called too early", LogLevel.Warn);
+                Log($"SyncMapChangesAndOpenShops: MarketDay.ShopLocations is null, called too early", LogLevel.Trace);
                 return;
             }
             
             if (MapUtility.ShopTiles().Count == 0)
             {
-                Log($"OnDayStartedAndMapLoaded: MarketDay.ShopLocations.Count {MapUtility.ShopTiles().Count}, called too early", LogLevel.Warn);
+                Log($"SyncMapChangesAndOpenShops: MarketDay.ShopLocations.Count {MapUtility.ShopTiles().Count}, called too early", LogLevel.Trace);
                 return;
             }
             
             RecalculateSchedules();
             MapChangesSynced = true;
+            Log($"SyncMapChangesAndOpenShops: MapChangesSynced set {MapChangesSynced}", LogLevel.Trace);
+
             OpenShops();
+            
+            Log($"SyncMapChangesAndOpenShops: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
         
         private static void RecalculateSchedules()
@@ -311,7 +329,7 @@ namespace MarketDay
             availableShopNames.Insert(0, "Player");
 
             var strNames = string.Join(", ", availableShopNames);
-            Log($"BuildStores: Adding stores ({MapUtility.ShopTiles().Count} of {strNames})", LogLevel.Info);
+            Log($"OpenShops: Adding stores ({MapUtility.ShopTiles().Count} of {strNames})", LogLevel.Trace);
 
             foreach (var ShopLocation in MapUtility.ShopTiles())
             {
@@ -324,14 +342,14 @@ namespace MarketDay
 
         private static void OnDayEnding_EmptyGrangeAndDestroyFurniture(object sender, EventArgs e)
         {
-            Log($"OnDayEnding: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Info);
+            Log($"OnDayEnding: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
             if (!IsMarketDay()) return;
             if (!Context.IsMainPlayer) return;
             
             foreach (var store in MapUtility.ShopAtTile().Values) store.EmptyGrangeAndDestroyFurniture();
             RemoveStrayFurniture();
             
-            Log($"OnDayEnding: complete", LogLevel.Debug);
+            Log($"OnDayEnding: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
 
         private static void RemoveStrayFurniture(string command=null, string[] args=null)
@@ -382,61 +400,63 @@ namespace MarketDay
         {
             if (!Context.IsWorldReady) return;
             if (Game1.activeClickableMenu is not null) return;
-
-            var (x, y) = e.Cursor.GrabTile;
-            var (tx, ty) = e.Cursor.Tile;
-
+            
             if (Config.DebugKeybinds) CheckDebugKeybinds(e);
             
             string signOwner = null;
             
             if (Game1.currentLocation is null) return;
-            if (Game1.currentLocation.objects.TryGetValue(new Vector2(x, y), out var objectAt))
+            if (Game1.currentLocation.objects.TryGetValue(e.Cursor.GrabTile, out var objectAt))
             {
                 objectAt.modData.TryGetValue($"{ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out signOwner);
             }
             
-            if (e.Button.IsUseToolButton() && objectAt is not null)
+            if (e.Button.IsUseToolButton() && objectAt is not null && signOwner is not null)
             {
-                if (signOwner is not null) {
-                    if (signOwner == "Player")
-                    {
-                        // clicked on player shop sign, show the summary
-                        Helper.Input.Suppress(e.Button);
-                        ShopManager.GrangeShops[signOwner].ShowSummary();
-                        return;
-                    }
-                    
-                    // clicked on NPC shop sign, open the store
+                if (signOwner == "Player")
+                {
+                    // clicked on player shop sign, show the summary
                     Helper.Input.Suppress(e.Button);
-                    ShopManager.GrangeShops[signOwner].DisplayShop(true);
+                    ShopManager.GrangeShops[signOwner].ShowSummary();
                     return;
                 }
+                    
+                // clicked on NPC shop sign, open the store
+                Helper.Input.Suppress(e.Button);
+                ShopManager.GrangeShops[signOwner].DisplayShop(true);
+                return;
             }
 
-            if (e.Button.IsActionButton()) {
-                // refer clicks on grange tiles to each store
-                var tileIndexAt = Game1.currentLocation.getTileIndexAt((int) x, (int) y, "Buildings");
-                Log($"ActionButton {tileIndexAt}", LogLevel.Debug);
-                if (tileIndexAt is < 349 or > 351) return;
+            if (!e.Button.IsActionButton()) return;
+            
+            // refer clicks on grange tiles to each shop
+            var gtShop = MapUtility.ShopNearTile(e.Cursor.GrabTile);
+            if (gtShop is null) return;
+            Log($"    gtShop {gtShop.ShopName}", LogLevel.Debug);
+            gtShop.OnActionButton(e);
 
-                var signTile = new Vector2(352 - tileIndexAt + x, y);
-                Log($"    checking {signTile}", LogLevel.Debug);
-                if (Game1.currentLocation.objects.TryGetValue(signTile, out var sign) && sign is Sign)
-                {
-                    sign.modData.TryGetValue($"{ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out var shopOwner);
-                    Log($"OnButtonPressed ActionButton for {shopOwner}", LogLevel.Debug);
-
-                    var shop = ShopManager.GrangeShops[shopOwner];
-                    shop.OnActionButton(e);
-                }
-            }
+            //
+            // var tileIndexAt = Game1.currentLocation.getTileIndexAt((int) x, (int) y, "Buildings");
+            // Log($"ActionButton {tileIndexAt}", LogLevel.Debug, true);
+            // if (tileIndexAt is < 349 or > 351) return;
+            //
+            // var signTile = new Vector2(352 - tileIndexAt + x, y);
+            // Log($"    checking {signTile}", LogLevel.Debug, true);
+            // if (Game1.currentLocation.objects.TryGetValue(signTile, out var sign) && sign is Sign)
+            // {
+            //     sign.modData.TryGetValue($"{ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out var shopOwner);
+            //     Log($"OnButtonPressed ActionButton for {shopOwner}", LogLevel.Debug, true);
+            //
+            //     var shop = ShopManager.GrangeShops[shopOwner];
+            //     shop.OnActionButton(e);
+            // }
         }
 
         private void CheckDebugKeybinds(ButtonPressedEventArgs e)
         {
             if (e.Button == Config.ReloadKeybind)
             {
+                helper.ConsoleCommands.Trigger("patch", new[]{"reload", ModManifest.UniqueID+".CP"});
                 HotReload("", null);
                 Helper.Input.Suppress(e.Button);
             }
@@ -450,7 +470,7 @@ namespace MarketDay
                     ? "warp FarmHouse"
                     : "warp Town";
                 Game1.game1.parseDebugInput(debugCommand);
-
+                
                 // show result
                 Log(Game1.debugOutput != oldOutput
                     ? $"> {Game1.debugOutput}"
@@ -586,16 +606,19 @@ namespace MarketDay
         
         private void OnLaunched(object sender, GameLaunchedEventArgs e)
         {
-            Log($"OnLaunched", LogLevel.Info);
+            Log($"OnLaunched: {Game1.ticks}", LogLevel.Trace);
 
             Config = Helper.ReadConfig<ModConfig>();
             
             setupGMCM();
             
-            ContentPatcherAPI =
-                Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>("Pathoschild.ContentPatcher");
+            // ContentPatcherAPI =
+            //     Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>("Pathoschild.ContentPatcher");
             // ContentPatcherAPI.RegisterToken(ModManifest, "MarketDayOpen",
             //     () => { return Context.IsWorldReady ? new[] {IsMarketDayJustForToken() ? "true" : "false"} : null; });
+            
+            Log($"OnLaunched: complete at {Game1.ticks}", LogLevel.Trace);
+
         }
 
         /// <summary>
@@ -661,13 +684,6 @@ namespace MarketDay
                 max: 6
             );
 
-            configMenu.AddBoolOption(ModManifest,
-                () => Config.AutoStockAtStartOfDay,
-                val => Config.AutoStockAtStartOfDay = val,
-                () => Helper.Translation.Get("cfg.auto-stock"),
-                () => Helper.Translation.Get("cfg.auto-stock.msg")
-            );
-            
             configMenu.AddNumberOption(ModManifest,
                 () => Config.RestockItemsPerHour,
                 val => Config.RestockItemsPerHour = val,
@@ -704,19 +720,19 @@ namespace MarketDay
             );
             
             configMenu.AddBoolOption(ModManifest,
-                () => Config.HideFurniture,
-                val => Config.HideFurniture = val,
-                () => Helper.Translation.Get("cfg.hide-furniture"),
-                () => Helper.Translation.Get("cfg.hide-furniture.msg")
-            );
-            
-            configMenu.AddBoolOption(ModManifest,
                 () => Config.NPCVisitors,
                 val => Config.NPCVisitors = val,
                 () => Helper.Translation.Get("cfg.npc-visitors"),
                 () => Helper.Translation.Get("cfg.npc-visitors.msg")
             );
 
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.VerboseLogging,
+                val => Config.VerboseLogging = val,
+                () => Helper.Translation.Get("cfg.verbose-logging"),
+                () => Helper.Translation.Get("cfg.verbose-logging.msg")
+            );
+            
             configMenu.AddBoolOption(ModManifest,
                 () => Config.DebugKeybinds,
                 val => Config.DebugKeybinds = val,
@@ -745,12 +761,12 @@ namespace MarketDay
                 () => ""
             );
             
-            configMenu.AddKeybind(ModManifest,
-                () => Config.StatusKeybind,
-                val => Config.StatusKeybind = val,
-                () => Helper.Translation.Get("cfg.status"),
-                () => ""
-            );
+            // configMenu.AddKeybind(ModManifest,
+            //     () => Config.StatusKeybind,
+            //     val => Config.StatusKeybind = val,
+            //     () => Helper.Translation.Get("cfg.status"),
+            //     () => ""
+            // );
         }
 
         private void SaveConfig() {
@@ -771,9 +787,13 @@ namespace MarketDay
             return helper.Translation.Get(key, tokens);
         }
 
-        internal static void Log(string message, LogLevel level)
+        internal static void Log(string message, LogLevel level, bool VerboseOnly = false)
         {
-            monitor.Log($"[{Game1.player.Name}] {message}", level);
+            if (VerboseOnly && Config is not null && !Config.VerboseLogging) return;
+            if (!Context.IsWorldReady)
+                monitor.Log($"{message}", level);
+            else
+                monitor.Log($"[{Game1.player.Name}] {message}", level);
         }
 
     }
