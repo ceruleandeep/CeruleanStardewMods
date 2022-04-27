@@ -46,10 +46,10 @@ namespace BetterJunimosForestry.Abilities
             return false;
         }
 
-        internal static bool ShouldPlantFruitTreeOnTile(GameLocation farm, JunimoHut hut, Vector2 pos)
+        internal static bool ShouldPlantFruitTreeOnTile(GameLocation location, JunimoHut hut, Vector2 pos)
         {
-            if (Util.BlocksDoor(hut, pos)) return false;
-            return IsTileInPattern(pos) && CanPlantFruitTreeOnTile(farm, pos);
+            if (Util.BlocksDoor(location, hut, pos)) return false;
+            return IsTileInPattern(pos) && CanPlantFruitTreeOnTile(location, pos);
         }
 
         private static bool CanPlantFruitTreeOnTile(GameLocation farm, Vector2 pos)

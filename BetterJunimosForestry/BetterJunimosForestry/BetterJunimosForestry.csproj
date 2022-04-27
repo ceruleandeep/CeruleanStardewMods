@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>BetterJunimosForestry</AssemblyName>
     <RootNamespace>BetterJunimosForestry</RootNamespace>
-    <Version>1.0.7-beta8</Version>
+    <Version>1.0.7-beta9</Version>
     <TargetFramework>net5.0</TargetFramework>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>

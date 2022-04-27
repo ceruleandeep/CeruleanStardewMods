@@ -56,7 +56,7 @@ namespace BetterJunimosForestry {
             // non-dirt terrain features
             if (location.terrainFeatures.TryGetValue(tile, out var feature))
             {
-                HoeDirt dirt = feature as HoeDirt;
+                var dirt = feature as HoeDirt;
                 if (dirt is not {crop: null})
                     return true;
             }
@@ -79,8 +79,8 @@ namespace BetterJunimosForestry {
         
         internal static bool CanBeHoed(GameLocation location, Vector2 tileLocation)
         {
-            int XCoord = (int)tileLocation.X;
-            int YCoord = (int)tileLocation.Y;
+            var XCoord = (int)tileLocation.X;
+            var YCoord = (int)tileLocation.Y;
 
             if (location.terrainFeatures.ContainsKey(tileLocation))
             {
@@ -101,6 +101,7 @@ namespace BetterJunimosForestry {
             {
                 return false;
             }
+            
             if(location.doesTileHaveProperty(XCoord, YCoord, "Diggable", "Back") == null)
             {
                 return false;
@@ -115,36 +116,24 @@ namespace BetterJunimosForestry {
             {
                 return false;
             }
-            Rectangle tileLocationRect = new Rectangle((int)tileLocation.X * 64 + 1, (int)tileLocation.Y * 64 + 1, 62, 62);
-            foreach (LargeTerrainFeature largeTerrainFeature in location.largeTerrainFeatures)
+            
+            var tileLocationRect = new Rectangle((int)tileLocation.X * 64 + 1, (int)tileLocation.Y * 64 + 1, 62, 62);
+            if (location.largeTerrainFeatures.Any(largeTerrainFeature => largeTerrainFeature.getBoundingBox().Intersects(tileLocationRect)))
             {
-                if (largeTerrainFeature.getBoundingBox().Intersects(tileLocationRect))
-                {
-                    return false;
-                }
+                return false;
             }
 
-            Furniture f = location.GetFurnitureAt(tileLocation);
+            var f = location.GetFurnitureAt(tileLocation);
             if (f != null)
             {
                 return false;
             }
 
-            if (location is Farm farm)
-            {
-                foreach(var building in farm.buildings)
-                {
-                    if (building.occupiesTile(tileLocation)){
-                        return false;
-                    }
-                }
-            }
-
-            return true;
+            return location is not Farm farm || farm.buildings.All(building => !building.occupiesTile(tileLocation));
         }
 
-        public static bool IsHoed(GameLocation farm, Vector2 pos) {
-            if (farm.terrainFeatures.TryGetValue(pos, out TerrainFeature feature))
+        public static bool IsHoed(GameLocation location, Vector2 pos) {
+            if (location.terrainFeatures.TryGetValue(pos, out var feature))
             {
                 return feature is HoeDirt;
             }
@@ -152,24 +141,23 @@ namespace BetterJunimosForestry {
             return false;
         }
         
-        public static bool SpawningTreesForbidden(GameLocation farm, Vector2 pos) {
-            string noSpawn = farm.doesTileHaveProperty((int)pos.X, (int)pos.Y, "NoSpawn", "Back");
-            bool cantSpawnHere = noSpawn != null && (noSpawn.Equals("Tree") || noSpawn.Equals("All") || noSpawn.Equals("True"));
-            if (cantSpawnHere) return true;
+        public static bool HasCrop(GameLocation location, Vector2 pos) {
+            if (location.terrainFeatures.TryGetValue(pos, out var feature))
+            {
+                return (feature as HoeDirt)?.crop != null;
+            }
+
             return false;
         }
         
-        public static Guid? GuidOfHutOnTile(Vector2 pos) {
-            foreach (Building b in Game1.getFarm().buildings) {
-                if (b is JunimoHut hut && b.occupiesTile(pos)) {
-                    return GetHutIdFromHut(hut);
-                }
-            }
-            return null;
+        public static bool SpawningTreesForbidden(GameLocation location, Vector2 pos) {
+            var noSpawn = location.doesTileHaveProperty((int)pos.X, (int)pos.Y, "NoSpawn", "Back");
+            var cantSpawnHere = noSpawn != null && (noSpawn.Equals("Tree") || noSpawn.Equals("All") || noSpawn.Equals("True"));
+            return cantSpawnHere;
         }
 
         public static JunimoHut HutOnTile(Vector2 pos) {
-            foreach (Building b in Game1.getFarm().buildings) {
+            foreach (var b in Game1.getFarm().buildings) {
                 if (b is JunimoHut hut && b.occupiesTile(pos)) {
                     return hut;
                 }
@@ -259,8 +247,10 @@ namespace BetterJunimosForestry {
             return outcome;
         }
         
-        public static bool BlocksDoor(JunimoHut hut, Vector2 pos) {
-            bool blocks = (int)pos.X == hut.tileX.Value + 1 && (int)pos.Y == hut.tileY.Value + 2;
+        public static bool BlocksDoor(GameLocation location, JunimoHut hut, Vector2 pos) {
+            if (!location.IsFarm) return false;
+            var (x, y) = pos;
+            var blocks = (int)x == hut.tileX.Value + 1 && (int)y == hut.tileY.Value + 2;
             // ModEntry.SMonitor.Log($"BlocksDoor: hut [{hut.tileX.Value} {hut.tileY.Value}], pos [{pos.X} {pos.Y}], blocks: {blocks}", LogLevel.Trace);
             return blocks;
         }

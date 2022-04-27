@@ -84,7 +84,7 @@ namespace BetterJunimosForestry.Abilities
             }
 
             // might we one day want to plant a wild tree here?
-            if (mode == Modes.Forest && ModEntry.PlantTrees.ShouldPlantWildTreeHere(location, hut, pos))
+            if (mode == Modes.Forest && PlantTreesAbility.ShouldPlantWildTreeHere(location, hut, pos))
             {
                 // Monitor.Log($"    ShouldHoeThisTile not hoeing [{pos.X} {pos.Y}] because wild tree plantable", LogLevel.Debug);
                 return false;
@@ -204,7 +204,7 @@ namespace BetterJunimosForestry.Abilities
                 }
                 catch (KeyNotFoundException)
                 {
-                    Monitor.Log($"Cache miss: {foundItem.ParentSheetIndex} {Game1.currentSeason}", LogLevel.Debug);
+                    Monitor.Log($"Cache miss: {foundItem.ParentSheetIndex} {Game1.currentSeason}", LogLevel.Trace);
                     var crop = new Crop(foundItem.ParentSheetIndex, 0, 0);
                     cropSeasons[Game1.currentSeason][key] = crop.seasonsToGrowIn.Contains(Game1.currentSeason);
                     if (cropSeasons[Game1.currentSeason][key])
@@ -284,9 +284,9 @@ namespace BetterJunimosForestry.Abilities
         {
             location.debris.Filter(
                 debris =>
-                    (Debris.DebrisType) (NetFieldBase<Debris.DebrisType, NetEnum<Debris.DebrisType>>) debris.debrisType !=
-                    Debris.DebrisType.SQUARES || (int) (debris.Chunks[0].position.X / 64.0) != tileX ||
-                    debris.chunkFinalYLevel / 64 != tileY);
+                    debris.debrisType.Value != Debris.DebrisType.SQUARES 
+                        || (int) (debris.Chunks[0].position.X / 64.0) != tileX 
+                        || debris.chunkFinalYLevel / 64 != tileY);
         }
 
         public List<int> RequiredItems()

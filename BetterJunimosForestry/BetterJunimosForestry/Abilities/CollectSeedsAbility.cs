@@ -12,68 +12,74 @@ using SObject = StardewValley.Object;
 
 // bits of this are from Tractor Mod; https://github.com/Pathoschild/StardewMods/blob/68628a40f992288278b724984c0ade200e6e4296/TractorMod/Framework/BaseAttachment.cs#L132
 
-namespace BetterJunimosForestry.Abilities {
-    public class CollectSeedsAbility : IJunimoAbility {
-
+namespace BetterJunimosForestry.Abilities
+{
+    public class CollectSeedsAbility : IJunimoAbility
+    {
         private readonly IMonitor Monitor;
-        private Axe FakeAxe = new();
+        private readonly Axe FakeAxe = new();
 
-        internal CollectSeedsAbility(IMonitor Monitor) {
+        internal CollectSeedsAbility(IMonitor Monitor)
+        {
             this.Monitor = Monitor;
             FakeAxe.UpgradeLevel = 1;
             FakeAxe.IsEfficient = true;
         }
 
-        public string AbilityName() {
+        public string AbilityName()
+        {
             return "CollectSeeds";
         }
 
-        protected bool IsHarvestableSeed(TerrainFeature t, string mode) {
+        public bool IsActionAvailable(GameLocation location, Vector2 pos, Guid guid)
+        {
+            var mode = Util.GetModeForHut(Util.GetHutFromId(guid));
+            return location.terrainFeatures.ContainsKey(pos) && IsHarvestableSeed(location.terrainFeatures[pos], mode);
+        }
+
+        public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid)
+        {
+            var mode = Util.GetModeForHut(Util.GetHutFromId(guid));
+            if (!location.terrainFeatures.ContainsKey(pos) || !IsHarvestableSeed(location.terrainFeatures[pos], mode))
+                return false;
+            UseToolOnTile(FakeAxe, pos, Game1.player, Game1.currentLocation);
+            return true;
+        }
+
+        private static bool IsHarvestableSeed(TerrainFeature t, string mode)
+        {
             if (t is not Tree tree) return false;
             if (tree.growthStage.Value != 0) return false;
             if (mode == Modes.Normal) return false;
             if (mode == Modes.Forest && PlantTreesAbility.IsTileInPattern(t.currentTileLocation)) return false;
             return true;
         }
-
-        public bool IsActionAvailable(GameLocation farm, Vector2 pos, Guid guid) {
-            string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
-            if (farm.terrainFeatures.ContainsKey(pos) && IsHarvestableSeed(farm.terrainFeatures[pos], mode)) {
-                return true;
-            }
-            return false;
-        }
-
-        public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            string mode = Util.GetModeForHut(Util.GetHutFromId(guid));
-            if (farm.terrainFeatures.ContainsKey(pos) && IsHarvestableSeed(farm.terrainFeatures[pos], mode)) {
-                UseToolOnTile(FakeAxe, pos, Game1.player, Game1.currentLocation);
-                return true;
-            }
-            return false;
-        }
-
-        protected bool UseToolOnTile(Tool tool, Vector2 tile, Farmer player, GameLocation location) {
-            Vector2 lc = GetToolPixelPosition(tile);
-            tool.DoFunction(location, (int)lc.X, (int)lc.Y, 0, player);
-            return true;
-        }
-
-        protected Vector2 GetToolPixelPosition(Vector2 tile) {
-            return (tile * Game1.tileSize) + new Vector2(Game1.tileSize / 2f);
-        }
-
-        public List<int> RequiredItems() {
-            return new List<int>();
-        }
         
-        
+        private static void UseToolOnTile(Tool tool, Vector2 tile, Farmer player, GameLocation location)
+        {
+            var (x, y) = GetToolPixelPosition(tile);
+            tool.DoFunction(location, (int) x, (int) y, 0, player);
+        }
+
+        private static Vector2 GetToolPixelPosition(Vector2 tile)
+        {
+            return tile * Game1.tileSize + new Vector2(Game1.tileSize / 2f);
+        }
+
+        public List<int> RequiredItems()
+        {
+            return new();
+        }
+
+
         /* older API compat */
-        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid) {
+        public bool IsActionAvailable(Farm farm, Vector2 pos, Guid guid)
+        {
             return IsActionAvailable((GameLocation) farm, pos, guid);
         }
-        
-        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
+
+        public bool PerformAction(Farm farm, Vector2 pos, JunimoHarvester junimo, Guid guid)
+        {
             return PerformAction((GameLocation) farm, pos, junimo, guid);
         }
     }
