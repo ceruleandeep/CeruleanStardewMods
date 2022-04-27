@@ -25,7 +25,7 @@ namespace PersonalEffects
         }
     }
 
-    internal static class Config
+    internal static class NPCConfig
     {
         public static Dictionary<string, ConfigNPC> Data;
         private static ConfigNPC NoData;
@@ -46,7 +46,7 @@ namespace PersonalEffects
             var filepath = Path.Combine(directory, "assets", "npcs.json");
             if (!File.Exists(filepath))
             {
-                Modworks.Log.Error($"Config file not found at {filepath}");
+                Modworks.Log.Error($"NPCConfig file not found at {filepath}");
                 return;
             }
             try
@@ -61,14 +61,14 @@ namespace PersonalEffects
                 Modworks.Log.Error("Failed to read config file: " + e.Message);
             }
             //set internal names
-            foreach (var kvp in Data)
+            foreach (var (key, configNpc) in Data)
             {
-                kvp.Value.InternalName = kvp.Key;
+                configNpc.InternalName = key;
 
                 //child safety - if any configured NPCs are children, we'll disable them here
-                var n = StardewValley.Game1.getCharacterFromName(kvp.Value.InternalName);
+                var n = Game1.getCharacterFromName(configNpc.InternalName);
                 if (n == null) continue; //if we can't read it, we'll let it pass.
-                if (IsChild(n)) kvp.Value.Enabled = false;
+                if (IsChild(n)) configNpc.Enabled = false;
             }
 
             foreach (var cnpc in Data.Values)
@@ -121,6 +121,7 @@ namespace PersonalEffects
         public int X;
         public int Y;
         public string Rarity;
+        public string ForSVE;
 
         public int PercentChance()
         {

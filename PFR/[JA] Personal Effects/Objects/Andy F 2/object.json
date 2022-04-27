@@ -1,0 +1,54 @@
+{
+    "Name": "Andy's Delicates",
+    "Description": "She's picked a side",
+    "Category": "-23",
+    "Edibility": 1,
+    "Price": 24,
+    "IsColored": false,
+    "GiftTastes": {
+        "Love": [
+            "Demetrius",
+            "Pierre",
+            "Morris"
+        ],
+        "Like": [
+            "Andy"
+        ],
+        "Dislike": [
+            "Abigail",
+            "Alex",
+            "Caroline",
+            "Clint",
+            "Dwarf",
+            "Elliott",
+            "Emily",
+            "Evelyn",
+            "George",
+            "Gus",
+            "Haley",
+            "Harvey",
+            "Jas",
+            "Jodi",
+            "Kent",
+            "Krobus",
+            "Leah",
+            "Lewis",
+            "Linus",
+            "Marnie",
+            "Maru",
+            "Pam",
+            "Penny",
+            "Robin",
+            "Sam",
+            "Sandy",
+            "Shane",
+            "Vincent",
+            "Willy",
+            "Wizard"
+        ],
+        "Hate": [
+            "Sebastian"
+        ]
+    },
+    "CanPurchase": false
+}

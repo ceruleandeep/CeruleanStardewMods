@@ -33,16 +33,10 @@ namespace PersonalEffects
 
         public static Log Log { get; private set; }
 
-        public static Player Player { get; private set; }
-
-        public static Events Events { get; private set; }
-
         internal static void Startup(Mod mod)
         {
             Log = new Log(mod.Monitor);
             RNG = new Random(DateTime.Now.Millisecond * DateTime.Now.GetHashCode());
-            Player = new Player();
-            Events = new Events();
         }
     }
 }
