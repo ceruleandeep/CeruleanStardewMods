@@ -48,7 +48,7 @@ namespace MarketDay.ItemPriceAndStock
         public void Update()
         {
             ItemPriceAndStock = new Dictionary<ISalable, int[]>();
-            MarketDay.monitor.Log($"Updating {_shopName}");
+            MarketDay.Log($"Updating {_shopName}", LogLevel.Trace, true);
 
             foreach (ItemStock stock in _itemStocks)
             {

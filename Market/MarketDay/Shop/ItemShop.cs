@@ -59,7 +59,7 @@ namespace MarketDay.Shop
             }
             catch (Exception ex) //couldn't load the image
             {
-                MarketDay.monitor.Log(ex.Message+ex.StackTrace, LogLevel.Error);
+                MarketDay.Log(ex.Message+ex.StackTrace, LogLevel.Error);
             }
         }
         /// <summary>
@@ -69,62 +69,8 @@ namespace MarketDay.Shop
         public void UpdateItemPriceAndStock()
         {
             _shopOpenedToday = false;
-            MarketDay.monitor.Log($"Generating stock for {ShopName}", LogLevel.Trace);
+            MarketDay.Log($"Generating stock for {ShopName}", LogLevel.Trace, true);
             StockManager.Update();
-        }
-
-        /// <summary>
-        /// Opens the shop if conditions are met. If not, display the closed message
-        /// </summary>
-        public void DisplayShop(bool debug = false)
-        {
-            MarketDay.Log($"Attempting to open the shop \"{ShopName}\"", LogLevel.Trace);
-
-            //if conditions aren't met, display closed message if there is one
-            //skips condition checking if debug mode
-            if (!debug && !APIs.Conditions.CheckConditions(When))
-            {
-                if (ClosedMessage != null)
-                {
-                    Game1.activeClickableMenu = new DialogueBox(ClosedMessage);
-                }
-
-                return;
-            }
-
-            int currency = 0;
-            switch (StoreCurrency)
-            {
-                case "festivalScore":
-                    currency = 1;
-                    break;
-                case "clubCoins":
-                    currency = 2;
-                    break;
-            }
-
-            var shopMenu = new ShopMenu(StockManager.ItemPriceAndStock, currency);
-
-            if (CategoriesToSellHere != null)
-                shopMenu.categoriesToSellHere = CategoriesToSellHere;
-
-            if (_portrait != null)
-            {
-                shopMenu.portraitPerson = new NPC();
-                //only add a shop name the first time store is open each day so that items added from JA's side are only added once
-                if (!_shopOpenedToday)
-                    shopMenu.portraitPerson.Name = "STF." + ShopName;
-
-                shopMenu.portraitPerson.Portrait = _portrait;
-            }
-
-            if (Quote != null)
-            {
-                shopMenu.potraitPersonDialogue = Game1.parseText(Quote, Game1.dialogueFont, 304);
-            }
-
-            Game1.activeClickableMenu = shopMenu;
-            _shopOpenedToday = true;
         }
 
         /// <summary>

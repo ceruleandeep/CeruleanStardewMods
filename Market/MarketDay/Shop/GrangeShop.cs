@@ -193,7 +193,7 @@ namespace MarketDay.Shop
         /// <summary>
         /// Opens the shop if conditions are met. If not, display the closed message
         /// </summary>
-        public new void DisplayShop(bool debug = false)
+        public void DisplayShop(bool debug = false)
         {
             MarketDay.Log($"Attempting to open the shop \"{ShopName}\" at {Game1.timeOfDay}", LogLevel.Debug, true);
 
@@ -1138,7 +1138,7 @@ namespace MarketDay.Shop
         private void Log(string message, LogLevel level, bool VerboseOnly = false)
         {
             if (VerboseOnly && !MarketDay.Config.VerboseLogging) return;
-            MarketDay.monitor.Log($"[{Game1.player.Name}] [{ShopName}] {message}", level);
+            MarketDay.Log($"[{Game1.player.Name}] [{ShopName}] {message}", level);
         }
 
         private string Get(string key)

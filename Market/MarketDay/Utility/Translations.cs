@@ -34,7 +34,7 @@ namespace MarketDay.Utility
         internal static void UpdateSelectedLanguage()
         {
             _selectedLanguage = LocalizedContentManager.CurrentLanguageCode;
-            MarketDay.monitor.Log($"Updating current language settings: {_selectedLanguage}", LogLevel.Trace);
+            MarketDay.Log($"Updating current language settings: {_selectedLanguage}", LogLevel.Trace);
         }
     }
 }

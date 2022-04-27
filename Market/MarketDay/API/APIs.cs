@@ -22,7 +22,7 @@ namespace MarketDay.API
 
             if (JsonAssets == null)
             {
-                MarketDay.monitor.Log("Json Assets API not detected. This is only an issue if you're using cystom Json Assets items and shops trying to sell them, as custom items will not appear in shops.",
+                MarketDay.Log("Json Assets API not detected. This is only an issue if you're using cystom Json Assets items and shops trying to sell them, as custom items will not appear in shops.",
                     LogLevel.Info);
             }
 
@@ -38,13 +38,13 @@ namespace MarketDay.API
 
             if (BFAV == null)
             {
-                MarketDay.monitor.Log("BFAV API not detected. This is only an issue if you're using custom BFAV animals and a custom shop that's supposed to sell them, as custom animals will not appear in those shops.",
+                MarketDay.Log("BFAV API not detected. This is only an issue if you're using custom BFAV animals and a custom shop that's supposed to sell them, as custom animals will not appear in those shops.",
                     LogLevel.Info);
             }
             else if (!BFAV.IsEnabled())
             {
                 BFAV = null;
-                MarketDay.monitor.Log("BFAV is installed but not enabled. This is only an issue if you're using custom BFAV animals and a custom shop that's supposed to sell them, as custom animals will not appear in those shops",
+                MarketDay.Log("BFAV is installed but not enabled. This is only an issue if you're using custom BFAV animals and a custom shop that's supposed to sell them, as custom animals will not appear in those shops",
                     LogLevel.Info);
             }
         }
@@ -58,7 +58,7 @@ namespace MarketDay.API
 
             if (Conditions == null)
             {
-                MarketDay.monitor.Log("Expanded Preconditions Utility API not detected. Something went wrong, please check that your installation of Expanded Preconditions Utility is valid",
+                MarketDay.Log("Expanded Preconditions Utility API not detected. Something went wrong, please check that your installation of Expanded Preconditions Utility is valid",
                     LogLevel.Error);
                 return;
             }

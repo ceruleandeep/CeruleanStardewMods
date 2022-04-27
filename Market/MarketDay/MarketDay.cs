@@ -219,7 +219,7 @@ namespace MarketDay
             Log($"OnDayStarted: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
 
             MapChangesSynced = false;
-            Log($"OnDayStarted: MapChangesSynced set {MapChangesSynced}", LogLevel.Trace);
+            Log($"OnDayStarted: MapChangesSynced set {MapChangesSynced} at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
 
             if (!IsMarketDay()) return;
 
@@ -250,17 +250,14 @@ namespace MarketDay
 
             if (!MapChangesSynced) SyncMapChangesAndOpenShops();
         }
-        
+
         private static void OnOneSecondUpdateTicking_InteractWithNPCs(object sender, OneSecondUpdateTickingEventArgs e)
         {
             if (!Context.IsWorldReady) return;
             if (!Context.IsMainPlayer) return;
             if (!IsMarketDay()) return;
 
-            foreach (var store in MapUtility.ShopAtTile().Values)
-            {
-                store.InteractWithNearbyNPCs();
-            }
+            foreach (var shop in MapUtility.ShopAtTile().Values) shop.InteractWithNearbyNPCs();
         }
 
         private static void OnTimeChanged_RestockThroughDay(object sender, EventArgs e)
@@ -287,22 +284,28 @@ namespace MarketDay
                 Log($"SyncMapChangesAndOpenShops: MarketDay.ShopLocations.Count {MapUtility.ShopTiles().Count}, called too early", LogLevel.Trace);
                 return;
             }
-            
+            Log($"    SyncMapChangesAndOpenShops: {Game1.ticks}", LogLevel.Trace);
+
             RecalculateSchedules();
             MapChangesSynced = true;
-            Log($"SyncMapChangesAndOpenShops: MapChangesSynced set {MapChangesSynced}", LogLevel.Trace);
+            Log($"SyncMapChangesAndOpenShops: MapChangesSynced set {MapChangesSynced} at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
 
             OpenShops();
             
-            Log($"SyncMapChangesAndOpenShops: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+            Log($"SyncMapChangesAndOpenShops: completed at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
         
         private static void RecalculateSchedules()
         {
+            Log($"RecalculateSchedules: begins at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+
             foreach (var npc in StardewValley.Utility.getAllCharacters())
             {
-                if (npc.isVillager()) npc.Schedule = npc.getSchedule(Game1.dayOfMonth);
+                if (npc is null) continue;
+                if (!npc.isVillager()) continue;
+                npc.Schedule = npc.getSchedule(Game1.dayOfMonth);
             }
+            Log($"RecalculateSchedules: completed at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
 
         private static void OpenShops()

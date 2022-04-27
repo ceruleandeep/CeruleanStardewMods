@@ -56,15 +56,15 @@ namespace MarketDay.Utility
 
             foreach (var tile in ShopTiles())
             {
-                // MarketDay.monitor.Log($"ShopAtTile: {tile}", LogLevel.Debug);
+                // MarketDay.Log($"ShopAtTile: {tile}", LogLevel.Debug);
 
                 var signTile = tile + new Vector2(3, 3);
                 if (!town.objects.TryGetValue(signTile, out var obj) || obj is not Sign sign) continue;
-                // MarketDay.monitor.Log($"    {signTile} is Sign", LogLevel.Debug);
+                // MarketDay.Log($"    {signTile} is Sign", LogLevel.Debug);
 
                 if (sign.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out var signOwner))
                 {
-                    // MarketDay.monitor.Log($"        signOwner {signOwner}", LogLevel.Debug);
+                    // MarketDay.Log($"        signOwner {signOwner}", LogLevel.Debug);
 
                     shopsAtTiles[tile] = ShopManager.GrangeShops[signOwner];
                 }

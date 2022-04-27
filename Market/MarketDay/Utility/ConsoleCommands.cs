@@ -46,7 +46,7 @@ namespace MarketDay.Utility
         private void ConditionCheck(string arg1, string[] arg2)
         {
             string[] condition = { string.Join(" ",arg2)};
-            MarketDay.monitor.Log($"Expression resolved as: {APIs.Conditions.CheckConditions(condition)}",LogLevel.Info);
+            MarketDay.Log($"Expression resolved as: {APIs.Conditions.CheckConditions(condition)}",LogLevel.Info);
         }
 
         /// <summary>
@@ -58,20 +58,20 @@ namespace MarketDay.Utility
         {
             if (args.Length == 0)
             {
-                MarketDay.monitor.Log($"A shop name is required", LogLevel.Debug);
+                MarketDay.Log($"A shop name is required", LogLevel.Debug);
                 return;
             }
 
             ShopManager.GrangeShops.TryGetValue(args[0], out GrangeShop value);
             if (value == null)
             {
-                MarketDay.monitor.Log($"No shop with a name of {args[0]} was found.", LogLevel.Debug);
+                MarketDay.Log($"No shop with a name of {args[0]} was found.", LogLevel.Debug);
             }
             else
             {
                 if (!Context.IsPlayerFree)
                 {
-                    MarketDay.monitor.Log($"The player isn't free to act; can't display a menu right now", LogLevel.Debug);
+                    MarketDay.Log($"The player isn't free to act; can't display a menu right now", LogLevel.Debug);
                     return;
                 }
 
@@ -88,20 +88,20 @@ namespace MarketDay.Utility
         {
             if (args.Length == 0)
             {
-                MarketDay.monitor.Log($"A shop name is required", LogLevel.Debug);
+                MarketDay.Log($"A shop name is required", LogLevel.Debug);
                 return;
             }
 
             ShopManager.AnimalShops.TryGetValue(args[0], out AnimalShop value);
             if (value == null)
             {
-                MarketDay.monitor.Log($"No shop with a name of {args[0]} was found.", LogLevel.Debug);
+                MarketDay.Log($"No shop with a name of {args[0]} was found.", LogLevel.Debug);
             }
             else
             {
                 if (!Context.IsPlayerFree)
                 {
-                    MarketDay.monitor.Log($"The player isn't free to act; can't display a menu right now", LogLevel.Debug);
+                    MarketDay.Log($"The player isn't free to act; can't display a menu right now", LogLevel.Debug);
                     return;
                 }
 
@@ -118,20 +118,20 @@ namespace MarketDay.Utility
         {
             if (args.Length == 0)
             {
-                MarketDay.monitor.Log($"A shop name is required", LogLevel.Debug);
+                MarketDay.Log($"A shop name is required", LogLevel.Debug);
                 return;
             }
 
             ShopManager.GrangeShops.TryGetValue(args[0], out var shop);
             if (shop == null)
             {
-                MarketDay.monitor.Log($"No shop with a name of {args[0]} was found.", LogLevel.Debug);
+                MarketDay.Log($"No shop with a name of {args[0]} was found.", LogLevel.Debug);
             }
             else
             {
                 if (!Context.IsWorldReady)
                 {
-                    MarketDay.monitor.Log($"The world hasn't loaded; shop stock can't be updated at this time", LogLevel.Debug);
+                    MarketDay.Log($"The world hasn't loaded; shop stock can't be updated at this time", LogLevel.Debug);
                     return;
                 }
                 shop.UpdateItemPriceAndStock();
@@ -145,7 +145,7 @@ namespace MarketDay.Utility
         {
             if (ShopManager.GrangeShops.Count == 0)
             {
-                MarketDay.monitor.Log($"No shops were found", LogLevel.Debug);
+                MarketDay.Log($"No shops were found", LogLevel.Debug);
             }
             else
             {
@@ -160,7 +160,7 @@ namespace MarketDay.Utility
                     temp += "\nAnimalShop: " + k;
                 }
 
-                MarketDay.monitor.Log(temp, LogLevel.Debug);
+                MarketDay.Log(temp, LogLevel.Debug);
             }
         }
 

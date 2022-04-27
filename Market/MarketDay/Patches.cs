@@ -148,81 +148,46 @@ namespace MarketDay
 
     [HarmonyPatch(typeof(PathFindController))]
     [HarmonyPatch("findPathForNPCSchedules")]
-    public class Prefix_findPathForNPCSchedules
+    public class Postfix_findPathForNPCSchedules
     {
-        public static bool Prefix(PathFindController __instance, Point startPoint, Point endPoint,
-            GameLocation location, int limit, Character ___character, ref Stack<Point> __result)
+        public static void Postfix(Point startPoint, Point endPoint, GameLocation location, int limit, ref Stack<Point> __result)
         {
-            try
+            if (location is not Town) return;
+            if (!MarketDay.IsMarketDay()) return;
+            if (!MarketDay.Config.NPCVisitors) return;
+            if (MapUtility.ShopTiles().Count == 0) return;
+
+            MarketDay.Log($"findPathForNPCSchedules {location.Name} {startPoint} -> {endPoint}", LogLevel.Trace, true);
+
+            var placesToVisit = new List<Point>();
+            foreach (var (shopX, shopY) in MapUtility.ShopTiles())
             {
-                if (location is not Town) return true;
-                if (___character is null) return true;
-                if (!MarketDay.IsMarketDay()) return true;
-                if (!MarketDay.Config.NPCVisitors) return true;
-                if (MapUtility.ShopTiles() is null)
-                {
-                    MarketDay.Log($"findPathForNPCSchedules: ShopTiles null", LogLevel.Trace);
-                    return true;
-                }
-
-                if (MapUtility.ShopTiles().Count == 0)
-                {
-                    MarketDay.Log($"findPathForNPCSchedules: ShopTiles 0", LogLevel.Trace);
-                    return true;
-                }
-
-                MarketDay.Log(
-                    $"findPathForNPCSchedules {___character.displayName}, {location.Name} {startPoint} -> {endPoint}",
-                    LogLevel.Trace);
-
-                var placesToVisit = new List<Point>();
-
-                foreach (var (shopX, shopY) in MapUtility.ShopTiles())
-                {
-                    var visitPoint = new Point((int) shopX + Game1.random.Next(3), (int) shopY + 4);
-                    if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);
-                }
-
-                StardewValley.Utility.Shuffle(Game1.random, placesToVisit);
-                placesToVisit.Add(startPoint);
-                if (placesToVisit.Count < 2) return true;
-
-                var waypoints = string.Join(", ", placesToVisit);
-                MarketDay.Log($"    Waypoints: {waypoints}", LogLevel.Debug, true);
-
-                // work backwards through the waypoints
-                __result = new Stack<Point>();
-
-                var thisEndPoint = endPoint;
-                foreach (var (wptX, wptY) in placesToVisit)
-                {
-                    var thisStartPoint = new Point(wptX, wptY);
-
-                    MarketDay.Log($"    Segment: {thisStartPoint} -> {thisEndPoint}", LogLevel.Debug, true);
-
-                    var originalPath = Schedule.findPathForNPCSchedules(thisStartPoint, thisEndPoint, location, limit);
-                    if (originalPath is null || originalPath.Count == 0) continue;
-
-                    var legPath = originalPath.ToList();
-                    legPath.Reverse();
-
-                    var segment = string.Join(", ", legPath);
-                    MarketDay.Log($"    Reversed path: {segment}", LogLevel.Debug, true);
-
-                    foreach (var pt in legPath) __result.Push(pt);
-
-                    thisEndPoint = thisStartPoint;
-                }
-
-                var final = string.Join(", ", __result);
-                MarketDay.Log($"    Final Path   : {final}", LogLevel.Debug, true);
-
-                return false;
+                var visitPoint = new Point((int) shopX + Game1.random.Next(3), (int) shopY + 4);
+                if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);
             }
-            catch (Exception ex)
+
+            StardewValley.Utility.Shuffle(Game1.random, placesToVisit);
+            placesToVisit.Add(startPoint);
+            if (placesToVisit.Count < 2) return;
+
+            var waypoints = string.Join(", ", placesToVisit);
+            MarketDay.Log($"    Waypoints: {waypoints}", LogLevel.Trace, true);
+
+            // work backwards through the waypoints
+            __result = new Stack<Point>();
+
+            var thisEndPoint = endPoint;
+            foreach (var (wptX, wptY) in placesToVisit)
             {
-                MarketDay.Log($"Failed in {nameof(Prefix_findPathForNPCSchedules)}:\n{ex}", LogLevel.Error);
-                return true; // run original logic
+                var thisStartPoint = new Point(wptX, wptY);
+
+                var originalPath = Schedule.findPathForNPCSchedules(thisStartPoint, thisEndPoint, location, limit);
+                if (originalPath is null || originalPath.Count == 0) continue;
+
+                var legPath = originalPath.ToList();
+                legPath.Reverse();
+                foreach (var pt in legPath) __result.Push(pt);
+                thisEndPoint = thisStartPoint;
             }
         }
     }

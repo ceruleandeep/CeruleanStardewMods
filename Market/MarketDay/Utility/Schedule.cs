@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Netcode;
 using StardewValley;
+using StardewValley.Network;
 using xTile.ObjectModel;
 using xTile.Tiles;
 
 namespace MarketDay.Utility
 {
-    public class Schedule
+    public static class Schedule
     {
         public static Stack<Point> findPathForNPCSchedules(
             Point startPoint,
@@ -64,7 +65,7 @@ namespace MarketDay.Utility
 
             return (Stack<Point>) null;
         }
-        
+
         private static readonly sbyte[,] Directions = new sbyte[4, 2]
         {
             {
@@ -84,7 +85,7 @@ namespace MarketDay.Utility
                 (sbyte) -1
             }
         };
-        
+
         private static bool isPositionImpassableForNPCSchedule(GameLocation loc, int x, int y)
         {
             Tile tile = loc.Map.GetLayer("Buildings").Tiles[x, y];
@@ -100,9 +101,11 @@ namespace MarketDay.Utility
                     if (str.StartsWith("LockedDoorWarp") || !str.Contains("Door") && !str.Contains("Passable"))
                         return true;
                 }
-                else if (loc.doesTileHaveProperty(x, y, "Passable", "Buildings") == null && loc.doesTileHaveProperty(x, y, "NPCPassable", "Buildings") == null)
+                else if (loc.doesTileHaveProperty(x, y, "Passable", "Buildings") == null &&
+                         loc.doesTileHaveProperty(x, y, "NPCPassable", "Buildings") == null)
                     return true;
             }
+
             if (loc.doesTileHaveProperty(x, y, "NoPath", "Back") != null)
                 return true;
             foreach (Warp warp in (NetList<Warp, NetRef<Warp>>) loc.warps)
@@ -110,9 +113,10 @@ namespace MarketDay.Utility
                 if (warp.X == x && warp.Y == y)
                     return true;
             }
+
             return loc.isTerrainFeatureAt(x, y);
         }
-        
+
         private static int getPreferenceValueForTerrainType(GameLocation l, int x, int y)
         {
             string str = l.doesTileHaveProperty(x, y, "Type", "Back");
@@ -128,6 +132,7 @@ namespace MarketDay.Utility
                 if (lower == "grass")
                     return -1;
             }
+
             return 0;
         }
     }

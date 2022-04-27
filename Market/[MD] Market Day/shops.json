@@ -1,0 +1,695 @@
+{
+  "GrangeShops": [
+    {
+      "ShopName": "Sophia",
+      "Quote": "Blue Moon Cellar Door",
+      "DefaultSellPriceMultiplier": 1.4,
+      "When": [
+        "HasMod FlashShifter.StardewValleyExpandedCP"
+      ],
+      "ItemStocks": [
+        {  "ItemType": "Object",  "ItemNames": ["Blue Moon Wine"], "StockPrice": 3500, "Stock": 20},
+        {  "ItemType": "Object",  "ItemNames": ["Aged Blue Moon Wine"], "StockPrice": 30000, "Stock": 4}
+      ]
+    },
+    {
+      "ShopName": "Andy",
+      "Quote": "Fairhaven Farm",
+      "SignObjectIndex": 400,
+      "DefaultSellPriceMultiplier": 1.2,
+      "When": [
+        "HasMod FlashShifter.StardewValleyExpandedCP"
+      ],
+      "ItemStocks": [
+        {  "ItemType": "Object",  "ItemNames": ["Potato", "Strawberry", "Green Beans"], "When": [ "z summer/z fall/z winter" ], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Corn", "Tomato", "Hops"], "When": [ "z spring/z fall/z winter" ], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Corn", "Eggplant", "Grape"], "When": [ "z spring/z summer/z winter" ], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Strawberry Seeds"], "When": [ "z spring/z summer/z fall" ], "StockPrice": 80, "Stock": 5}
+      ]
+    },
+    {
+      "ShopName": "Susan",
+      "Quote": "Emerald Farm",
+      "SignObjectIndex": 60,
+      "DefaultSellPriceMultiplier": 1.2,
+      "When": [
+        "HasMod FlashShifter.StardewValleyExpandedCP"
+      ],
+      "ItemStocks": [
+        {  "ItemType": "Object",  "ItemNames": ["Potato", "Cauliflower", "Parsnip", "Green Beans"], "When": [ "z summer/z fall/z winter" ], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Corn", "Melon", "Radish", "Hops"], "When": [ "z spring/z fall/z winter" ], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Corn", "Pumpkin", "Yam", "Grape"], "When": [ "z spring/z summer/z winter" ], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Pale Ale"], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Deluxe Speed-Gro"], "StockPrice": 80, "Stock": 5}
+      ]
+    },
+    {
+      "ShopName": "Jodi",
+      "Quote": "Jodi's Sweet Treats",
+      "SignObjectIndex": 221,
+      "DefaultSellPriceMultiplier": 1.4,
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [ "Pink Cake" ],
+          "Stock": 5
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [ "Chocolate Cake" ],
+          "Stock": 5
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [ "Plum Pudding" ],
+          "Stock": 10
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [ "Rhubarb Pie" ],
+          "Stock": 3
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [ "Blueberry Tart" ],
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [ "Blackberry Cobbler" ],
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [ "Pumpkin Pie" ],
+          "Stock": 2
+        }
+      ]
+    },
+    {
+      "ShopName": "Harvey",
+      "Quote": "Harvey's Coffee And More",
+      "SignObjectIndex": 253,
+      "DefaultSellPriceMultiplier": 1.4,
+      "ItemStocks": [
+        {  "ItemType": "Object",  "ItemNames": ["Coffee"], "Stock": 4},
+        {  "ItemType": "Object",  "ItemNames": ["Triple Shot Espresso"], "Stock": 4},
+        {  "ItemType": "Object",  "ItemNames": ["Coffee Bean"], "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Chocolate Cake"], "Stock": 2 },
+        {  "ItemType": "Object",  "ItemNames": ["Pink Cake"], "Stock": 2 },
+        {  "ItemType": "Object",  "ItemNames": ["Salad"], "Stock": 5 },
+        {  "ItemType": "Object",  "ItemNames": ["Super Meal"], "Stock": 2 },
+        {  "ItemType": "Object",  "ItemNames": ["Energy Tonic"], "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Muscle Remedy"], "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Pickled Cauliflower"], "Stock": 1 }
+      ]
+    },
+    {
+      "ShopName": "Linus",
+      "Quote": "Fruits of the Forest",
+      "SignObjectIndex": 280,
+      "DefaultSellPriceMultiplier": 1.2,
+      "ItemStocks": [
+        {  "ItemType": "Object",  "ItemNames": ["Yam"], "Stock": 4},
+        {  "ItemType": "Object",  "ItemNames": ["Chanterelle"], "Stock": 4},
+        {  "ItemType": "Object",  "ItemNames": ["Holly"], "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Leek"], "Stock": 2 },
+        {  "ItemType": "Object",  "ItemNames": ["Spring Onion"], "Stock": 2 },
+        {  "ItemType": "Object",  "ItemNames": ["Winter Root"], "Stock": 5 }
+      ]
+    },
+    {
+      "ShopName": "Willy",
+      "Quote": "Willy's Shack",
+      "SignObjectIndex": 691,
+      "ItemStocks": [
+        {  "ItemType": "Object",  "ItemNames": ["Trout Soup"], "StockPrice": 250, "Stock": 1},
+        {  "ItemType": "Object",  "ItemNames": ["Spinner"], "StockPrice":500, "Stock": 1},
+        {  "ItemType": "Object",  "ItemNames": ["Trap Bobber"], "StockPrice":500, "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Lead Bobber"], "StockPrice":200, "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Treasure Hunter"], "StockPrice":750, "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Cork Bobber"], "StockPrice":750, "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Barbed Hook"], "StockPrice":1000, "Stock": 1 },
+        {  "ItemType": "Object",  "ItemNames": ["Dressed Spinner"], "StockPrice":1000, "Stock": 1 },
+        {  "ItemType": "Furniture",  "ItemNames": ["Large Fish Tank"], "StockPrice":2000, "Stock": 1 },
+        {  "ItemType": "Furniture",  "ItemNames": ["Fisher Double Bed"], "StockPrice":25000, "Stock": 1 },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Catfish"
+          ],
+          "StockPrice": 700,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Octopus"
+          ],
+          "StockPrice": 300,
+          "Stock": 2
+        }
+      ]
+    },
+    {
+      "ShopName": "Marnie",
+      "Quote": "Farm Fresh from Marnie",
+      "DefaultSellPriceMultiplier": 1.5,
+      "SignObjectIndex": 424,
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Cheese",
+            "Goat Cheese",
+            "Wool",
+            "Egg",
+            "Duck Egg",
+            "Farmer's Lunch",
+            "Pumpkin Pie",
+            "Milk",
+            "Goat Milk"
+          ],
+          "MaxNumItemsSoldInItemStock": 5,
+          "Stock": 3
+        }
+      ]
+    },
+    {
+      "ShopName": "Evelyn",
+      "Quote": "Flowers by Evelyn",
+      "DefaultSellPriceMultiplier": 1.8,
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Fairy Rose",
+            "Tulip",
+            "Daffodil",
+            "Sweet Pea",
+            "Crocus",
+            "Sunflower",
+            "Summer Spangle",
+            "Blue Jazz"
+          ],
+          "JAPacks": [ "mizu.flowers" ],
+          "FilterSeedsBySeason": true,
+          "MaxNumItemsSoldInItemStock": 30,
+          "Stock": 2
+        }
+      ]
+    },
+    {
+      "ShopName": "Gus",
+      "Quote": "Gus's Pantry",
+      "SignObjectIndex": 204,
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Autumn's Bounty"
+          ],
+          "StockPrice": 700,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Baked Fish"
+          ],
+          "StockPrice": 200,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Bean Hotpot"
+          ],
+          "StockPrice": 200,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Blueberry Tart"
+          ],
+          "StockPrice": 300,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Carp Surprise"
+          ],
+          "StockPrice": 300,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Cheese Cauliflower"
+          ],
+          "StockPrice": 600,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Chocolate Cake"
+          ],
+          "StockPrice": 400,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Complete Breakfast"
+          ],
+          "StockPrice": 700,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Cookie"
+          ],
+          "StockPrice": 280,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Cranberry Sauce"
+          ],
+          "StockPrice": 240,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Crispy Bass"
+          ],
+          "StockPrice": 300,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Eggplant Parmesan"
+          ],
+          "StockPrice": 400,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Fish Taco"
+          ],
+          "StockPrice": 1000,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Fried Calamari"
+          ],
+          "StockPrice": 300,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Fried Eel"
+          ],
+          "StockPrice": 240,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Fried Egg"
+          ],
+          "StockPrice": 70,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Fried Mushroom"
+          ],
+          "StockPrice": 400,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Glazed Yams"
+          ],
+          "StockPrice": 400,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Hashbrowns"
+          ],
+          "StockPrice": 240,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Ice Cream"
+          ],
+          "StockPrice": 240,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Lucky Lunch"
+          ],
+          "StockPrice": 500,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Maki Roll"
+          ],
+          "StockPrice": 440,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Omelet"
+          ],
+          "StockPrice": 250,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Pancakes"
+          ],
+          "StockPrice": 160,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Parsnip Soup"
+          ],
+          "StockPrice": 240,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Pepper Poppers"
+          ],
+          "StockPrice": 400,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Pink Cake"
+          ],
+          "StockPrice": 960,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Pumpkin Soup"
+          ],
+          "StockPrice": 600,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Red Plate"
+          ],
+          "StockPrice": 800,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Rhubarb Pie"
+          ],
+          "StockPrice": 800,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Rice Pudding"
+          ],
+          "StockPrice": 520,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Salmon Dinner"
+          ],
+          "StockPrice": 600,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Sashimi"
+          ],
+          "StockPrice": 150,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Spicy Eel"
+          ],
+          "StockPrice": 350,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Strange Bun"
+          ],
+          "StockPrice": 450,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Stuffing"
+          ],
+          "StockPrice": 330,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Super Meal"
+          ],
+          "StockPrice": 440,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Tom Kha Soup"
+          ],
+          "StockPrice": 500,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Tortilla"
+          ],
+          "StockPrice": 100,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Trout Soup"
+          ],
+          "StockPrice": 200,
+          "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Vegetable Medley"
+          ],
+          "StockPrice": 240,
+          "Stock": 2
+        }
+      ]
+    },
+    {
+      "ShopName": "Leah",
+      "Quote": "Objets d'Leah",
+      "SignObjectIndex": 169,
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Malachite",
+            "Marble"
+          ],
+          "Stock": 0
+        },
+        {
+          "ItemType": "Furniture",
+          "ItemNames": [
+            "'Blue City'",
+            "'Blueberries'", 
+            "'Dancing Grass'",
+            "'The Muzzamaroo'",
+            "'Sun #45'",
+            "'Sun #44'",
+            "'Queen of the Gem Sea'",
+            "'Pathways'",
+            "'Little Tree'",
+            "'Vanilla Villa'",
+            "'VGA Paradise'",
+            "Calico Falls",
+            "Colorful Set",
+            "Needlepoint Flower",
+            "'Spires'"
+          ],
+          "Stock": 1, 
+          "StockPrice": 500
+        },
+        {
+          "ItemType": "Furniture",
+          "ItemNames": [
+            "Leah's Sculpture"
+          ],
+          "StockPrice": 5000,
+          "Stock": 1
+        },
+        {
+          "ItemType": "BigCraftable",
+          "ItemNames": [
+            "Stone Frog",
+            "Stone Parrot"
+          ],
+          "StockPrice": 1000,
+          "Stock": 1
+        }
+      ]
+    },
+    {
+      "ShopName": "Emily",
+      "Quote": "Emily's Sartorial Treasures",
+      "SignObjectIndex": 428,
+      "ShopColor": "143, 0, 255, 0",
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Cloth",
+          ],
+          "Stock": 6
+        },
+        {
+          "ItemType": "Clothing",
+          "ItemNames": [
+            "%Pants",
+            "%Pants",
+            "%Pants",
+            "%Pants",
+            "%Pants",
+            "%Shirt",
+            "%Shirt",
+            "%Shirt",
+            "%Shirt",
+            "%Shirt",
+            "%Shirt",
+            "%Shirt",
+            "%Shirt"
+          ],
+          "Stock": 1
+        }
+      ]
+    },
+    {
+      "ShopName": "HatMouse",
+      "Quote": "Me sell hats and caps. Okay, poke?",
+      "SignObjectIndex": 424,
+      "ShopColor": "255, 217, 33, 255",
+      "PortraitPath": "assets/HatMousePlace.png",
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Cheese",
+          ],
+          "Stock": 1
+        },
+        {
+          "ItemType": "Hat",
+          "ItemNames": [
+            "% Hat",
+            "% Hat",
+            "% Hat",
+            "% Hat",
+            "% Hat",
+            "% Cap",
+            "% Cap",
+            "% Cap",
+            "% Cap",
+            "% Cap"
+          ],
+          "Stock": 1,
+          "StockPrice": 1000
+        }
+      ]
+    },
+    {
+      "ShopName": "Clint",
+      "Quote": "Stuff Clint Made",
+      "SignObjectIndex": 336,
+      "ShopColor": "64, 64, 64, 0",
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Copper Bar",
+            "Iron Bar",
+            "Gold Bar",
+            "Iridium Bar"
+          ],
+          "Stock": 3
+        },
+        {
+          "ItemType": "Weapon",
+          "ItemNames": ["Steel Smallsword"],
+          "Stock": 1,
+          "StockPrice": 1000
+        },
+        {
+          "ItemType": "Furniture",
+          "ItemNames": ["Hanging Shield"],
+          "Stock": 1,
+          "StockPrice": 1000
+        },
+        {
+          "ItemType": "Weapon",
+          "ItemNames": ["Tempered Broadsword"],
+          "Stock": 1,
+          "StockPrice": 10000
+        },
+      ]
+    }
+  ]
+}

@@ -24,12 +24,12 @@ namespace MarketDay.Shop
         /// </summary>
         public static void LoadContentPacks()
         {
-            MarketDay.monitor.Log("Adding Content Packs...", LogLevel.Info);
+            MarketDay.Log("Adding Content Packs...", LogLevel.Info);
             foreach (IContentPack contentPack in MarketDay.helper.ContentPacks.GetOwned())
             {
                 if (!contentPack.HasFile("shops.json"))
                 {
-                    MarketDay.monitor.Log($"No shops.json found from the mod {contentPack.Manifest.UniqueID}. " +
+                    MarketDay.Log($"No shops.json found from the mod {contentPack.Manifest.UniqueID}. " +
                         $"Skipping pack.", LogLevel.Warn);
                     continue;
                 }
@@ -41,12 +41,12 @@ namespace MarketDay.Shop
                 }
                 catch (Exception ex)
                 {
-                    MarketDay.monitor.Log($"Invalid JSON provided by {contentPack.Manifest.UniqueID}.", LogLevel.Error);
-                    MarketDay.monitor.Log(ex.Message + ex.StackTrace,LogLevel.Error);
+                    MarketDay.Log($"Invalid JSON provided by {contentPack.Manifest.UniqueID}.", LogLevel.Error);
+                    MarketDay.Log(ex.Message + ex.StackTrace,LogLevel.Error);
                     continue;
                 }
 
-                MarketDay.monitor.Log($"Loading: {contentPack.Manifest.Name} by {contentPack.Manifest.Author} | " +
+                MarketDay.Log($"Loading: {contentPack.Manifest.Name} by {contentPack.Manifest.Author} | " +
                     $"{contentPack.Manifest.Version} | {contentPack.Manifest.Description}", LogLevel.Info);
 
                 RegisterShops(data, contentPack);
@@ -66,15 +66,14 @@ namespace MarketDay.Shop
                 {
                     if (GrangeShops.ContainsKey(shopPack.ShopName))
                     {
-                        MarketDay.monitor.Log($"{contentPack.Manifest.Name} is trying to add a Shop \"{shopPack.ShopName}\"," +
+                        MarketDay.Log($"{contentPack.Manifest.Name} is trying to add a Shop \"{shopPack.ShopName}\"," +
                             $" but a shop of this name has already been added. " +
                             $"It will not be added.", LogLevel.Warn);
                         continue;
                     }
 
                     shopPack.ContentPack = contentPack;
-                    MarketDay.monitor.Log($"{contentPack.Manifest.Name} is adding \"{shopPack.ShopName}\"",
-                        LogLevel.Debug);
+                    MarketDay.Log($"{contentPack.Manifest.Name} is adding \"{shopPack.ShopName}\"", LogLevel.Trace);
                     GrangeShops.Add(shopPack.ShopName, shopPack);
                 }
             }
@@ -85,7 +84,7 @@ namespace MarketDay.Shop
                 {
                     if (AnimalShops.ContainsKey(animalShopPack.ShopName))
                     {
-                        MarketDay.monitor.Log($"{contentPack.Manifest.Name} is trying to add an AnimalShop \"{animalShopPack.ShopName}\"," +
+                        MarketDay.Log($"{contentPack.Manifest.Name} is trying to add an AnimalShop \"{animalShopPack.ShopName}\"," +
                             $" but a shop of this name has already been added. " +
                             $"It will not be added.", LogLevel.Warn);
                         continue;
@@ -145,7 +144,7 @@ namespace MarketDay.Shop
         internal static void UpdateStock()
         {
             if (GrangeShops.Count > 0)
-                MarketDay.monitor.Log($"Refreshing stock for all custom shops...", LogLevel.Debug);
+                MarketDay.Log($"Refreshing stock for all custom shops...", LogLevel.Debug);
 
             foreach (GrangeShop store in GrangeShops.Values)
             {

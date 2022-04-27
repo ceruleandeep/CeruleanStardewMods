@@ -42,7 +42,7 @@ namespace MarketDay.ItemPriceAndStock
             if (Quality < 0 || Quality == 3 || Quality > 4)
             {
                 Quality = 0;
-                MarketDay.monitor.Log("Item quality can only be 0,1,2, or 4. Defaulting to 0", LogLevel.Warn);
+                MarketDay.Log("Item quality can only be 0,1,2, or 4. Defaulting to 0", LogLevel.Warn);
             }
 
             CurrencyObjectId = ItemsUtil.GetIndexByName(StockItemCurrency);
@@ -71,7 +71,7 @@ namespace MarketDay.ItemPriceAndStock
 
             if (!ItemsUtil.CheckItemType(ItemType)) //check that itemtype is valid
             {
-                MarketDay.monitor.Log($"\t\"{ItemType}\" is not a valid ItemType. No items from this stock will be added."
+                MarketDay.Log($"\t\"{ItemType}\" is not a valid ItemType. No items from this stock will be added."
                     , LogLevel.Warn);
                 return null;
             }
@@ -100,11 +100,11 @@ namespace MarketDay.ItemPriceAndStock
             else
             {
                 if (ItemIDs != null)
-                    MarketDay.monitor.Log(
-                        "ItemType of \"Seed\" is a special itemtype used for parsing Seeds from JA Pack crops and trees and does not support input via ID. If adding seeds via ID, please use the ItemType \"Object\" instead to directly sell the seeds/saplings");
+                    MarketDay.Log(
+                        "ItemType of \"Seed\" is a special itemtype used for parsing Seeds from JA Pack crops and trees and does not support input via ID. If adding seeds via ID, please use the ItemType \"Object\" instead to directly sell the seeds/saplings", LogLevel.Trace);
                 if (ItemNames != null)
-                    MarketDay.monitor.Log(
-                        "ItemType of \"Seed\" is a special itemtype used for parsing Seeds from JA Pack crops and trees and does not support input via Name. If adding seeds via Name, please use the ItemType \"Object\" instead to directly sell the seeds/saplings");
+                    MarketDay.Log(
+                        "ItemType of \"Seed\" is a special itemtype used for parsing Seeds from JA Pack crops and trees and does not support input via Name. If adding seeds via Name, please use the ItemType \"Object\" instead to directly sell the seeds/saplings", LogLevel.Trace);
             }
 
             AddByJAPack(pricemultiplier);
@@ -155,7 +155,7 @@ namespace MarketDay.ItemPriceAndStock
 
             foreach (var JAPack in JAPacks)
             {
-                MarketDay.monitor.Log($"Adding all {ItemType}s from {JAPack}", LogLevel.Trace);
+                MarketDay.Log($"Adding all {ItemType}s from {JAPack}", LogLevel.Trace);
 
                 if (ItemType == "Seed")
                 {
@@ -193,7 +193,7 @@ namespace MarketDay.ItemPriceAndStock
                 var packs = GetJaItems(JAPack);
                 if (packs == null)
                 {
-                    MarketDay.monitor.Log($"No {ItemType} from {JAPack} could be found", LogLevel.Trace);
+                    MarketDay.Log($"No {ItemType} from {JAPack} could be found", LogLevel.Trace);
                     continue;
                 }
 
