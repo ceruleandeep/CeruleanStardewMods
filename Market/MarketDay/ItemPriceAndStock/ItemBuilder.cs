@@ -16,6 +16,8 @@ namespace MarketDay.ItemPriceAndStock
     {
         private Dictionary<ISalable, int[]> _itemPriceAndStock;
         private readonly ItemStock _itemStock;
+        private const string CategorySearchPrefix = "%Category:";
+        private const string NameSearchPrefix = "%Match:";
 
         public ItemBuilder(ItemStock itemStock)
         {
@@ -36,9 +38,20 @@ namespace MarketDay.ItemPriceAndStock
         /// <returns></returns>
         public bool AddItemToStock(string itemName, double priceMultiplier = 1)
         {
-            var id = itemName.StartsWith("%") ? 
-                ItemsUtil.GetIndexByMatch(itemName[1..], _itemStock.ItemType) 
-                : ItemsUtil.GetIndexByName(itemName, _itemStock.ItemType);
+            int id;
+            if (itemName.StartsWith(CategorySearchPrefix))
+            {
+                var offset = CategorySearchPrefix.Length + 1;
+                id = ItemsUtil.GetIndexByCategory(itemName[offset..], _itemStock.ItemType);
+            }
+            else if (itemName.StartsWith(NameSearchPrefix))
+            {
+                var offset = NameSearchPrefix.Length + 1;
+                id = ItemsUtil.GetIndexByMatch(itemName[offset..], _itemStock.ItemType);
+            } else {
+                id = ItemsUtil.GetIndexByName(itemName, _itemStock.ItemType);
+            }
+            
             if (id >= 0) return AddItemToStock(id, priceMultiplier);
             MarketDay.Log($"{_itemStock.ItemType} named \"{itemName}\" could not be added to the Shop {_itemStock.ShopName}", LogLevel.Trace);
             return false;

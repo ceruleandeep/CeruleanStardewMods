@@ -27,5 +27,8 @@ namespace MarketDay.Data
         
         public string NpcName { get; set; }
 
+        public string OpenSignPath { get; set; }
+
+        public string ClosedSignPath { get; set; }
     }
 }

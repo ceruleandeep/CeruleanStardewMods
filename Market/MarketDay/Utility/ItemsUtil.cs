@@ -101,6 +101,27 @@ namespace MarketDay.Utility
         }
         
         /// <summary>
+        /// Get the itemID given a category and the object information that item belongs to
+        /// </summary>
+        /// <param name="needle">pattern to search for</param>
+        /// <param name="itemType"></param>
+        /// <returns></returns>
+        public static int GetIndexByCategory(string needle, string itemType = "Object")
+        {
+            var candidates = new List<int>();
+            foreach (var (index, objectData) in ObjectInfoSource[itemType])
+            {
+                if (objectData.Split('/')[3].Contains(needle))
+                {
+                    candidates.Add(index);
+                }
+            }
+
+            if (candidates.Count > 0) return candidates[Game1.random.Next(candidates.Count)];
+            return -1;
+        }
+        
+        /// <summary>
         /// Get the itemID given a pattern and the object information that item belongs to
         /// </summary>
         /// <param name="needle">pattern to search for</param>

@@ -3,7 +3,7 @@
     "ConfigSchema": {
         "MarketLayout": {
             "AllowValues": "1 Shop, 3 Shops, 5 Shops, 6 Shops, 7 Shops, 9 Shops",
-            "Default": "5 Shops"
+            "Default": "6 Shops"
         },
         "MarketDay": {
             "AllowValues": "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",

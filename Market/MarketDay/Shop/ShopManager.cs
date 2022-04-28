@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MarketDay.API;
 using MarketDay.Data;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace MarketDay.Shop
 {
@@ -75,6 +76,9 @@ namespace MarketDay.Shop
                     shopPack.ContentPack = contentPack;
                     MarketDay.Log($"{contentPack.Manifest.Name} is adding \"{shopPack.ShopName}\"", LogLevel.Trace);
                     GrangeShops.Add(shopPack.ShopName, shopPack);
+                    
+                    // load sign assets
+                    LoadAssets(contentPack, shopPack);
                 }
             }
 
@@ -90,6 +94,37 @@ namespace MarketDay.Shop
                         continue;
                     }
                     AnimalShops.Add(animalShopPack.ShopName, animalShopPack);
+                }
+            }
+        }
+
+        private static void LoadAssets(IContentPack contentPack, GrangeShop shopPack)
+        {
+            if (shopPack.OpenSignPath is not null && shopPack.OpenSignPath.Length > 0)
+            {
+                try
+                {
+                    shopPack.OpenSign = contentPack.LoadAsset<Texture2D>(shopPack.OpenSignPath);
+                    MarketDay.Log($"[{shopPack.ShopName}] Loaded asset {shopPack.OpenSignPath}", LogLevel.Trace);
+                }
+                catch (Exception ex)
+                {
+                    MarketDay.Log($"[{shopPack.ShopName}] Could not load asset {shopPack.OpenSignPath}", LogLevel.Error);
+                    MarketDay.Log(ex.Message + ex.StackTrace, LogLevel.Error);
+                }
+            }
+
+            if (shopPack.ClosedSignPath is not null && shopPack.ClosedSignPath.Length > 0)
+            {
+                try
+                {
+                    shopPack.ClosedSign = contentPack.LoadAsset<Texture2D>(shopPack.ClosedSignPath);
+                    MarketDay.Log($"[{shopPack.ShopName}] Loaded asset {shopPack.ClosedSignPath}", LogLevel.Trace);
+                }
+                catch (Exception ex)
+                {
+                    MarketDay.Log($"[{shopPack.ShopName}] Could not load asset {shopPack.ClosedSignPath}", LogLevel.Error);
+                    MarketDay.Log(ex.Message + ex.StackTrace, LogLevel.Error);
                 }
             }
         }

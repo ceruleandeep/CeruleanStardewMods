@@ -40,14 +40,18 @@ namespace MarketDay.Shop
         public Dictionary<NPC, int> recentlyTended = new();
         public List<SalesRecord> Sales = new();
 
+        public Texture2D OpenSign;
+        public Texture2D ClosedSign;
+
         // state queries
         public bool IsPlayerShop()
         {
             return ShopName == "Player";
         }
+
         private static bool OutsideOpeningHours =>
-            Game1.timeOfDay < MarketDay.Config.OpeningTime*100 ||
-            Game1.timeOfDay > MarketDay.Config.ClosingTime*100;
+            Game1.timeOfDay < MarketDay.Config.OpeningTime * 100 ||
+            Game1.timeOfDay > MarketDay.Config.ClosingTime * 100;
 
         public void OpenAt(Vector2 Origin)
         {
@@ -90,12 +94,12 @@ namespace MarketDay.Shop
         {
             return Origin + new Vector2(3, 2);
         }
-        
+
         public void RestockThroughDay(bool IsMarketDay)
         {
             if (!Context.IsMainPlayer) return;
             if (!IsMarketDay) return;
-            
+
             if (IsPlayerShop())
             {
                 if (MarketDay.Config.RestockItemsPerHour > 0) RestockGrangeFromChest();
@@ -117,17 +121,18 @@ namespace MarketDay.Shop
                 EmptyStoreIntoChest();
                 EmptyPlayerDayStorageChest();
             }
+
             DestroyFurniture();
         }
 
         private void EmptyPlayerDayStorageChest()
         {
-            Log("Here we would move all the player's stuff to L+F or shipping bin", LogLevel.Warn);
             if (StockChest is null)
             {
                 Log("EmptyPlayerDayStorageChest: DayStockChest is null", LogLevel.Error);
                 return;
             }
+
             if (StockChest.items.Count <= 0) return;
             for (var i = 0; i < StockChest.items.Count; i++)
             {
@@ -156,7 +161,8 @@ namespace MarketDay.Shop
                 npc.movementPause = 5000;
                 recentlyLooked[npc] = Game1.timeOfDay;
 
-                var visitors = int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"]);
+                var visitors =
+                    int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"]);
                 visitors++;
                 StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"] = $"{visitors}";
             }
@@ -177,10 +183,9 @@ namespace MarketDay.Shop
                 Log($"DisplayChest is null", LogLevel.Error);
                 return;
             }
-            
+
             if (IsPlayerShop())
             {
-                
                 Game1.activeClickableMenu = new StorageContainer(GrangeChest.items, 9, 3, onGrangeChange,
                     StardewValley.Utility.highlightSmallObjects);
             }
@@ -205,18 +210,18 @@ namespace MarketDay.Shop
                 }
                 else
                 {
-                    var openingTime = (MarketDay.Config.OpeningTime*100).ToString();
+                    var openingTime = (MarketDay.Config.OpeningTime * 100).ToString();
                     openingTime = openingTime[..^2] + ":" + openingTime[^2..];
-                    
-                    var closingTime = (MarketDay.Config.ClosingTime*100).ToString();
+
+                    var closingTime = (MarketDay.Config.ClosingTime * 100).ToString();
                     closingTime = closingTime[..^2] + ":" + closingTime[^2..];
-                    
+
                     Game1.activeClickableMenu = new DialogueBox(Get("closed", new {openingTime, closingTime}));
                 }
 
                 return;
             }
-            
+
             int currency = 0;
             switch (StoreCurrency)
             {
@@ -239,8 +244,8 @@ namespace MarketDay.Shop
                 // try to load portrait from NPC the shop is named after
                 var npc = Game1.getCharacterFromName(ShopName);
                 if (npc is not null) _portrait = npc.Portrait;
-            } 
-            
+            }
+
             if (_portrait != null)
             {
                 shopMenu.portraitPerson = new NPC();
@@ -279,7 +284,8 @@ namespace MarketDay.Shop
         {
             foreach (var (stockItem, priceAndQty) in StockManager.ItemPriceAndStock)
             {
-                if (item.ParentSheetIndex != ((Item) stockItem).ParentSheetIndex || item.Category != ((Item) stockItem).Category) continue;
+                if (item.ParentSheetIndex != ((Item) stockItem).ParentSheetIndex ||
+                    item.Category != ((Item) stockItem).Category) continue;
                 return priceAndQty[0];
             }
 
@@ -299,13 +305,10 @@ namespace MarketDay.Shop
                 Log("ShopStock: DisplayChest is null", LogLevel.Warn);
                 return stock;
             }
-            
+
             foreach (var stockItem in GrangeChest.items)
             {
                 if (stockItem is null) continue;
-
-                // we won't do item quality right now
-                int specifiedQuality = 0;
 
                 // we won't do sell price mult right now
                 // var price = StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false);
@@ -313,14 +316,15 @@ namespace MarketDay.Shop
                 var price = getSellPriceFromShopStock(stockItem);
                 if (price == 0)
                 {
-                    price = (int)(StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false) * SellPriceMultiplier(stockItem, null));
+                    price = (int) (StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false) *
+                                   SellPriceMultiplier(stockItem, null));
                 }
-                
+
                 var sellItem = stockItem.getOne();
                 sellItem.Stack = 1;
-                if (sellItem is Object o) o.Quality = specifiedQuality;
+                if (sellItem is Object sellObj && stockItem is Object stockObj) sellObj.Quality = stockObj.Quality;
 
-                stock[sellItem] = new[] { price, 1 };
+                stock[sellItem] = new[] {price, 1};
             }
 
             return stock;
@@ -368,7 +372,7 @@ namespace MarketDay.Shop
         private void SellSomethingToOnlookers()
         {
             if (OutsideOpeningHours) return;
-            
+
             foreach (var npc in NearbyNPCs())
             {
                 // the owner
@@ -385,12 +389,14 @@ namespace MarketDay.Shop
 
                 // check stock                
                 // also remove items the NPC dislikes
-                var available = GrangeChest.items.Where(gi => gi is not null && ItemPreferenceIndex(gi, npc) > 0).ToList();
+                var available = GrangeChest.items.Where(gi => gi is not null && ItemPreferenceIndex(gi, npc) > 0)
+                    .ToList();
                 if (available.Count == 0)
                 {
                     // no stock
                     var grumpy =
-                        int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"]);
+                        int.Parse(StockChest.modData[
+                            $"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"]);
                     grumpy++;
                     StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"] = $"{grumpy}";
 
@@ -470,7 +476,7 @@ namespace MarketDay.Shop
                 mult = mult,
                 timeOfDay = Game1.timeOfDay
             };
-            
+
             Sales.Add(newSale);
         }
 
@@ -480,7 +486,7 @@ namespace MarketDay.Shop
             {
                 Log($"ShowSummary: summary for farmhands cannot list items sold", LogLevel.Warn);
             }
-            
+
             var salesDescriptions = (
                 from sale in Sales
                 let displayMult = Convert.ToInt32((sale.mult - 1) * 100)
@@ -565,7 +571,7 @@ namespace MarketDay.Shop
         private static double ItemPreferenceIndex(Item item, NPC npc)
         {
             if (item is null || npc is null) return 1.0;
-            
+
             // * gift taste
             switch (npc.getGiftTasteForThisItem(item))
             {
@@ -607,7 +613,9 @@ namespace MarketDay.Shop
 
             if (StockChest is not null && GrangeChest is not null && ShopSign is not null)
             {
-                Log($"    All furniture in place: {StockChest.TileLocation} {GrangeChest.TileLocation} {ShopSign.TileLocation}", LogLevel.Trace);
+                Log(
+                    $"    All furniture in place: {StockChest.TileLocation} {GrangeChest.TileLocation} {ShopSign.TileLocation}",
+                    LogLevel.Trace);
                 return;
             }
 
@@ -616,21 +624,21 @@ namespace MarketDay.Shop
                 Log("MakeFurniture called on non-market day", LogLevel.Error);
                 return;
             }
-            
+
             var location = Game1.getLocationFromName("Town");
 
             // the storage chest
-            if (StockChest is null) 
+            if (StockChest is null)
                 if (Context.IsMainPlayer) MakeStorageChest(location, OriginTile);
                 else Log($"    StorageChest still null", LogLevel.Warn);
 
             // the display chest
-            if (GrangeChest is null) 
+            if (GrangeChest is null)
                 if (Context.IsMainPlayer) MakeDisplayChest(location);
                 else Log($"    DisplayChest still null", LogLevel.Warn);
 
             // the grange sign
-            if (ShopSign is null) 
+            if (ShopSign is null)
                 if (Context.IsMainPlayer) MakeSign(location, OriginTile);
                 else Log($"    {ShopSignKey} still null", LogLevel.Warn);
 
@@ -716,7 +724,7 @@ namespace MarketDay.Shop
         private void MakeStorageChest(GameLocation location, Vector2 OriginTile)
         {
             var VisibleChestPosition = OriginTile + new Vector2(3, 1);
-            
+
             Log($"    Creating new StorageChest at {VisibleChestPosition}", LogLevel.Trace);
             var chest = new Chest(true, VisibleChestPosition, 232)
             {
@@ -771,7 +779,7 @@ namespace MarketDay.Shop
         //         (int) ShopSign.TileLocation.X, (int) ShopSign.TileLocation.Y,
         //         (int) VisibleSignPosition.X, (int) VisibleSignPosition.Y);
         // }
-        
+
         private void DestroyFurniture()
         {
             Log($"    DestroyFurniture: {ShopName}", LogLevel.Error);
@@ -781,14 +789,14 @@ namespace MarketDay.Shop
             var location = Game1.getLocationFromName("Town");
             foreach (var (tile, item) in location.Objects.Pairs)
             {
-                foreach (var key in new List<string>{"{ShopSignKey}", "{DayStockChestKey}", "{DisplayChestKey}"})
+                foreach (var key in new List<string> {"{ShopSignKey}", "{DayStockChestKey}", "{DisplayChestKey}"})
                 {
                     if (!item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{key}",
                         out var owner)) continue;
                     if (owner != ShopName) continue;
                     Log($"    Scheduling {item.displayName} from {tile}", LogLevel.Debug);
                     toRemove[tile] = item;
-                } 
+                }
             }
 
             foreach (var (tile, itemToRemove) in toRemove)
@@ -803,7 +811,8 @@ namespace MarketDay.Shop
             foreach (var (Salable, priceAndStock) in StockManager.ItemPriceAndStock)
             {
                 // priceAndStock: price, stock, currency obj, currency stack
-                Log($"    Stock item {Salable.DisplayName} price {priceAndStock[0]} stock {priceAndStock[1]}", LogLevel.Trace);
+                Log($"    Stock item {Salable.DisplayName} price {priceAndStock[0]} stock {priceAndStock[1]}",
+                    LogLevel.Trace);
                 var stack = Math.Min(priceAndStock[1], 13);
                 while (stack-- > 0)
                 {
@@ -828,13 +837,15 @@ namespace MarketDay.Shop
                 Log($"RestockGrangeFromChest: StorageChest is null", LogLevel.Warn);
                 return;
             }
+
             if (GrangeChest is null)
             {
                 Log($"RestockGrangeFromChest: DisplayChest is null", LogLevel.Warn);
                 return;
             }
+
             var restockLimitRemaining = MarketDay.Config.RestockItemsPerHour;
-            
+
             for (var j = 0; j < GrangeChest.items.Count; j++)
             {
                 if (StockChest.items.Count == 0)
@@ -842,12 +853,13 @@ namespace MarketDay.Shop
                     Log($"RestockGrangeFromChest: {ShopName} out of stock", LogLevel.Debug, true);
                     return;
                 }
-                
+
                 if (restockLimitRemaining <= 0) return;
                 if (GrangeChest.items[j] != null) continue;
 
                 var stockItem = StockChest.items[Game1.random.Next(StockChest.items.Count)];
                 var grangeItem = stockItem.getOne();
+
                 grangeItem.Stack = 1;
                 addItemToGrangeDisplay(grangeItem, j, false);
 
@@ -956,22 +968,38 @@ namespace MarketDay.Shop
             GrangeChest.items[position] = i;
         }
 
+        internal void DrawSign(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
+        {
+            var start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
+
+            var sign = OutsideOpeningHours ? ClosedSign : OpenSign;
+            if (sign is null) return;
+            
+            var center = start + new Vector2(24 * 4, 55 * 4);
+            var signLoc = center - new Vector2(
+                (int) (sign.Width * Game1.pixelZoom / 2),
+                (int) (sign.Height * Game1.pixelZoom / 2));
+
+            spriteBatch.Draw(
+                texture: sign,
+                position: signLoc,
+                sourceRectangle: null,
+                color: Color.White,
+                rotation: 0f,
+                origin: Vector2.Zero,
+                scale: Game1.pixelZoom,
+                effects: SpriteEffects.None,
+                layerDepth: layerDepth
+            );
+        }
+
+
         // aedenthorn
         internal void drawGrangeItems(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
         {
             if (GrangeChest is null) return;
-            
-            var start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
 
-            // if (Config.ShowCurrentScoreOnGrange)
-            // {
-            //     int score = GetGrangeScore();
-            //     string farmName = $"{Game1.player.farmName.Value} Farm";
-            //     spriteBatch.DrawString(Game1.smallFont,
-            //         farmName,
-            //         new Vector2(start.X + 24 * 4 - farmName.Length * 8, start.Y + 51 * 4),
-            //         GetPointsColor(score), 0f, Vector2.Zero, 0.7f, SpriteEffects.None, layerDepth + 0.0202f);
-            // }
+            var start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
 
             start.X += 4f;
             var xCutoff = (int) start.X + 168;

@@ -319,7 +319,7 @@ namespace MarketDay
                 {
                     if (!APIs.Conditions.CheckConditions(shop.When))
                     {
-                        Log($"Shop {shopName}: opening condition not met", LogLevel.Warn);
+                        Log($"Shop {shopName}: opening condition not met", LogLevel.Trace);
                         continue;
                     }
                 }
@@ -434,9 +434,7 @@ namespace MarketDay
             
             // refer clicks on grange tiles to each shop
             var gtShop = MapUtility.ShopNearTile(e.Cursor.GrabTile);
-            if (gtShop is null) return;
-            Log($"    gtShop {gtShop.ShopName}", LogLevel.Debug);
-            gtShop.OnActionButton(e);
+            gtShop?.OnActionButton(e);
 
             //
             // var tileIndexAt = Game1.currentLocation.getTileIndexAt((int) x, (int) y, "Buildings");

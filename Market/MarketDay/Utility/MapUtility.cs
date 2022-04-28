@@ -85,9 +85,9 @@ namespace MarketDay.Utility
                     MarketDay.Log($"    ShopNearTile {x} {y} {search}", LogLevel.Debug, true);
                     if (!Game1.currentLocation.objects.TryGetValue(search, out var chest) || chest is not Chest) continue;
                     chest.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}", out var shopOwner);
+                    if (shopOwner is null) return null;
                     MarketDay.Log($"    ShopNearTile {shopOwner}", LogLevel.Debug, true);
-                    var shop = ShopManager.GrangeShops[shopOwner];
-                    return shop;
+                    if (ShopManager.GrangeShops.TryGetValue(shopOwner, out var shop)) return shop;
                 }
             }
 

@@ -2,6 +2,7 @@
   "GrangeShops": [
     {
       "ShopName": "Sophia",
+      "ClosedSignPath": "assets/closed-brown.png",
       "Quote": "Blue Moon Cellar Door",
       "DefaultSellPriceMultiplier": 1.4,
       "When": [
@@ -14,6 +15,7 @@
     },
     {
       "ShopName": "Andy",
+      "ClosedSignPath": "assets/closed-red.png",
       "Quote": "Fairhaven Farm",
       "SignObjectIndex": 400,
       "DefaultSellPriceMultiplier": 1.2,
@@ -29,12 +31,11 @@
     },
     {
       "ShopName": "Susan",
+      "ClosedSignPath": "assets/closed-green.png",
       "Quote": "Emerald Farm",
+      "When": ["n landslideDone", "HasMod FlashShifter.StardewValleyExpandedCP"],
       "SignObjectIndex": 60,
       "DefaultSellPriceMultiplier": 1.2,
-      "When": [
-        "HasMod FlashShifter.StardewValleyExpandedCP"
-      ],
       "ItemStocks": [
         {  "ItemType": "Object",  "ItemNames": ["Potato", "Cauliflower", "Parsnip", "Green Beans"], "When": [ "z summer/z fall/z winter" ], "Stock": 5},
         {  "ItemType": "Object",  "ItemNames": ["Corn", "Melon", "Radish", "Hops"], "When": [ "z spring/z fall/z winter" ], "Stock": 5},
@@ -45,6 +46,7 @@
     },
     {
       "ShopName": "Jodi",
+      "ClosedSignPath": "assets/closed-blue.png",
       "Quote": "Jodi's Sweet Treats",
       "SignObjectIndex": 221,
       "DefaultSellPriceMultiplier": 1.4,
@@ -88,6 +90,7 @@
     },
     {
       "ShopName": "Harvey",
+      "ClosedSignPath": "assets/closed-brown.png",
       "Quote": "Harvey's Coffee And More",
       "SignObjectIndex": 253,
       "DefaultSellPriceMultiplier": 1.4,
@@ -106,6 +109,7 @@
     },
     {
       "ShopName": "Linus",
+      "ClosedSignPath": "assets/closed-red.png",
       "Quote": "Fruits of the Forest",
       "SignObjectIndex": 280,
       "DefaultSellPriceMultiplier": 1.2,
@@ -120,6 +124,8 @@
     },
     {
       "ShopName": "Willy",
+      "OpenSignPath": "assets/open-fish.png",
+      "ClosedSignPath": "assets/closed-fishin.png",
       "Quote": "Willy's Shack",
       "SignObjectIndex": 691,
       "ItemStocks": [
@@ -153,6 +159,7 @@
     },
     {
       "ShopName": "Marnie",
+      "ClosedSignPath": "assets/closed-green.png",
       "Quote": "Farm Fresh from Marnie",
       "DefaultSellPriceMultiplier": 1.5,
       "SignObjectIndex": 424,
@@ -177,6 +184,7 @@
     },
     {
       "ShopName": "Evelyn",
+      "ClosedSignPath": "assets/closed-blue.png",
       "Quote": "Flowers by Evelyn",
       "DefaultSellPriceMultiplier": 1.8,
       "ItemStocks": [
@@ -201,6 +209,8 @@
     },
     {
       "ShopName": "Gus",
+      "ClosedSignPath": "assets/closed-brown.png",
+      "OpenSignPath": "assets/open-saloon.png",
       "Quote": "Gus's Pantry",
       "SignObjectIndex": 204,
       "ItemStocks": [
@@ -536,8 +546,10 @@
     },
     {
       "ShopName": "Leah",
+      "ClosedSignPath": "assets/closed-red.png",
       "Quote": "Objets d'Leah",
       "SignObjectIndex": 169,
+      "When": ["n afterArtShow"],
       "ItemStocks": [
         {
           "ItemType": "Object",
@@ -551,7 +563,7 @@
           "ItemType": "Furniture",
           "ItemNames": [
             "'Blue City'",
-            "'Blueberries'", 
+            "'Blueberries'",
             "'Dancing Grass'",
             "'The Muzzamaroo'",
             "'Sun #45'",
@@ -566,7 +578,7 @@
             "Needlepoint Flower",
             "'Spires'"
           ],
-          "Stock": 1, 
+          "Stock": 1,
           "StockPrice": 500
         },
         {
@@ -589,74 +601,8 @@
       ]
     },
     {
-      "ShopName": "Emily",
-      "Quote": "Emily's Sartorial Treasures",
-      "SignObjectIndex": 428,
-      "ShopColor": "143, 0, 255, 0",
-      "ItemStocks": [
-        {
-          "ItemType": "Object",
-          "ItemNames": [
-            "Cloth",
-          ],
-          "Stock": 6
-        },
-        {
-          "ItemType": "Clothing",
-          "ItemNames": [
-            "%Pants",
-            "%Pants",
-            "%Pants",
-            "%Pants",
-            "%Pants",
-            "%Shirt",
-            "%Shirt",
-            "%Shirt",
-            "%Shirt",
-            "%Shirt",
-            "%Shirt",
-            "%Shirt",
-            "%Shirt"
-          ],
-          "Stock": 1
-        }
-      ]
-    },
-    {
-      "ShopName": "HatMouse",
-      "Quote": "Me sell hats and caps. Okay, poke?",
-      "SignObjectIndex": 424,
-      "ShopColor": "255, 217, 33, 255",
-      "PortraitPath": "assets/HatMousePlace.png",
-      "ItemStocks": [
-        {
-          "ItemType": "Object",
-          "ItemNames": [
-            "Cheese",
-          ],
-          "Stock": 1
-        },
-        {
-          "ItemType": "Hat",
-          "ItemNames": [
-            "% Hat",
-            "% Hat",
-            "% Hat",
-            "% Hat",
-            "% Hat",
-            "% Cap",
-            "% Cap",
-            "% Cap",
-            "% Cap",
-            "% Cap"
-          ],
-          "Stock": 1,
-          "StockPrice": 1000
-        }
-      ]
-    },
-    {
       "ShopName": "Clint",
+      "ClosedSignPath": "assets/closed-brown.png",
       "Quote": "Stuff Clint Made",
       "SignObjectIndex": 336,
       "ShopColor": "64, 64, 64, 0",
@@ -688,7 +634,176 @@
           "ItemNames": ["Tempered Broadsword"],
           "Stock": 1,
           "StockPrice": 10000
+        }
+      ]
+    },
+    {
+      "ShopName": "Caroline",
+      "OpenSignPath": "assets/open-tea.png",
+      "ClosedSignPath": "assets/closed-brown.png",
+      "Quote": "Tea House",
+      "SignObjectIndex": 614,
+      "DefaultSellPriceMultiplier": 1.2,
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": ["Green Tea", "Nettle Tea", "Mahonia Tea", "Christmas Rose Tea"], "Stock": 3
         },
+        {
+          "ItemType": "Object",
+          "ItemNames": ["Chocolate Cake", "Sweet Cranberry Cheesecake", "Lemon and Persimmon Cake"], "Stock": 3
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": ["Tea Leaves"], "Stock": 4
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": ["Tea Sapling"], "Stock": 2
+        },
+        {
+          "ItemType": "Object",
+          "ItemNames": ["Tea Set"], "Stock": 3
+        }
+      ]
+    },
+    {
+      "ShopName": "Gunther",
+      "ClosedSignPath": "assets/closed-brown.png",
+      "Quote": "Museum Gift Shop",
+      "SignObjectIndex": 749,
+      "DefaultSellPriceMultiplier": 10,
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": ["%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral"], "Stock": 1
+        },
+        {
+          "ItemType": "BigCraftable",
+          "ItemNames": ["Crystalarium", "Skeleton Statue"], "Stock": 1
+        },
+        {
+          "ItemType": "BigCraftable",
+          "ItemNames": ["Standing Geode"], "Stock": 1, "StockPrice": 5000
+        }
+      ]
+    },
+    {
+      "ShopName": "Emily",
+      "ClosedSignPath": "assets/closed-green.png",
+      "OpenSignPath": "assets/open-emily.png",
+      "Quote": "Emily's Tailoring Treasures",
+      "SignObjectIndex": 428,
+      "ShopColor": "143, 0, 255, 0",
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Cloth"
+          ],
+          "Stock": 6
+        },
+        {
+          "ItemType": "Clothing",
+          "ItemNames": [
+            "%Match:Pants",
+            "%Match:Pants",
+            "%Match:Pants",
+            "%Match:Pants",
+            "%Match:Pants",
+            "%Match:Shirt",
+            "%Match:Shirt",
+            "%Match:Shirt",
+            "%Match:Shirt",
+            "%Match:Shirt",
+            "%Match:Shirt",
+            "%Match:Shirt",
+            "%Match:Shirt"
+          ],
+          "Stock": 1
+        }
+      ]
+    },
+    {
+      "ShopName": "HatMouse",
+      "ClosedSignPath": "assets/closed-blue.png",
+      "OpenSignPath": "assets/open-hats.png",
+      "Quote": "Me sell hats and caps. Okay, poke?",
+      "SignObjectIndex": 424,
+      "ShopColor": "255, 217, 33, 255",
+      "PortraitPath": "assets/HatMousePlace.png",
+      "When": ["n hatter"],
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": [
+            "Cheese"
+          ],
+          "Stock": 1
+        },
+        {
+          "ItemType": "Hat",
+          "ItemNames": [
+            "%Match: Hat",
+            "%Match: Hat",
+            "%Match: Hat",
+            "%Match: Hat",
+            "%Match: Hat",
+            "%Match: Cap",
+            "%Match: Cap",
+            "%Match: Cap",
+            "%Match: Cap",
+            "%Match: Cap"
+          ],
+          "Stock": 1,
+          "StockPrice": 1000
+        }
+      ]
+    },
+    {
+      "ShopName": "Demetrius",
+      "ClosedSignPath": "assets/closed-brown.png",
+      "OpenSignPath": "assets/open-lab.png",
+      "Quote": "Demetrius Lab Direct",
+      "DefaultSellPriceMultiplier": 2,
+      "When": ["SkillLevel farming 6"],
+      "ItemStocks": [
+        {
+          "ItemType": "Object",
+          "ItemNames": ["Coal"], "Stock": 10
+        },
+        {
+          "ItemType": "BigCraftable",
+          "ItemNames": ["Coal Box"], "Stock": 2
+        },
+        {"ItemNames": ["Lightning Rod"], "StockPrice": 4000, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Bee House"], "StockPrice": 12000, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Keg"], "StockPrice": 8000, "Stock": 3, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Furnace"], "StockPrice": 11000, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Oil Maker"], "StockPrice": 26000, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Cheese Press"], "StockPrice": 16500, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Charcoal Kiln"], "StockPrice": 6000, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Auto-Grabber"], "StockPrice": 50000, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Workbench"], "StockPrice": 4000, "Stock": 2, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Wood Chipper"], "StockPrice": 2000, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Farm Computer"], "StockPrice": 11000, "Stock": 1, "ItemType": "BigCraftable"},
+        {"ItemNames": ["Solar Panel"], "StockPrice": 120000, "Stock": 1, "ItemType": "BigCraftable"}
+      ]
+    },
+    {
+      "ShopName": "Pierre",
+      "ClosedSignPath": "assets/closed-blue.png",
+      "OpenSignPath": "assets/open-prime.png",
+      "Quote": "Pierre's Prime (TM)",
+      "DefaultSellPriceMultiplier": 10,
+      "When": ["n MSB_Pierre"],
+      "ItemStocks": [
+        {"ItemNames": ["Cauliflower", "Garlic", "Green Bean", "Kale", "Parsnip", "Potato", "Rhubarb", "Strawberry"], "When": [ "z summer/z fall/z winter" ], "Stock": 4, "ItemType": "Object", "Quality": 2},
+        {"ItemNames": ["Blueberry", "Corn", "Hot Pepper", "Melon", "Poppy", "Radish", "Red Cabbage", "Starfruit", "Tomato"], "When": [ "z spring/z fall/z winter" ], "Stock": 4, "ItemType": "Object", "Quality": 2},
+        {"ItemNames": ["Amaranth", "Artichoke", "Beet", "Bok Choy", "Cranberries", "Eggplant", "Grape", "Pumpkin", "Yam"], "When": [ "z spring/z summer/z winter" ], "Stock": 4, "ItemType": "Object", "Quality": 2},
+        {"ItemNames": ["Cauliflower", "Garlic", "Green Bean", "Kale", "Parsnip", "Potato", "Rhubarb", "Strawberry"], "When": [ "z summer/z fall/z winter" ], "Stock": 2, "ItemType": "Object", "Quality": 4},
+        {"ItemNames": ["Blueberry", "Corn", "Hot Pepper", "Melon", "Poppy", "Radish", "Red Cabbage", "Starfruit", "Tomato"], "When": [ "z spring/z fall/z winter" ], "Stock": 2, "ItemType": "Object", "Quality": 4},
+        {"ItemNames": ["Amaranth", "Artichoke", "Beet", "Bok Choy", "Cranberries", "Eggplant", "Grape", "Pumpkin", "Yam"], "When": [ "z spring/z summer/z winter" ], "Stock": 2, "ItemType": "Object", "Quality": 4}
       ]
     }
   ]
