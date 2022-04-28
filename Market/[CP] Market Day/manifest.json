@@ -1,17 +1,23 @@
 {
-    "Name": "[CP] Market Day",
-    "Author": "ceruleandeep",
-    "Version": "1.0.5",
-    "Description": "Market Day: Sell Your Items",
-    "UniqueID": "ceruleandeep.MarketDay.CP",
-    "UpdateKeys": [],
-    "ContentPackFor": {
-        "UniqueID": "Pathoschild.ContentPatcher"
+  "Name": "[CP] Market Day",
+  "Author": "ceruleandeep",
+  "Version": "1.0.7",
+  "Description": "Market Day: Sell Your Items",
+  "UniqueID": "ceruleandeep.MarketDay.CP",
+  "UpdateKeys": [
+    "Nexus:???"
+  ],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "FlashShifter.StardewValleyExpandedCP",
+      "IsRequired": false
     },
-    "Dependencies": [
-        {
-            "UniqueID": "FlashShifter.StardewValleyExpandedCP",
-            "IsRequired": false
-        }
-    ]
+    {
+      "UniqueID": "ceruleandeep.MarketDay",
+      "IsRequired": true
+    }
+  ]
 }

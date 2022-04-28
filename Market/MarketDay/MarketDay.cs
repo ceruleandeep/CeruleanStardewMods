@@ -72,7 +72,6 @@ namespace MarketDay
             Helper.Events.GameLoop.Saving += OnSaving_WriteConfig;
             Helper.Events.GameLoop.Saved += OnSaved_DoNothing;
             Helper.Events.Input.ButtonPressed += OnButtonPressed_ShowShopOrGrangeOrStats;
-            Helper.Events.Input.ButtonPressed += STF_Input_ButtonPressed;
 
             Entry_InitSTF();
 
@@ -426,7 +425,7 @@ namespace MarketDay
                     
                 // clicked on NPC shop sign, open the store
                 Helper.Input.Suppress(e.Button);
-                ShopManager.GrangeShops[signOwner].DisplayShop(true);
+                ShopManager.GrangeShops[signOwner].DisplayShop();
                 return;
             }
 

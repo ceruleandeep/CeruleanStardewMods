@@ -16,12 +16,12 @@
             "Action": "EditMap",
             "Target": "Maps/Town",
             "MapTiles": [
+                {"Position": { "X": 35, "Y": 67 }, "Layer": "Front", "Remove": true},
+
                 {"Position": { "X": 34, "Y": 66 }, "Layer": "Front", "Remove": true},
                 {"Position": { "X": 35, "Y": 66 }, "Layer": "Front", "Remove": true},
                 {"Position": { "X": 36, "Y": 66 }, "Layer": "Front", "Remove": true},
-
-                {"Position": { "X": 35, "Y": 67 }, "Layer": "Front", "Remove": true},
-
+                
                 {"Position": { "X": 34, "Y": 67 }, "Layer": "Buildings", "Remove": true},
                 {"Position": { "X": 35, "Y": 67 }, "Layer": "Buildings", "Remove": true},
                 {"Position": { "X": 36, "Y": 67 }, "Layer": "Buildings", "Remove": true},
@@ -30,9 +30,23 @@
                 {"Position": { "X": 35, "Y": 68 }, "Layer": "Buildings", "Remove": true},
                 {"Position": { "X": 36, "Y": 68 }, "Layer": "Buildings", "Remove": true},
 
+                {"Position": { "X": 35, "Y": 70 }, "Layer": "Front", "Remove": true},
+                
+                {"Position": { "X": 34, "Y": 69 }, "Layer": "Front", "Remove": true},
+                {"Position": { "X": 35, "Y": 69 }, "Layer": "Front", "Remove": true},
+                {"Position": { "X": 36, "Y": 69 }, "Layer": "Front", "Remove": true},
+
                 {"Position": { "X": 34, "Y": 69 }, "Layer": "Buildings", "Remove": true},
                 {"Position": { "X": 35, "Y": 69 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 36, "Y": 69 }, "Layer": "Buildings", "Remove": true}
+                {"Position": { "X": 36, "Y": 69 }, "Layer": "Buildings", "Remove": true},
+
+                {"Position": { "X": 34, "Y": 70 }, "Layer": "Buildings", "Remove": true},
+                {"Position": { "X": 35, "Y": 70 }, "Layer": "Buildings", "Remove": true},
+                {"Position": { "X": 36, "Y": 70 }, "Layer": "Buildings", "Remove": true},
+
+                {"Position": { "X": 34, "Y": 71 }, "Layer": "Buildings", "Remove": true},
+                {"Position": { "X": 35, "Y": 71 }, "Layer": "Buildings", "Remove": true},
+                {"Position": { "X": 36, "Y": 71 }, "Layer": "Buildings", "Remove": true}
             ]
         },
         {

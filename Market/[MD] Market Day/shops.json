@@ -2,6 +2,7 @@
   "GrangeShops": [
     {
       "ShopName": "Sophia",
+      "OpenSignPath": "assets/open-bluemoon.png",
       "ClosedSignPath": "assets/closed-brown.png",
       "Quote": "Blue Moon Cellar Door",
       "DefaultSellPriceMultiplier": 1.4,
@@ -15,6 +16,7 @@
     },
     {
       "ShopName": "Andy",
+      "OpenSignPath": "assets/open-fairhaven.png",
       "ClosedSignPath": "assets/closed-red.png",
       "Quote": "Fairhaven Farm",
       "SignObjectIndex": 400,
@@ -23,7 +25,7 @@
         "HasMod FlashShifter.StardewValleyExpandedCP"
       ],
       "ItemStocks": [
-        {  "ItemType": "Object",  "ItemNames": ["Potato", "Strawberry", "Green Beans"], "When": [ "z summer/z fall/z winter" ], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Potato", "Strawberry", "Green Bean"], "When": [ "z summer/z fall/z winter" ], "Stock": 5},
         {  "ItemType": "Object",  "ItemNames": ["Corn", "Tomato", "Hops"], "When": [ "z spring/z fall/z winter" ], "Stock": 5},
         {  "ItemType": "Object",  "ItemNames": ["Corn", "Eggplant", "Grape"], "When": [ "z spring/z summer/z winter" ], "Stock": 5},
         {  "ItemType": "Object",  "ItemNames": ["Strawberry Seeds"], "When": [ "z spring/z summer/z fall" ], "StockPrice": 80, "Stock": 5}
@@ -31,13 +33,14 @@
     },
     {
       "ShopName": "Susan",
+      "OpenSignPath": "assets/open-emerald.png",
       "ClosedSignPath": "assets/closed-green.png",
       "Quote": "Emerald Farm",
       "When": ["n landslideDone", "HasMod FlashShifter.StardewValleyExpandedCP"],
       "SignObjectIndex": 60,
       "DefaultSellPriceMultiplier": 1.2,
       "ItemStocks": [
-        {  "ItemType": "Object",  "ItemNames": ["Potato", "Cauliflower", "Parsnip", "Green Beans"], "When": [ "z summer/z fall/z winter" ], "Stock": 5},
+        {  "ItemType": "Object",  "ItemNames": ["Potato", "Cauliflower", "Parsnip", "Green Bean"], "When": [ "z summer/z fall/z winter" ], "Stock": 5},
         {  "ItemType": "Object",  "ItemNames": ["Corn", "Melon", "Radish", "Hops"], "When": [ "z spring/z fall/z winter" ], "Stock": 5},
         {  "ItemType": "Object",  "ItemNames": ["Corn", "Pumpkin", "Yam", "Grape"], "When": [ "z spring/z summer/z winter" ], "Stock": 5},
         {  "ItemType": "Object",  "ItemNames": ["Pale Ale"], "Stock": 5},
@@ -46,6 +49,7 @@
     },
     {
       "ShopName": "Jodi",
+      "OpenSignPath": "assets/open-jodi.png",
       "ClosedSignPath": "assets/closed-blue.png",
       "Quote": "Jodi's Sweet Treats",
       "SignObjectIndex": 221,
@@ -90,6 +94,7 @@
     },
     {
       "ShopName": "Harvey",
+      "OpenSignPath": "assets/open-harvey.png",
       "ClosedSignPath": "assets/closed-brown.png",
       "Quote": "Harvey's Coffee And More",
       "SignObjectIndex": 253,
@@ -109,6 +114,7 @@
     },
     {
       "ShopName": "Linus",
+      "OpenSignPath": "assets/open-linus.png",
       "ClosedSignPath": "assets/closed-red.png",
       "Quote": "Fruits of the Forest",
       "SignObjectIndex": 280,
@@ -159,6 +165,7 @@
     },
     {
       "ShopName": "Marnie",
+      "OpenSignPath": "assets/open-marnie.png",
       "ClosedSignPath": "assets/closed-green.png",
       "Quote": "Farm Fresh from Marnie",
       "DefaultSellPriceMultiplier": 1.5,
@@ -184,6 +191,7 @@
     },
     {
       "ShopName": "Evelyn",
+      "OpenSignPath": "assets/open-evelyn.png",
       "ClosedSignPath": "assets/closed-blue.png",
       "Quote": "Flowers by Evelyn",
       "DefaultSellPriceMultiplier": 1.8,
@@ -549,7 +557,7 @@
       "ClosedSignPath": "assets/closed-red.png",
       "Quote": "Objets d'Leah",
       "SignObjectIndex": 169,
-      "When": ["n afterArtShow"],
+        "When": ["n afterArtShow"],
       "ItemStocks": [
         {
           "ItemType": "Object",
@@ -602,6 +610,7 @@
     },
     {
       "ShopName": "Clint",
+      "OpenSignPath": "assets/open-clint.png",
       "ClosedSignPath": "assets/closed-brown.png",
       "Quote": "Stuff Clint Made",
       "SignObjectIndex": 336,
@@ -669,7 +678,8 @@
     },
     {
       "ShopName": "Gunther",
-      "ClosedSignPath": "assets/closed-brown.png",
+      "OpenSignPath": "assets/open-gunther.png",
+      "ClosedSignPath": "assets/closed-blue.png",
       "Quote": "Museum Gift Shop",
       "SignObjectIndex": 749,
       "DefaultSellPriceMultiplier": 10,
@@ -680,7 +690,7 @@
         },
         {
           "ItemType": "BigCraftable",
-          "ItemNames": ["Crystalarium", "Skeleton Statue"], "Stock": 1
+          "ItemNames": ["Crystalarium", "Skeleton"], "Stock": 1
         },
         {
           "ItemType": "BigCraftable",
