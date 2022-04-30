@@ -49,7 +49,9 @@ namespace MarketDay
         internal static bool VerboseLogging = false;
         
         private IGenericModConfigMenuApi configMenu;
-
+        internal IContentPatcherAPI ContentPatcherApi;
+        private static bool GMMJosephPresent;
+        private static bool GMMPaisleyPresent;
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="h">Provides simplified APIs for writing mods.</param>
@@ -73,8 +75,6 @@ namespace MarketDay
             Helper.Events.GameLoop.Saved += OnSaved_DoNothing;
             Helper.Events.Input.ButtonPressed += OnButtonPressed_ShowShopOrGrangeOrStats;
 
-            Entry_InitSTF();
-
             var harmony = new Harmony("ceruleandeep.MarketDay");
             harmony.PatchAll();
 
@@ -83,11 +83,11 @@ namespace MarketDay
             helper.ConsoleCommands.Add("fm_tiles", "List shop tiles", ListShopTiles);
         }
 
-        private static void Entry_InitSTF()
-        {
-            ShopManager.LoadContentPacks();
-            MakePlayerShop();
-        }
+        // private static void Entry_InitSTF()
+        // {
+        //     ShopManager.LoadContentPacks();
+        //     MakePlayerShop();
+        // }
 
         private static void MakePlayerShop()
         {
@@ -110,11 +110,11 @@ namespace MarketDay
             OnDayEnding_EmptyGrangeAndDestroyFurniture(null, null);
 
             Log($"    Removing non-player stores", LogLevel.Debug);
-            foreach (var (ShopName, shop) in ShopManager.GrangeShops)
-                ShopManager.GrangeShops.Remove(ShopName);
+            foreach (var (ShopKey, shop) in ShopManager.GrangeShops)
+                ShopManager.GrangeShops.Remove(ShopKey);
 
             Log($"    Loading content packs", LogLevel.Debug);
-            Entry_InitSTF();
+
             OnSaveLoaded_ReadConfig_InitSTF(null, null);
             OnSaveLoaded_DestroyFurniture(null, null);
 
@@ -123,6 +123,28 @@ namespace MarketDay
 
             Log($"    Opening stores", LogLevel.Debug);
             OnOneSecondUpdateTicking_SyncMapOpenShops(null, null);
+
+            LogModState();
+        }
+
+        private static void LogModState()
+        {
+            var state = new List<string>();
+            state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:");
+            state.Add($"{Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}");
+            var festival = StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
+            state.Add($"Rain: {Game1.isRaining} Snow: {Game1.isSnowing} Festival: {festival}");
+            state.Add($"Market Day: {IsMarketDay()}");
+            state.Add($"GMM Compat: Enabled: {Config.GMMCompat}  GMM Day: {isGMMDay()}  Joseph: {GMMJosephPresent}  Paisley: {GMMPaisleyPresent}");
+            
+            var positions = string.Join(", ", ShopPositions());
+            state.Add($"Shop positions: {positions}");
+
+            state.Add($"Shop config:");
+            var enabled = Config.ShopsEnabled.Select(kvp => $"    {kvp.Key}: {kvp.Value}").ToList();
+            state.AddRange(enabled);
+
+            foreach (var line in state) Log(line, LogLevel.Debug);
         }
 
         private static void ListShopTiles(string command, string[] args)
@@ -191,6 +213,9 @@ namespace MarketDay
             Config = helper.ReadConfig<ModConfig>();
             
             // some hooks for STF
+            ShopManager.LoadContentPacks();
+            MakePlayerShop();
+            
             Translations.UpdateSelectedLanguage();
             ShopManager.UpdateTranslations();
 
@@ -246,8 +271,13 @@ namespace MarketDay
             if (!Context.IsWorldReady) return;
             if (!Context.IsMainPlayer) return;
             if (!IsMarketDay()) return;
-
-            if (!MapChangesSynced) SyncMapChangesAndOpenShops();
+            
+            if (MapChangesSynced) return;
+            SyncMapChanges();
+            
+            if (!MapChangesSynced) return;
+            OpenShops();
+            LogModState();
         }
 
         private static void OnOneSecondUpdateTicking_InteractWithNPCs(object sender, OneSecondUpdateTickingEventArgs e)
@@ -265,22 +295,22 @@ namespace MarketDay
             foreach (var store in MapUtility.ShopAtTile().Values) store.RestockThroughDay(IsMarketDay());
         }
 
-        private static void SyncMapChangesAndOpenShops()
+        private static void SyncMapChanges()
         {
             if (!IsMarketDay()) return;
             if (!Context.IsMainPlayer) return;
             
             Log($"SyncMapChangesAndOpenShops: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
 
-            if (MapUtility.ShopTiles() is null)
+            if (MapUtility.ShopTiles is null)
             {
                 Log($"SyncMapChangesAndOpenShops: MarketDay.ShopLocations is null, called too early", LogLevel.Trace);
                 return;
             }
             
-            if (MapUtility.ShopTiles().Count == 0)
+            if (MapUtility.ShopTiles.Count == 0)
             {
-                Log($"SyncMapChangesAndOpenShops: MarketDay.ShopLocations.Count {MapUtility.ShopTiles().Count}, called too early", LogLevel.Trace);
+                Log($"SyncMapChangesAndOpenShops: MarketDay.ShopLocations.Count {MapUtility.ShopTiles.Count}, called too early", LogLevel.Trace);
                 return;
             }
             Log($"    SyncMapChangesAndOpenShops: {Game1.ticks}", LogLevel.Trace);
@@ -289,7 +319,7 @@ namespace MarketDay
             MapChangesSynced = true;
             Log($"SyncMapChangesAndOpenShops: MapChangesSynced set {MapChangesSynced} at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
 
-            OpenShops();
+            // we used to open the shops here
             
             Log($"SyncMapChangesAndOpenShops: completed at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
@@ -311,34 +341,53 @@ namespace MarketDay
         {
             if (!MapChangesSynced) throw new Exception("Map changes not synced");
             
-            var availableShopNames = new List<string>();
-            foreach (var (shopName, shop) in ShopManager.GrangeShops)
+            var availableShopKeys = AvailableShopKeys;
+            StardewValley.Utility.Shuffle(Game1.random, availableShopKeys);
+            StardewValley.Utility.Shuffle(Game1.random, MapUtility.ShopTiles);
+            availableShopKeys.Remove("Player");
+            availableShopKeys.Insert(0, "Player");
+
+            var strNames = string.Join(", ", availableShopKeys);
+            Log($"OpenShops: Adding stores ({MapUtility.ShopTiles.Count} of {strNames})", LogLevel.Trace);
+
+            foreach (var ShopLocation in MapUtility.ShopTiles)
             {
-                if (shop.When is not null)
+                if (availableShopKeys.Count == 0) break;
+                var ShopKey = availableShopKeys[0];
+                availableShopKeys.RemoveAt(0);
+                if (ShopManager.GrangeShops.ContainsKey(ShopKey))
                 {
-                    if (!APIs.Conditions.CheckConditions(shop.When))
-                    {
-                        Log($"Shop {shopName}: opening condition not met", LogLevel.Trace);
-                        continue;
-                    }
+                    Log($"    {ShopKey} at {ShopLocation}", LogLevel.Trace);
+                    ShopManager.GrangeShops[ShopKey].OpenAt(ShopLocation);    
                 }
-                availableShopNames.Add(shopName);
+                else
+                {
+                    Log($"    {ShopKey} is not in shopManager.GrangeShops", LogLevel.Trace);
+                }
             }
+        }
 
-            StardewValley.Utility.Shuffle(Game1.random, availableShopNames);
-            StardewValley.Utility.Shuffle(Game1.random, MapUtility.ShopTiles());
-            availableShopNames.Remove("Player");
-            availableShopNames.Insert(0, "Player");
-
-            var strNames = string.Join(", ", availableShopNames);
-            Log($"OpenShops: Adding stores ({MapUtility.ShopTiles().Count} of {strNames})", LogLevel.Trace);
-
-            foreach (var ShopLocation in MapUtility.ShopTiles())
+        private static List<string> AvailableShopKeys
+        {
+            get
             {
-                if (availableShopNames.Count == 0) break;
-                var ShopName = availableShopNames[0];
-                availableShopNames.RemoveAt(0);
-                ShopManager.GrangeShops[ShopName].OpenAt(ShopLocation);
+                var availableShopKeys = new List<string>();
+                foreach (var (ShopKey, shop) in ShopManager.GrangeShops)
+                {
+                    if (Config.ShopsEnabled.TryGetValue(ShopKey, out var enabled) && !enabled) continue;
+                    if (shop.When is not null)
+                    {
+                        if (!APIs.Conditions.CheckConditions(shop.When))
+                        {
+                            Log($"Shop {ShopKey}: opening condition not met", LogLevel.Trace);
+                            continue;
+                        }
+                    }
+
+                    availableShopKeys.Add(ShopKey);
+                }
+
+                return availableShopKeys;
             }
         }
 
@@ -487,7 +536,7 @@ namespace MarketDay
 
             if (e.Button == Config.StatusKeybind)
             {
-                Log("Status:", LogLevel.Debug);
+                LogModState();
                 Helper.Input.Suppress(e.Button);
             }
         }
@@ -567,17 +616,17 @@ namespace MarketDay
                 else //no vanilla shop found
                 {
                     //Extract the tile property value
-                    string shopName = shopProperty.ToString();
+                    string ShopKey = shopProperty.ToString();
 
-                    if (ShopManager.GrangeShops.ContainsKey(shopName))
+                    if (ShopManager.GrangeShops.ContainsKey(ShopKey))
                     {
                         //stop the click action from going through after the menu has been opened
                         helper.Input.Suppress(e.Button);
-                        ShopManager.GrangeShops[shopName].DisplayShop();
+                        ShopManager.GrangeShops[ShopKey].DisplayShop();
                     }
                     else
                     {
-                        Log($"A Shop tile was clicked, but a shop by the name \"{shopName}\" " +
+                        Log($"A Shop tile was clicked, but a shop by the name \"{ShopKey}\" " +
                             $"was not found.", LogLevel.Debug);
                     }
                 }
@@ -587,16 +636,16 @@ namespace MarketDay
                 tileProperty.TryGetValue("AnimalShop", out shopProperty); //see if there's an AnimalShop property
                 if (shopProperty != null) //no animal shop found
                 {
-                    string shopName = shopProperty.ToString();
-                    if (ShopManager.AnimalShops.ContainsKey(shopName))
+                    string ShopKey = shopProperty.ToString();
+                    if (ShopManager.AnimalShops.ContainsKey(ShopKey))
                     {
                         //stop the click action from going through after the menu has been opened
                         helper.Input.Suppress(e.Button);
-                        ShopManager.AnimalShops[shopName].DisplayShop();
+                        ShopManager.AnimalShops[ShopKey].DisplayShop();
                     }
                     else
                     {
-                        Log($"An Animal Shop tile was clicked, but a shop by the name \"{shopName}\" " +
+                        Log($"An Animal Shop tile was clicked, but a shop by the name \"{ShopKey}\" " +
                             $"was not found.", LogLevel.Debug);
                     }
                 }
@@ -611,11 +660,15 @@ namespace MarketDay
             Config = Helper.ReadConfig<ModConfig>();
             
             setupGMCM();
+            ContentPatcherApi =
+                Helper.ModRegistry.GetApi<IContentPatcherAPI>("Pathoschild.ContentPatcher");
+            ContentPatcherApi.RegisterToken(ModManifest, "IsMarketDay",
+                () => { return Context.IsWorldReady ? new[] {IsMarketDay() ? "true" : "false"} : null; });
+            ContentPatcherApi.RegisterToken(ModManifest, "ShopPositions",
+                () => ShopPositions());
             
-            // ContentPatcherAPI =
-            //     Helper.ModRegistry.GetApi<ContentPatcher.IContentPatcherAPI>("Pathoschild.ContentPatcher");
-            // ContentPatcherAPI.RegisterToken(ModManifest, "MarketDayOpen",
-            //     () => { return Context.IsWorldReady ? new[] {IsMarketDayJustForToken() ? "true" : "false"} : null; });
+            GMMJosephPresent = this.Helper.ModRegistry.IsLoaded("Elaho.JosephsSeedShopDisplayCP");
+            GMMPaisleyPresent = this.Helper.ModRegistry.IsLoaded("Elaho.PaisleysBridalBoutiqueCP");
             
             Log($"OnLaunched: complete at {Game1.ticks}", LogLevel.Trace);
 
@@ -660,6 +713,29 @@ namespace MarketDay
                 () => Helper.Translation.Get("cfg.main-settings"));
             
             configMenu.AddNumberOption(ModManifest,
+                () => Config.DayOfWeek,
+                val => Config.DayOfWeek = val,
+                () => Helper.Translation.Get("cfg.day-of-week"),
+                () => Helper.Translation.Get("cfg.day-of-week.msg"),
+                min: 0,
+                max: 6
+            );
+
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenInRain,
+                val => Config.OpenInRain = val,
+                () => Helper.Translation.Get("cfg.open-in-rain"),
+                () => Helper.Translation.Get("cfg.open-in-rain.msg")
+            );
+            
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenInSnow,
+                val => Config.OpenInSnow = val,
+                () => Helper.Translation.Get("cfg.open-in-snow"),
+                () => Helper.Translation.Get("cfg.open-in-snow.msg")
+            );
+            
+            configMenu.AddNumberOption(ModManifest,
                 () => Config.OpeningTime,
                 val => Config.OpeningTime = val,
                 () => Helper.Translation.Get("cfg.opening-time"),
@@ -667,6 +743,7 @@ namespace MarketDay
                 min: 0,
                 max: 26
             );
+            
             configMenu.AddNumberOption(ModManifest,
                 () => Config.ClosingTime,
                 val => Config.ClosingTime = val,
@@ -675,13 +752,21 @@ namespace MarketDay
                 min: 0,
                 max: 26
             );
+            
             configMenu.AddNumberOption(ModManifest,
-                () => Config.DayOfWeek,
-                val => Config.DayOfWeek = val,
-                () => Helper.Translation.Get("cfg.day-of-week"),
-                () => Helper.Translation.Get("cfg.day-of-week.msg"),
-                min: 0,
-                max: 6
+                () => Config.ShopLayout,
+                val => Config.ShopLayout = val,
+                () => Helper.Translation.Get("cfg.shop-layout"),
+                () => Helper.Translation.Get("cfg.shop-layout.msg"),
+                0,
+                9
+            );
+            
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.GMMCompat,
+                val => Config.GMMCompat = val,
+                () => Helper.Translation.Get("cfg.gmm-compat"),
+                () => Helper.Translation.Get("cfg.gmm-compat.msg")
             );
 
             configMenu.AddNumberOption(ModManifest,
@@ -776,10 +861,43 @@ namespace MarketDay
         
         internal static bool IsMarketDay()
         {
-            return Game1.dayOfMonth % 7 == Config.DayOfWeek &&
-                   !Game1.isRaining &&
-                   !Game1.isSnowing &&
-                   !StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
+            var md = Game1.dayOfMonth % 7 == Config.DayOfWeek
+                     && !StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
+            md = md && (Config.OpenInRain || !Game1.isRaining);
+            md = md && (Config.OpenInSnow || !Game1.isSnowing);
+            return md;
+        }
+
+        internal static Dictionary<string, List<int>> ShopLayouts = new()
+        {
+            ["1 Shop"] = new List<int> {1},
+            ["3 Shops"] = new List<int> {1, 7, 8},
+            ["5 Shops"] = new List<int> {1, 5, 6, 7, 8},
+            ["6 Shops"] = new List<int> {1, 2, 6, 7, 8, 9},
+            ["7 Shops"] = new List<int> {1, 2, 5, 6, 7, 8, 9},
+            ["9 Shops"] = new List<int> {1, 2, 3, 4, 5, 6, 7, 8, 9},
+        };
+
+        private static bool isGMMDay()
+        {
+            return Game1.dayOfMonth is 6 or 7 or 20 or 21;
+        }
+        
+        internal static string[] ShopPositions()
+        {
+            if (!Context.IsWorldReady) return null;
+            var key = $"{Config.ShopLayout} Shops";
+            if (!ShopLayouts.ContainsKey(key)) key = "6 Shops";
+            if (!ShopLayouts.TryGetValue(key, out var layout)) return null;
+
+            if (Config.GMMCompat && isGMMDay())
+            {
+                if (GMMPaisleyPresent) layout.Remove(5);
+                if (GMMJosephPresent) layout.Remove(2);
+                if (GMMJosephPresent) layout.Remove(7);
+            }
+            
+            return layout.Select(i => $"Shop{i}").ToArray();
         }
 
         private static string Get(string key, object tokens)

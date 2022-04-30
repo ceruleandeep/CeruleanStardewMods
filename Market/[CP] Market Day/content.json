@@ -1,15 +1,5 @@
 {
     "Format": "1.25.0",
-    "ConfigSchema": {
-        "MarketLayout": {
-            "AllowValues": "1 Shop, 3 Shops, 5 Shops, 6 Shops, 7 Shops, 9 Shops",
-            "Default": "6 Shops"
-        },
-        "MarketDay": {
-            "AllowValues": "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",
-            "Default": "Saturday"
-        }
-    },
     "Changes": [
         {
             "LogName": "Remove SVE table",
@@ -58,10 +48,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 28, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "1 Shop, 3 Shops, 5 Shops, 6 shops, 7 Shops, 9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay"
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop1", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 2",
@@ -72,10 +59,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 33, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "6 shops, 7 Shops, 9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay", "HasMod |contains=Elaho.JosephsSeedShopDisplayCP": false
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop2", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 3",
@@ -86,10 +70,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 37, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 38, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay"
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop3", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 4",
@@ -100,10 +81,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 42, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 43, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay"
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop4", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 5",
@@ -114,10 +92,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 63, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 23, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "5 Shops, 7 Shops, 9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay", "HasMod |contains=Elaho.PaisleysBridalBoutiqueCP": false
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop5", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 6",
@@ -128,10 +103,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 63, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 28, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "5 Shops, 6 shops, 7 Shops, 9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay"
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop6", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 7",
@@ -142,10 +114,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 63, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 33, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "3 Shops, 5 Shops, 6 shops, 7 Shops, 9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay", "HasMod |contains=Elaho.JosephsSeedShopDisplayCP": false
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop7", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 8",
@@ -156,10 +125,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 68, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 28, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "3 Shops, 5 Shops, 6 shops, 7 Shops, 9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay"
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop8", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 9",
@@ -170,10 +136,7 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 68, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 33, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {
-                "MarketLayout": "6 shops, 7 Shops, 9 Shops", "DayOfWeek": "{{MarketDay}}", "Weather": "Sun, Wind", "HasValue:{{DayEvent}}": "false",
-                "HasMod": "ceruleandeep.MarketDay"
-            }
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop9", "ceruleandeep.MarketDay/IsMarketDay": true}
         }
     ]
 }

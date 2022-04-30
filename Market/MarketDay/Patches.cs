@@ -129,13 +129,13 @@ namespace MarketDay
         public static void Postfix(Chest __instance, SpriteBatch spriteBatch, int x, int y)
         {
             if (!__instance.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}",
-                out var shopName)) return;
+                out var ShopKey)) return;
 
-            // get shop for shopName
-            if (!ShopManager.GrangeShops.TryGetValue(shopName, out var grangeShop))
+            // get shop for ShopKey
+            if (!ShopManager.GrangeShops.TryGetValue(ShopKey, out var grangeShop))
             {
                 MarketDay.Log(
-                    $"Postfix_draw: shop '{shopName}' not found in ShopManager.GrangeShops, can't draw",
+                    $"Postfix_draw: shop '{ShopKey}' not found in ShopManager.GrangeShops, can't draw",
                     LogLevel.Error);
                 return;
             }
@@ -158,12 +158,12 @@ namespace MarketDay
             if (location is not Town) return;
             if (!MarketDay.IsMarketDay()) return;
             if (!MarketDay.Config.NPCVisitors) return;
-            if (MapUtility.ShopTiles().Count == 0) return;
+            if (MapUtility.ShopTiles.Count == 0) return;
 
             MarketDay.Log($"findPathForNPCSchedules {location.Name} {startPoint} -> {endPoint}", LogLevel.Trace, true);
 
             var placesToVisit = new List<Point>();
-            foreach (var (shopX, shopY) in MapUtility.ShopTiles())
+            foreach (var (shopX, shopY) in MapUtility.ShopTiles)
             {
                 var visitPoint = new Point((int) shopX + Game1.random.Next(3), (int) shopY + 4);
                 if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);

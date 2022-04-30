@@ -59,23 +59,33 @@ namespace MarketDay.Shop
         /// </summary>
         /// <param name="data"></param>
         /// <param name="contentPack"></param>
-        public static void RegisterShops(ContentPack data, IContentPack contentPack)
+        private static void RegisterShops(ContentPack data, IContentPack contentPack)
         {
+            MarketDay.Config.ShopsEnabled ??= new Dictionary<string, bool>();
             if (data.GrangeShops != null)
             {
                 foreach (var shopPack in data.GrangeShops)
                 {
-                    if (GrangeShops.ContainsKey(shopPack.ShopName))
+                    shopPack.ContentPack = contentPack;
+
+                    if (shopPack.ShopName is null)
                     {
-                        MarketDay.Log($"{contentPack.Manifest.Name} is trying to add a Shop \"{shopPack.ShopName}\"," +
+                        MarketDay.Log($"{contentPack.Manifest.Name}: a shop needs a name", LogLevel.Error);
+                        continue;
+                    }
+
+                    if (!MarketDay.Config.ShopsEnabled.ContainsKey(shopPack.ShopKey)) MarketDay.Config.ShopsEnabled[shopPack.ShopKey] = true;
+                    
+                    if (GrangeShops.ContainsKey(shopPack.ShopKey))
+                    {
+                        MarketDay.Log($"{contentPack.Manifest.Name} is trying to add a Shop {shopPack.ShopKey}" +
                             $" but a shop of this name has already been added. " +
                             $"It will not be added.", LogLevel.Warn);
                         continue;
                     }
 
-                    shopPack.ContentPack = contentPack;
-                    MarketDay.Log($"{contentPack.Manifest.Name} is adding \"{shopPack.ShopName}\"", LogLevel.Trace);
-                    GrangeShops.Add(shopPack.ShopName, shopPack);
+                    MarketDay.Log($"{contentPack.Manifest.Name} adding {shopPack.ShopKey}", LogLevel.Trace);
+                    GrangeShops.Add(shopPack.ShopKey, shopPack);
                     
                     // load sign assets
                     LoadAssets(contentPack, shopPack);

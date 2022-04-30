@@ -132,10 +132,7 @@ namespace MarketDay.Utility
             var candidates = new List<int>();
             foreach (var (index, objectData) in ObjectInfoSource[itemType])
             {
-                if (objectData.Split('/')[0].Contains(needle))
-                {
-                    candidates.Add(index);
-                }
+                if (objectData.Split('/')[0].Contains(needle)) candidates.Add(index);
             }
 
             if (candidates.Count > 0) return candidates[Game1.random.Next(candidates.Count)];
