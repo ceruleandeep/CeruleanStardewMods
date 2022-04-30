@@ -74,7 +74,10 @@ namespace MarketDay.Shop
                         continue;
                     }
 
-                    if (!MarketDay.Config.ShopsEnabled.ContainsKey(shopPack.ShopKey)) MarketDay.Config.ShopsEnabled[shopPack.ShopKey] = true;
+                    if (!MarketDay.Config.ShopsEnabled.ContainsKey(shopPack.ShopKey))
+                    {
+                        MarketDay.Config.ShopsEnabled[shopPack.ShopKey] = true;
+                    }
                     
                     if (GrangeShops.ContainsKey(shopPack.ShopKey))
                     {

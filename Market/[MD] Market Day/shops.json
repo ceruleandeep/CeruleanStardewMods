@@ -881,7 +881,7 @@
       "NpcName": "Jas",
       "ClosedSignPath": "assets/closed-gray.png",
       "OpenSignPath": "assets/open-jv.png",
-      "Quote": "Ice Cream Palace",
+      "Quote": "Jas and Vincent's Ice Cream Palace",
       "DefaultSellPriceMultiplier": 1.2,
       "SignObjectIndex": 233,
       "ItemStocks": [
@@ -889,9 +889,9 @@
         {"ItemIDs": [57, 58, 59], "StockItemCurrency": "Ice Cream", "StockCurrencyStack": 3, "StockPrice": 0, "Stock": 1, "MaxNumItemsSoldInItemStock": 1, "ItemType": "Hat"},
         {"ItemNames": ["Puzzle Table", "Pink Plush Seat", "Green Plush Seat"], "StockItemCurrency": "Ice Cream", "StockCurrencyStack": 1, "StockPrice": 0,  "Stock": 1, "MaxNumItemsSoldInItemStock": 1, "ItemType": "Furniture"},
         {"ItemIDs": [1760, 1761, 1762, 1763], "StockItemCurrency": "Ice Cream", "StockCurrencyStack": 1, "StockPrice": 0, "Stock": 1, "MaxNumItemsSoldInItemStock": 1, "ItemType": "Furniture"},
-        {"ItemNames": ["Strange Bun", "Snail", "Mud", "Miner's Treat", "Clay"], "StockItemCurrency": "Ice Cream", "StockCurrencyStack": 1, "StockPrice": 0, "Stock": 1, "ItemType": "Object"},
+        {"ItemNames": ["Strange Bun", "Snail", "Miner's Treat", "Clay"], "StockItemCurrency": "Ice Cream", "StockCurrencyStack": 1, "StockPrice": 0, "Stock": 1, "ItemType": "Object"},
         {"ItemNames": ["Driftwood", "Soggy Newspaper", "Broken CD", "Broken Glasses"], "StockPrice": 10, "Stock": 1, "ItemType": "Object"},
-        {"ItemNames": ["Mudstone"], "StockItemCurrency": "Ice Cream", "StockCurrencyStack": 1, "StockPrice": 0, "Stock": 1, "ItemType": "Mineral"},
+        {"ItemNames": ["Mudstone"], "StockItemCurrency": "Ice Cream", "StockCurrencyStack": 1, "StockPrice": 0, "Stock": 1, "ItemType": "Object"},
         {"ItemNames": ["Ice Cream"], "StockPrice": 250, "Stock": 10, "ItemType": "Object"}
       ]
     },
@@ -906,7 +906,8 @@
         {"ItemNames": ["Battery Pack"], "StockPrice": 2000, "Stock": 2, "ItemType": "Object"},
         {"ItemNames": ["Maru's Wrench"], "When": ["e 10"], "StockPrice": 777, "Stock": 1, "ItemType": "Weapon"},
         {"ItemNames": ["Cookout Kit"], "StockPrice": 300,  "Stock": 2, "ItemType": "Object"},
-        {"ItemNames": ["Goggles", "Circuitboard Shirt"], "StockPrice": 1000, "Stock": 1, "ItemType": "Clothing"},
+        {"ItemNames": ["Circuitboard Shirt"], "StockPrice": 1000, "Stock": 1, "ItemType": "Clothing"},
+        {"ItemNames": ["Goggles"], "StockPrice": 1000, "Stock": 1, "ItemType": "Hat"},
         {"ItemNames": ["Dwarf Gadget"], "StockPrice": 500, "Stock": 2, "ItemType": "Object"},
         {"ItemNames": ["Cherry Bomb"], "StockPrice": 150, "Stock": 2, "ItemType": "Object"},
         {"ItemNames": ["Bomb"], "StockPrice": 300, "Stock": 2, "ItemType": "Object"},

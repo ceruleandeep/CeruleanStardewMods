@@ -1,5 +1,9 @@
 # Changes
 
+1.0.9-beta.1
+* Wrap another NPC gift tastes call in a try/catch block
+* Fix some ordering stuff that prevented shop en/dis from being saved
+  
 * 1.0.8 RELEASE
   * Add shops for Wizard, Haley, Elliott, Sam, Jas+Vincent, Maru
   * Catch exceptions caused by other lazy mods not doing gift preference

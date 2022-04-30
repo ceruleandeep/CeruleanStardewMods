@@ -63,7 +63,8 @@ namespace MarketDay
 
             Helper.Events.GameLoop.GameLaunched += OnLaunched;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_STFRegistrations;
-            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_ReadConfig_InitSTF;
+            Helper.Events.GameLoop.GameLaunched += OnLaunched_STFInit;
+            // Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_ReadConfig;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateSTFStock_SendPrompt;
             // Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
@@ -113,9 +114,10 @@ namespace MarketDay
             foreach (var (ShopKey, shop) in ShopManager.GrangeShops)
                 ShopManager.GrangeShops.Remove(ShopKey);
 
+            helper.WriteConfig(Config);
+            
             Log($"    Loading content packs", LogLevel.Debug);
-
-            OnSaveLoaded_ReadConfig_InitSTF(null, null);
+            OnLaunched_STFInit(null, null);
             OnSaveLoaded_DestroyFurniture(null, null);
 
             Log($"    Updating stock", LogLevel.Debug);
@@ -133,15 +135,17 @@ namespace MarketDay
             state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:");
             state.Add($"{Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}");
             var festival = StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
-            state.Add($"Rain: {Game1.isRaining} Snow: {Game1.isSnowing} Festival: {festival}");
+            state.Add($"Rain: {Game1.isRaining}  Snow: {Game1.isSnowing}  Festival: {festival}");
             state.Add($"Market Day: {IsMarketDay()}");
             state.Add($"GMM Compat: Enabled: {Config.GMMCompat}  GMM Day: {isGMMDay()}  Joseph: {GMMJosephPresent}  Paisley: {GMMPaisleyPresent}");
             
             var positions = string.Join(", ", ShopPositions());
-            state.Add($"Shop positions: {positions}");
+            state.Add($"Shop positions: {Config.ShopLayout} shops: {positions}");
 
             state.Add($"Shop config:");
             var enabled = Config.ShopsEnabled.Select(kvp => $"    {kvp.Key}: {kvp.Value}").ToList();
+            if (enabled.Count == 0)
+                state.Add("    No shops enabled/disabled in config.json");
             state.AddRange(enabled);
 
             foreach (var line in state) Log(line, LogLevel.Debug);
@@ -207,24 +211,10 @@ namespace MarketDay
         /// </summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
-        private static void OnSaveLoaded_ReadConfig_InitSTF(object sender, EventArgs e)
+        private static void OnSaveLoaded_ReadConfig(object sender, EventArgs e)
         {
             // reload the config to pick up any changes made in GMCM on the title screen
             Config = helper.ReadConfig<ModConfig>();
-            
-            // some hooks for STF
-            ShopManager.LoadContentPacks();
-            MakePlayerShop();
-            
-            Translations.UpdateSelectedLanguage();
-            ShopManager.UpdateTranslations();
-
-            ItemsUtil.UpdateObjectInfoSource();
-
-            ShopManager.InitializeShops();
-            ShopManager.InitializeItemStocks();
-
-            ItemsUtil.RegisterItemsToRemove();
         }
         
         private static void OnSaveLoaded_DestroyFurniture(object sender, EventArgs e)
@@ -691,6 +681,24 @@ namespace MarketDay
             APIs.RegisterExpandedPreconditionsUtility();
             APIs.RegisterBFAV();
             APIs.RegisterFAVR();
+        }
+
+        private static void OnLaunched_STFInit(object sender, GameLaunchedEventArgs e)
+        {
+            
+            // some hooks for STF
+            ShopManager.LoadContentPacks();
+            MakePlayerShop();
+            
+            Translations.UpdateSelectedLanguage();
+            ShopManager.UpdateTranslations();
+
+            ItemsUtil.UpdateObjectInfoSource();
+
+            ShopManager.InitializeShops();
+            ShopManager.InitializeItemStocks();
+
+            ItemsUtil.RegisterItemsToRemove();
         }
         
         private void JsonAssets_AddedItemsToShop(object sender, System.EventArgs e)

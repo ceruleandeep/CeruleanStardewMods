@@ -415,12 +415,23 @@ namespace MarketDay.Shop
             }
             else
             {
+                int taste;
+                try
+                {
+                    // so many other mods hack up NPCs that we have to wrap this
+                    taste = npc.getGiftTasteForThisItem(item);
+                }
+                catch (Exception)
+                {
+                    taste = NPC.gift_taste_neutral;
+                }
+                
                 string dialog = Get("buy", new {ItemName = item.DisplayName});
-                if (npc.getGiftTasteForThisItem(item) == NPC.gift_taste_love)
+                if (taste == NPC.gift_taste_love)
                 {
                     dialog = Get("love", new {ItemName = item.DisplayName});
                 }
-                else if (npc.getGiftTasteForThisItem(item) == NPC.gift_taste_like)
+                else if (taste == NPC.gift_taste_like)
                 {
                     dialog = Get("like", new {ItemName = item.DisplayName});
                 }
