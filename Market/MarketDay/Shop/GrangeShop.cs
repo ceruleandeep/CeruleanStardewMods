@@ -481,16 +481,24 @@ namespace MarketDay.Shop
 
             if (Game1.player.team.useSeparateWallets.Value)
             {
-                Log($"Paying {PlayerID}", LogLevel.Debug);
-                Log($"Paying {Game1.getFarmer(PlayerID).Name}", LogLevel.Debug);
-                var farmer = Game1.getFarmer(PlayerID);
-                Game1.player.team.AddIndividualMoney(farmer, salePrice);
+                try
+                {
+                    Log($"Paying {PlayerID}", LogLevel.Trace);
+                    Log($"Paying {Game1.getFarmer(PlayerID).Name}", LogLevel.Trace);
+                    var farmer = Game1.getFarmer(PlayerID);
+                    Game1.player.team.AddIndividualMoney(farmer, salePrice);
+                }
+                catch (Exception ex)
+                {
+                    Log($"Error while paying {PlayerID}: {ex}", LogLevel.Error);
+                    Game1.player.Money += salePrice;
+                }
             }
             else
             {
                 Game1.player.Money += salePrice;
             }
-            Log($"Item {item.ParentSheetIndex} sold for {salePrice}", LogLevel.Debug);
+            Log($"Item {item.ParentSheetIndex} sold for {salePrice}", LogLevel.Trace);
 
             var newSale = new SalesRecord()
             {
@@ -851,14 +859,14 @@ namespace MarketDay.Shop
                     if (!item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{key}",
                         out var owner)) continue;
                     if (owner != ShopKey) continue;
-                    Log($"    Scheduling {item.displayName} from {tile}", LogLevel.Debug);
+                    Log($"    Scheduling removal of {item.displayName} from {tile}", LogLevel.Trace);
                     toRemove[tile] = item;
                 }
             }
 
             foreach (var (tile, itemToRemove) in toRemove)
             {
-                Log($"    Removing {itemToRemove.displayName} from {tile}", LogLevel.Debug);
+                Log($"    Removing {itemToRemove.displayName} from {tile}", LogLevel.Trace);
                 location.Objects.Remove(tile);
             }
         }

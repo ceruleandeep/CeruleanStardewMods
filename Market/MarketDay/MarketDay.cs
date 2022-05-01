@@ -114,25 +114,15 @@ namespace MarketDay
                     PlayerID = farmer.UniqueMultiplayerID
                 };
                 ShopManager.GrangeShops.Add(PlayerShop.ShopKey, PlayerShop);
-                Log($"Added shop {PlayerShop.ShopKey} for {PlayerShop.ShopName} ({PlayerShop.PlayerID})", LogLevel.Debug);
+                Log($"Added shop {PlayerShop.ShopKey} for {PlayerShop.ShopName} ({PlayerShop.PlayerID})", LogLevel.Trace);
             }
-            
-            var ExtraPlayerShop = new GrangeShop()
-            {
-                ShopName = "Farmer:ExtraPlayerShop",
-                Quote = "Farmer store",
-                ItemStocks = Array.Empty<ItemStock>(),
-                PlayerID = -2
-            };
-            ShopManager.GrangeShops.Add(ExtraPlayerShop.ShopKey, ExtraPlayerShop);
-            Log($"Added shop {ExtraPlayerShop.ShopKey} for {ExtraPlayerShop.ShopName} ({ExtraPlayerShop.PlayerID})", LogLevel.Debug);
         }
 
         // void OnFieldChanged(IManifest mod, Action<string, object> onChange);
 
         private static void GMCMFieldChanged(string fieldID, object val)
         {
-            Log($"GMCMFieldChanged: {fieldID} = {val}", LogLevel.Debug);
+            Log($"GMCMFieldChanged: {fieldID} = {val}", LogLevel.Trace);
             if (fieldID.StartsWith("fm_")) GMCMChangesSynced = false;
         }
 
@@ -554,7 +544,7 @@ namespace MarketDay
             
             if (e.Button.IsUseToolButton() && objectAt is not null && signOwner is not null)
             {
-                Log($"Tool use on {objectAt.Name} owned by {signOwner}", LogLevel.Debug);
+                Log($"Tool use on {objectAt.Name} owned by {signOwner}", LogLevel.Trace);
                 if (signOwner.StartsWith("Farmer:"))
                 {
                     // clicked on player shop sign, show the summary
