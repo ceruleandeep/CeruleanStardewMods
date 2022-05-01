@@ -570,6 +570,7 @@
     {
       "ShopName": "LeahShop",
       "NpcName": "Leah",
+      "OpenSignPath": "assets/open-leah.png",
       "ClosedSignPath": "assets/closed-red.png",
       "Quote": "Objets d'Leah",
       "SignObjectIndex": 169,
@@ -900,7 +901,7 @@
       "NpcName": "Maru",
       "ClosedSignPath": "assets/closed-purple.png",
       "OpenSignPath": "assets/open-roboshack.png",
-      "Quote": "Roboshack",
+      "Quote": "RoboShack",
       "DefaultSellPriceMultiplier": 1.2,
       "ItemStocks": [
         {"ItemNames": ["Battery Pack"], "StockPrice": 2000, "Stock": 2, "ItemType": "Object"},

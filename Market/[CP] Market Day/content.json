@@ -2,9 +2,14 @@
     "Format": "1.25.0",
     "Changes": [
         {
-            "LogName": "Remove SVE table",
+            "LogName": "Remove SVE table North",
             "Action": "EditMap",
             "Target": "Maps/Town",
+            "When": {
+                "ceruleandeep.MarketDay/ShopPositions": "Shop7",
+                "ceruleandeep.MarketDay/IsMarketDay": true,
+                "HasMod": "FlashShifter.StardewValleyExpandedCP"
+            },
             "MapTiles": [
                 {"Position": { "X": 35, "Y": 67 }, "Layer": "Front", "Remove": true},
 
@@ -19,9 +24,20 @@
                 {"Position": { "X": 34, "Y": 68 }, "Layer": "Buildings", "Remove": true},
                 {"Position": { "X": 35, "Y": 68 }, "Layer": "Buildings", "Remove": true},
                 {"Position": { "X": 36, "Y": 68 }, "Layer": "Buildings", "Remove": true},
-
+            ]
+        },
+        {
+            "LogName": "Remove SVE table South",
+            "Action": "EditMap",
+            "Target": "Maps/Town",
+            "When": {
+                "ceruleandeep.MarketDay/ShopPositions": "Shop9",
+                "ceruleandeep.MarketDay/IsMarketDay": true,
+                "HasMod": "FlashShifter.StardewValleyExpandedCP"
+            },
+            "MapTiles": [
                 {"Position": { "X": 35, "Y": 70 }, "Layer": "Front", "Remove": true},
-                
+
                 {"Position": { "X": 34, "Y": 69 }, "Layer": "Front", "Remove": true},
                 {"Position": { "X": 35, "Y": 69 }, "Layer": "Front", "Remove": true},
                 {"Position": { "X": 36, "Y": 69 }, "Layer": "Front", "Remove": true},
@@ -38,6 +54,69 @@
                 {"Position": { "X": 35, "Y": 71 }, "Layer": "Buildings", "Remove": true},
                 {"Position": { "X": 36, "Y": 71 }, "Layer": "Buildings", "Remove": true}
             ]
+        },
+        {
+            "LogName": "Patch north path for Shop 0",
+            "Action": "EditMap",
+            "Target": "Maps/Town",
+            "FromFile": "assets/Town_Shop0c.tmx",
+            "PatchMode": "Replace",
+            "FromArea": {"X": 0, "Y": 0, "Width": 6, "Height": 9},
+            "ToArea": {"X": 19, "Y": 53, "Width": 6, "Height": 9},
+            "When": {
+                "ceruleandeep.MarketDay/ShopPositions": "Shop0", 
+                "ceruleandeep.MarketDay/IsMarketDay": true,
+                "HasMod |contains=FlashShifter.StardewValleyExpandedCP": false
+            }
+        },
+        {
+            "LogName": "Patch north path for Shop 0",
+            "Action": "EditMap",
+            "Target": "Maps/Town",
+            "FromFile": "assets/Town_Shop0_SVE.tmx",
+            "PatchMode": "Replace",
+            "FromArea": {"X": 0, "Y": 0, "Width": 6, "Height": 9},
+            "ToArea": {"X": 19, "Y": 53, "Width": 6, "Height": 9},
+            "When": {
+                "ceruleandeep.MarketDay/ShopPositions": "Shop0", 
+                "ceruleandeep.MarketDay/IsMarketDay": true,
+                "HasMod |contains=FlashShifter.StardewValleyExpandedCP": true
+            }
+        },
+        {
+            "LogName": "Patch path for Shop 4",
+            "Action": "EditMap",
+            "Target": "Maps/Town",
+            "FromFile": "assets/Town_Shop34.tmx",
+            "PatchMode": "Overlay",
+            "FromArea": {"X": 0, "Y": 0, "Width": 10, "Height": 3},
+            "ToArea": {"X": 38, "Y": 62, "Width": 10, "Height": 3},
+            "When": {
+                "ceruleandeep.MarketDay/ShopPositions": "Shop4", 
+                "ceruleandeep.MarketDay/IsMarketDay": true,
+                "HasMod |contains=FlashShifter.StardewValleyExpandedCP": false
+            }
+        },
+//        {
+//            "LogName": "Patch town corner for Shop 0",
+//            "Action": "EditMap",
+//            "Target": "Maps/Town",
+//            "FromFile": "assets/Town_Shop0.tmx",
+//            "PatchMode": "Replace",
+//            "FromArea": {"X": 20, "Y": 56, "Width": 6, "Height": 7},
+//            "ToArea": {"X": 20, "Y": 56, "Width": 6, "Height": 7},
+//            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop0", "ceruleandeep.MarketDay/IsMarketDay": true}
+//        },
+        {
+            "LogName": "Load Market Day map: Shop 0",
+            "Action": "EditMap",
+            "Target": "Maps/Town",
+            "FromFile": "assets/GrangeShopPurple.tmx",
+            "PatchMode": "Overlay",
+            "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
+            "ToArea": {"X": 22, "Y": 58, "Width": 5, "Height": 5},
+            "MapTiles": [{"Position": { "X": 23, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop0", "ceruleandeep.MarketDay/IsMarketDay": true}
         },
         {
             "LogName": "Load Market Day map: Shop 1",
