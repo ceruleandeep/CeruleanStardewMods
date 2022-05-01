@@ -22,6 +22,9 @@ namespace MarketDay.Shop
 
         private const int DisplayChestHidingOffsetY = 36;
 
+        public string ShopKey => IsPlayerShop() ? ShopName : $"{ContentPack.Manifest.UniqueID}/{ShopName}";
+        public long PlayerID;
+        
         public Vector2 Origin => StockChest.TileLocation - new Vector2(3, 1);
 
         public const string GrangeChestKey = "GrangeDisplay";
@@ -35,18 +38,20 @@ namespace MarketDay.Shop
 
         public const string VisitorsTodayKey = "VisitorsToday";
         public const string GrumpyVisitorsTodayKey = "GrumpyVisitorsToday";
+        public const string SalesTodayKey = "SalesToday";
+        public const string GoldTodayKey = "GoldToday";
 
         public Dictionary<NPC, int> recentlyLooked = new();
         public Dictionary<NPC, int> recentlyTended = new();
         public List<SalesRecord> Sales = new();
-
+        
         public Texture2D OpenSign;
         public Texture2D ClosedSign;
 
         // state queries
         public bool IsPlayerShop()
         {
-            return ShopName == "Player";
+            return PlayerID != 0;
         }
 
         private static bool OutsideOpeningHours =>
@@ -65,8 +70,10 @@ namespace MarketDay.Shop
             recentlyTended = new Dictionary<NPC, int>();
             Sales = new List<SalesRecord>();
 
-            StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"] = "0";
-            StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"] = "0";
+            SetSharedValue(VisitorsTodayKey, 0);
+            SetSharedValue(GrumpyVisitorsTodayKey, 0);
+            SetSharedValue(SalesTodayKey, 0);
+            SetSharedValue(GoldTodayKey, 0);
 
             if (!IsPlayerShop())
             {
@@ -161,11 +168,26 @@ namespace MarketDay.Shop
                 npc.movementPause = 5000;
                 recentlyLooked[npc] = Game1.timeOfDay;
 
-                var visitors =
-                    int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"]);
-                visitors++;
-                StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"] = $"{visitors}";
+                IncrementSharedValue(VisitorsTodayKey);
             }
+        }
+
+        private void IncrementSharedValue(string key, int amount = 1)
+        {
+            var val = int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"]);
+            val += amount;
+            StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"] = $"{val}";
+        }
+
+        private int GetSharedValue(string key)
+        {
+            var val = int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"]);
+            return val;
+        }
+
+        private void SetSharedValue(string key, int val = 1)
+        {
+            StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"] = $"{val}";
         }
 
         internal void InteractWithNearbyNPCs()
@@ -186,8 +208,16 @@ namespace MarketDay.Shop
 
             if (IsPlayerShop())
             {
-                Game1.activeClickableMenu = new StorageContainer(GrangeChest.items, 9, 3, onGrangeChange,
-                    StardewValley.Utility.highlightSmallObjects);
+                if (PlayerID != Game1.player.UniqueMultiplayerID)
+                {
+                    var Owner = ShopName.Replace("Farmer:", "");
+                    Game1.activeClickableMenu = new DialogueBox(Get("not-your-shop", new {Owner}));
+                }
+                else
+                {
+                    Game1.activeClickableMenu = new StorageContainer(GrangeChest.items, 9, 3, onGrangeChange,
+                        StardewValley.Utility.highlightSmallObjects);
+                }
             }
             else DisplayShop();
 
@@ -381,12 +411,7 @@ namespace MarketDay.Shop
                 if (available.Count == 0)
                 {
                     // no stock
-                    var grumpy =
-                        int.Parse(StockChest.modData[
-                            $"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"]);
-                    grumpy++;
-                    StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"] = $"{grumpy}";
-
+                    IncrementSharedValue(GrumpyVisitorsTodayKey);
                     npc.doEmote(12);
                     return;
                 }
@@ -415,18 +440,9 @@ namespace MarketDay.Shop
             }
             else
             {
-                int taste;
-                try
-                {
-                    // so many other mods hack up NPCs that we have to wrap this
-                    taste = npc.getGiftTasteForThisItem(item);
-                }
-                catch (Exception)
-                {
-                    taste = NPC.gift_taste_neutral;
-                }
+                var taste = GetGiftTasteForThisItem(item, npc);
                 
-                string dialog = Get("buy", new {ItemName = item.DisplayName});
+                var dialog = Get("buy", new {ItemName = item.DisplayName});
                 if (taste == NPC.gift_taste_love)
                 {
                     dialog = Get("love", new {ItemName = item.DisplayName});
@@ -463,7 +479,17 @@ namespace MarketDay.Shop
 
             salePrice = Convert.ToInt32(salePrice * mult);
 
-            Game1.player.Money += salePrice;
+            if (Game1.player.team.useSeparateWallets.Value)
+            {
+                Log($"Paying {PlayerID}", LogLevel.Debug);
+                Log($"Paying {Game1.getFarmer(PlayerID).Name}", LogLevel.Debug);
+                var farmer = Game1.getFarmer(PlayerID);
+                Game1.player.team.AddIndividualMoney(farmer, salePrice);
+            }
+            else
+            {
+                Game1.player.Money += salePrice;
+            }
             Log($"Item {item.ParentSheetIndex} sold for {salePrice}", LogLevel.Debug);
 
             var newSale = new SalesRecord()
@@ -475,6 +501,9 @@ namespace MarketDay.Shop
                 timeOfDay = Game1.timeOfDay
             };
 
+            IncrementSharedValue(SalesTodayKey);
+            IncrementSharedValue(GoldTodayKey, salePrice);
+            
             Sales.Add(newSale);
         }
 
@@ -484,6 +513,12 @@ namespace MarketDay.Shop
             {
                 Log($"ShowSummary: summary for farmhands cannot list items sold", LogLevel.Warn);
             }
+
+            var FullFarmName = ShopName.Replace("Farmer:", "") + "'s " + Game1.player.farmName.Value;
+            var VisitorsToday = GetSharedValue(VisitorsTodayKey);
+            var GrumpyVisitorsToday = GetSharedValue(GrumpyVisitorsTodayKey);
+            var ItemsSold = GetSharedValue(SalesTodayKey);
+            var TotalGold = GetSharedValue(GoldTodayKey);
 
             var salesDescriptions = (
                 from sale in Sales
@@ -495,34 +530,37 @@ namespace MarketDay.Shop
                         Mult = displayMult
                     })
             ).ToList();
-            if (salesDescriptions.Count == 0) salesDescriptions.Add(Get("no-sales-today"));
 
+            string SalesSummary = "";
+            if (salesDescriptions.Count > 0)
+            {
+                SalesSummary = string.Join("^", salesDescriptions);
+            } 
+            
             string AverageMult;
-            string TotalGold;
             if (Sales.Count > 0)
             {
                 var avgBonus = Sales.Select(s => s.mult).Average() - 1;
                 AverageMult = $"{Convert.ToInt32(avgBonus * 100)}%";
-                TotalGold = $"{Sales.Select(s => s.price).Sum()}";
+            } else if (ItemsSold > 0)  // we sold stuff but the data's not available to this player
+            {
+                AverageMult = Get("not-available-mp");
             }
             else
             {
                 AverageMult = Get("no-sales-today");
-                TotalGold = Get("no-sales-today");
             }
 
-            var VisitorsToday = StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{VisitorsTodayKey}"];
-            var GrumpyVisitorsToday = StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrumpyVisitorsTodayKey}"];
             var message = Get("daily-summary",
                 new
                 {
-                    FarmName = Game1.player.farmName.Value,
-                    ItemsSold = Sales.Count,
+                    FarmName = FullFarmName,
+                    ItemsSold,
                     AverageMult,
                     VisitorsToday,
                     GrumpyVisitorsToday,
                     TotalGold,
-                    SalesSummary = string.Join("^", salesDescriptions)
+                    SalesSummary
                 }
             );
             Game1.drawLetterMessage(message);
@@ -549,7 +587,7 @@ namespace MarketDay.Shop
             if (npc is null) return mult;
 
             // * gift taste
-            switch (npc.getGiftTasteForThisItem(item))
+            switch (GetGiftTasteForThisItem(item, npc))
             {
                 case NPC.gift_taste_like:
                     mult += 1.2;
@@ -569,11 +607,8 @@ namespace MarketDay.Shop
             return mult;
         }
 
-        private static double ItemPreferenceIndex(Item item, NPC npc)
+        private static int GetGiftTasteForThisItem(Item item, NPC npc)
         {
-            if (item is null || npc is null) return 1.0;
-
-            // * gift taste
             int taste;
             try
             {
@@ -582,9 +617,19 @@ namespace MarketDay.Shop
             }
             catch (Exception)
             {
-                taste = NPC.gift_taste_neutral;
+                // the default is dislike 
+                // because otherwise we get dogs buying clothes
+                taste = NPC.gift_taste_dislike;
             }
-            
+            return taste;
+        }
+
+        private static double ItemPreferenceIndex(Item item, NPC npc)
+        {
+            if (item is null || npc is null) return 1.0;
+
+            // * gift taste
+            var taste = GetGiftTasteForThisItem(item, npc);
             switch (taste)
             {
                 case NPC.gift_taste_dislike:

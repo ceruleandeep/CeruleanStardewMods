@@ -28,7 +28,7 @@ namespace MarketDay
                 LogLevel.Debug, true);
 
             if (owner is null) return true;
-            if (owner == "Player" || MarketDay.Config.PeekIntoChests) return true;
+            if (owner == $"Farmer:{who.Name}" || MarketDay.Config.PeekIntoChests) return true;
 
             MarketDay.Log(
                 $"Prefix_Chest_checkForAction preventing action on object at {__instance.TileLocation} owned by {owner}",
@@ -52,13 +52,13 @@ namespace MarketDay
             var owner = MapUtility.Owner(__instance);
             MarketDay.Log(
                 $"Prefix_Sign_checkForAction checking {__instance} {__instance.DisplayName} owner {owner} at {__instance.TileLocation}",
-                LogLevel.Debug, true);
+                LogLevel.Debug, false);
 
-            if (owner is null or "Player") return true;
+            if (owner is null || owner == $"Farmer:{who.Name}") return true;
 
             MarketDay.Log(
                 $"Prefix_Sign_checkForAction preventing action on object at {__instance.TileLocation} owned by {owner}",
-                LogLevel.Debug, true);
+                LogLevel.Debug, false);
 
             who.currentLocation.playSound("clank");
             __instance.shakeTimer = 500;
@@ -78,14 +78,14 @@ namespace MarketDay
             var owner = MapUtility.Owner(__instance);
             MarketDay.Log(
                 $"Prefix_Object_performUseAction checking {__instance} {__instance.DisplayName} owner {owner} at {__instance.TileLocation}",
-                LogLevel.Debug, true);
+                LogLevel.Debug, false);
 
             if (owner is null) return true;
-            if (owner == "Player" || MarketDay.Config.PeekIntoChests) return true;
+            if (owner == $"Farmer:{Game1.player.Name}" || MarketDay.Config.PeekIntoChests) return true;
 
             MarketDay.Log(
                 $"Prefix_Object_performUseAction preventing use of object at {__instance.TileLocation} owned by {owner}",
-                LogLevel.Debug, true);
+                LogLevel.Debug, false);
 
             location.playSound("clank");
             __instance.shakeTimer = 500;

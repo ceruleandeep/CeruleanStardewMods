@@ -26,7 +26,7 @@ namespace MarketDay.Shop
         public static void LoadContentPacks()
         {
             MarketDay.Log("Adding Content Packs...", LogLevel.Info);
-            foreach (IContentPack contentPack in MarketDay.helper.ContentPacks.GetOwned())
+            foreach (var contentPack in MarketDay.helper.ContentPacks.GetOwned())
             {
                 if (!contentPack.HasFile("shops.json"))
                 {
@@ -194,10 +194,10 @@ namespace MarketDay.Shop
             if (GrangeShops.Count > 0)
                 MarketDay.Log($"Refreshing stock for all custom shops...", LogLevel.Debug);
 
-            foreach (GrangeShop store in GrangeShops.Values)
+            foreach (var grangeShop in GrangeShops.Values)
             {
-                store.UpdateItemPriceAndStock();
-                store.UpdatePortrait();
+                if (! grangeShop.IsPlayerShop()) grangeShop.UpdateItemPriceAndStock();
+                grangeShop.UpdatePortrait();
             }
         }
 

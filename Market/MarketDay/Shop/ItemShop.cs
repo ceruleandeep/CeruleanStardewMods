@@ -19,9 +19,7 @@ namespace MarketDay.Shop
         public ItemPriceAndStockManager StockManager { get; set; }
 
         public IContentPack ContentPack { set; get; }
-
-        public string ShopKey => ShopName == "Player" ? ShopName : $"{ContentPack.Manifest.UniqueID}/{ShopName}";
-
+        
         /// <summary>
         /// This is used to make sure that JA only adds items to this shop the first time it is opened each day
         /// or else items will be added every time the shop is opened
