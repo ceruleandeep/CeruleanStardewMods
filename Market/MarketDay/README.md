@@ -63,13 +63,6 @@ Requirements
 * Generic Mod Config Menu (optional)
 * JSON Assets (optional)
 
-Future shop ideas
----
-* Haley sells photography
-* Robin sells furniture
-* More art for Leah
-* Sandy
-
 Adding your own shops
 ---
 
@@ -89,37 +82,38 @@ What I think I know about grange shop design:
 Future
 ---
 
+Shop ideas:
+* Robin sells furniture
+* More art for Leah
+* Sandy sells... something
+* Marnie sells animals
+* Willy sells fish instead of fishing bits
+* Leo's island shop
+
+Market rendering
 * two markets a day
 * villagers come to sides of shops
 * track villager's intended arrival tile and only pause them there
-* restart market on GMCM change
-* flx flash of content when chest is/isn't displayed
-  
-* if NPC buys a clothing item, put it on
-  
-* Option for random number of shops every market day
-* Make a shop with your spouse/roommate
-* Leo's island shop
-* letter after market to summarize sales
-  
-* write tutorial here
-* sell animals
-* shut the market down properly at closing time, empty the granges
-* in-game tutorial
-* send a mail on the day before the first fair?
+* fix flash of content when chest is/isn't displayed
+* Option for random number of shops each market day
 * tint the sign
-* boost price if item is in season
-* custom sell prices for player store with prob of purchase
-
-* samples sell product
-* interactions with buyers
-* Variable pricing, supply/demand response
-* Reviews
-* Critics
-* Gain friendship if items bought while you're there
-* Samples
-* https://github.com/StardewModders/mod-ideas/issues/650
+  
+Mail and conversations:
+* write tutorial here
+* in-game tutorial
+* send a mail on the day before the first fair
+* shut the market down properly at closing time, empty the granges
+* letter after market to summarize sales
 * Conversation topic after market day e.g. Pierre is pissed
+* interactions with buyers
+
+Market mechanics:
+* boost price if item is in season
+* Make a shop with your spouse/roommate
+* samples sell product
+* Variable pricing, supply/demand response
+* Critics and reviews
+* Gain friendship if items bought while you're there
 
 
 License
