@@ -106,6 +106,7 @@ namespace MarketDay
         {
             foreach (var farmer in Game1.getAllFarmers())
             {
+                if (!farmer.isActive()) continue;
                 var PlayerShop = new GrangeShop()
                 {
                     ShopName = $"Farmer:{farmer.Name}",
