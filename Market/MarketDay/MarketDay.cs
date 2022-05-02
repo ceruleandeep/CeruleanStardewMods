@@ -562,25 +562,8 @@ namespace MarketDay
 
             if (!e.Button.IsActionButton()) return;
             
-            // refer clicks on grange tiles to each shop
             var gtShop = MapUtility.ShopNearTile(e.Cursor.GrabTile);
             gtShop?.OnActionButton(e);
-
-            //
-            // var tileIndexAt = Game1.currentLocation.getTileIndexAt((int) x, (int) y, "Buildings");
-            // Log($"ActionButton {tileIndexAt}", LogLevel.Debug, true);
-            // if (tileIndexAt is < 349 or > 351) return;
-            //
-            // var signTile = new Vector2(352 - tileIndexAt + x, y);
-            // Log($"    checking {signTile}", LogLevel.Debug, true);
-            // if (Game1.currentLocation.objects.TryGetValue(signTile, out var sign) && sign is Sign)
-            // {
-            //     sign.modData.TryGetValue($"{ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out var shopOwner);
-            //     Log($"OnButtonPressed ActionButton for {shopOwner}", LogLevel.Debug, true);
-            //
-            //     var shop = ShopManager.GrangeShops[shopOwner];
-            //     shop.OnActionButton(e);
-            // }
         }
 
         private void CheckDebugKeybinds(ButtonPressedEventArgs e)

@@ -97,16 +97,6 @@
                 "HasMod |contains=FlashShifter.StardewValleyExpandedCP": false
             }
         },
-//        {
-//            "LogName": "Patch town corner for Shop 0",
-//            "Action": "EditMap",
-//            "Target": "Maps/Town",
-//            "FromFile": "assets/Town_Shop0.tmx",
-//            "PatchMode": "Replace",
-//            "FromArea": {"X": 20, "Y": 56, "Width": 6, "Height": 7},
-//            "ToArea": {"X": 20, "Y": 56, "Width": 6, "Height": 7},
-//            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop0", "ceruleandeep.MarketDay/IsMarketDay": true}
-//        },
         {
             "LogName": "Load Market Day map: Shop 0",
             "Action": "EditMap",

@@ -1,6 +1,9 @@
 # Changes
 
-1.0.9-beta.3
+1.0.9-beta.4
+  * Fix ordering of NPC gift preferences when buying stuff
+
+1.0.9-beta.3: Multi-shop
   * Add one shop for each player
   * Pay farmers separately when separate money in use
   * Patch paths to make room for one more shop
@@ -12,7 +15,7 @@
   * Wrap another NPC gift tastes call in a try/catch block
   * Fix some ordering stuff that prevented shop en/dis from being saved
   
-* 1.0.8 RELEASE
+1.0.8 RELEASE
   * Add shops for Wizard, Haley, Elliott, Sam, Jas+Vincent, Maru
   * Catch exceptions caused by other lazy mods not doing gift preference
   * Move all market-opening settings to C# out of CP
@@ -24,15 +27,14 @@
   * Display total sales value in sign message
   * ShopTiles is now a property so get set for mayhem
   
-* 1.0.7 RELEASE
+1.0.7 RELEASE
   * fix exploit where shop could be opened after hours via sign
   * remove click handler so we don't react to STF tile props
   * remove SVE's picnic set more thoroughly
   
-* 1.0.5 RELEASE: New shops, new art, item quality
-    * New shops: Caroline, Gunther, Pierre, Demetrius
-    * Support item quality in NPC shops
-    * Custom open and closed signs for shops
-    * Load random items from a category
-    * Fix annoying log spam when a not-ours chest is clicked on
-\
+1.0.5 RELEASE: New shops, new art, item quality
+  * New shops: Caroline, Gunther, Pierre, Demetrius
+  * Support item quality in NPC shops
+  * Custom open and closed signs for shops
+  * Load random items from a category
+  * Fix annoying log spam when a not-ours chest is clicked on

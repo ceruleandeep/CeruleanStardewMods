@@ -18,7 +18,7 @@ namespace MarketDay.Shop
     public class GrangeShop : ItemShop
     {
         private const int WOOD_SIGN = 37;
-        private const double BUY_CHANCE = 0.25;
+        private const double BUY_CHANCE = 0.75;
 
         private const int DisplayChestHidingOffsetY = 36;
 
@@ -402,7 +402,7 @@ namespace MarketDay.Shop
                 if (RecentlyBought(npc)) continue;
 
                 // unlucky
-                if (Game1.random.NextDouble() < BUY_CHANCE + Game1.player.DailyLuck) continue;
+                if (Game1.random.NextDouble() > BUY_CHANCE + Game1.player.DailyLuck) continue;
 
                 // check stock                
                 // also remove items the NPC dislikes
@@ -472,11 +472,7 @@ namespace MarketDay.Shop
             Debug.Assert(Context.IsMainPlayer, "AddToPlayerFunds: only main player can access Sales");
 
             var mult = SellPriceMultiplier(item, npc);
-            var obj = (Object) item;
-            if (obj is null) return;
-
-            var salePrice = obj.sellToStorePrice();
-
+            var salePrice = StardewValley.Utility.getSellToStorePriceOfItem(item, false);
             salePrice = Convert.ToInt32(salePrice * mult);
 
             if (Game1.player.team.useSeparateWallets.Value)
