@@ -874,7 +874,7 @@
         {"ItemNames": ["Sam's Old Guitar"], "When": ["e 4081148"], "StockPrice": 2000, "Stock": 1, "ItemType": "Weapon"},
         {"ItemNames": ["Earmuffs"], "StockPrice": 1000, "Stock": 1, "ItemType": "Hat"},
         {"ItemNames": ["Pizza", "Joja Cola"], "Stock": 3, "ItemType": "Object"},
-        {"ItemNames": ["Super Joja Cola"], "Stock": 1, "ItemType": "Object"},
+        {"ItemNames": ["Super Joja Cola"], "Stock": 1, "ItemType": "Object"}
       ]
     },
     {

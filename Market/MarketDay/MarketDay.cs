@@ -845,7 +845,7 @@ namespace MarketDay
                 () => Helper.Translation.Get("cfg.shop-layout"),
                 () => Helper.Translation.Get("cfg.shop-layout.msg"),
                 0,
-                10,
+                12,
                 fieldId: "fm_ShopLayout"
             );
             
@@ -969,6 +969,8 @@ namespace MarketDay
             ["8 Shops"] = new List<int> {0, 1, 2, 5, 6, 7, 8, 9}, 
             ["9 Shops"] = new List<int> {0, 1, 2, 3, 5, 6, 7, 8, 9},
             ["10 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+            ["11 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+            ["12 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
         };
 
         private static bool isGMMDay()

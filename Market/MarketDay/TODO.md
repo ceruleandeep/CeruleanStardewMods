@@ -1,5 +1,40 @@
+Future
+---
 
-c/o dollynhoevida:
+Shop ideas:
+* Robin sells furniture
+* More art for Leah
+* Sandy sells... something
+* Marnie sells animals
+* Willy sells fish instead of fishing bits
+* Leo's island shop
+
+Market rendering
+* two markets a day
+* villagers come to sides of shops
+* track villager's intended arrival tile and only pause them there
+* fix flash of content when chest is/isn't displayed
+* Option for random number of shops each market day
+* tint the sign
+
+Mail and conversations:
+* write tutorial here
+* in-game tutorial
+* send a mail on the day before the first fair
+* shut the market down properly at closing time, empty the granges
+* letter after market to summarize sales
+* Conversation topic after market day e.g. Pierre is pissed
+* interactions with buyers
+
+Market mechanics:
+* boost price if item is in season
+* Make a shop with your spouse/roommate
+* samples sell product
+* Variable pricing, supply/demand response
+* Critics and reviews
+* Gain friendship if items bought while you're there
+
+## c/o dollynhoevida:
 
 Hello, I have many ideas for your market day mod, I'm sending message because it's a lot of text to put on a post sorry, also it's just ideas I had fun making, tell me what you think and if you need help to find items on the list.
 
