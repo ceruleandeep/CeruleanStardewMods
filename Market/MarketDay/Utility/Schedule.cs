@@ -495,8 +495,8 @@ namespace MarketDay.Utility
 						// 	LogLevel.Info);
 
 						var startToTown = pathfindToNextScheduleLocation(npc, stepTime, nextStepTime, false, startLoc,
-							startPoint.X, startPoint.Y, "Town", (int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, 2, endBehavior,
-							endMessage);
+							startPoint.X, startPoint.Y, "Town", (int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, 2, null,
+							null);
 						var arriveInTownAt =
 							StardewValley.Utility.ConvertMinutesToTime(StardewValley.Utility.ConvertTimeToMinutes(stepTime) +
 							                                           Minutes(startToTown));

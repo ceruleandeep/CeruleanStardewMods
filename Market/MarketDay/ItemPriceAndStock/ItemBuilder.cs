@@ -21,13 +21,13 @@ namespace MarketDay.ItemPriceAndStock
 
         public ItemBuilder(ItemStock itemStock)
         {
-            this._itemStock = itemStock;
+            _itemStock = itemStock;
         }
 
         /// <param name="itemPriceAndStock">the ItemPriceAndStock this builder will add items to</param>
         public void SetItemPriceAndStock(Dictionary<ISalable, int[]> itemPriceAndStock)
         {
-            this._itemPriceAndStock = itemPriceAndStock;
+            _itemPriceAndStock = itemPriceAndStock;
         }
 
         /// <summary>

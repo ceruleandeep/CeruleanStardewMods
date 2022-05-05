@@ -41,9 +41,13 @@ namespace MarketDay
         private static bool GMCMChangesSynced = true;
         
         internal static ModConfig Config;
+        internal static ProgressionModel Progression;
         internal static IModHelper helper;
         internal static IMonitor monitor;
         internal static Mod SMod;
+        
+        public const string SalesReportKey = "LastSalesReport";
+        public const string TotalGoldKey = "TotalGold";
         
         // ChroniclerCherry
         //The following variables are to help revert hardcoded warps done by the carpenter and
@@ -57,6 +61,8 @@ namespace MarketDay
         private static bool GMMJosephPresent;
         private static bool GMMPaisleyPresent;
 
+        private static Mail Mail = new Mail();
+        
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="h">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper h)
@@ -68,10 +74,12 @@ namespace MarketDay
             Helper.Events.GameLoop.GameLaunched += OnLaunched;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_STFRegistrations;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_STFInit;
-            // Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_ReadConfig;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_ReadProgressionData;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_MakePlayerShops;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateSTFStock_SendPrompt;
+            Helper.Events.GameLoop.DayStarted += OnDayStarted_SendMail;
+            
             // Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_SyncMapOpenShops;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_InteractWithNPCs;
@@ -159,6 +167,7 @@ namespace MarketDay
                 ShopManager.GrangeShops.Remove(ShopKey);
 
             helper.WriteConfig(Config);
+            OnSaveLoaded_ReadProgressionData(null, null);
             
             Log($"    Loading content packs", LogLevel.Debug);
             OnLaunched_STFInit(null, null);
@@ -266,22 +275,20 @@ namespace MarketDay
         }
 
         /// <summary>Raised after the player loads a save slot and the world is initialised.
-        ///
-        /// For STF compat:
-        /// On a save loaded, store the language for translation purposes. Done on save loaded in
-        /// case it's changed between saves
-        /// 
-        /// Also retrieve all object informations. This is done on save loaded because that's
-        /// when JA adds custom items
         /// </summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
-        private static void OnSaveLoaded_ReadConfig(object sender, EventArgs e)
+        private static void OnSaveLoaded_ReadProgressionData(object sender, EventArgs e)
         {
-            // reload the config to pick up any changes made in GMCM on the title screen
-            Config = helper.ReadConfig<ModConfig>();
+            Progression = helper.Data.ReadJsonFile<ProgressionModel>("assets/progression.json");
+            if (Progression is null)
+            {
+                Log("Could not read progression data", LogLevel.Error);
+                Progression = new ProgressionModel();
+            }
+            Progression.CheckItems();
         }
-        
+
         private static void OnSaveLoaded_DestroyFurniture(object sender, EventArgs e)
         {
             Log($"OnSaveLoaded_DestroyFurniture: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
@@ -319,6 +326,28 @@ namespace MarketDay
         {
             RemovePlayerShops();
             MakePlayerShops();
+        }
+
+        private static void OnDayStarted_SendMail(object sender, EventArgs e)
+        {
+            var prefix = $"{SMod.ModManifest.UniqueID}/{SalesReportKey}/";
+            foreach (var (dataKey, dataValue) in Game1.getFarm().modData.Pairs)
+            {
+                if (!dataKey.StartsWith(prefix)) continue;
+                var farmer = dataKey.Replace(prefix, "");
+                Log($"Available sales report for {farmer}: {dataKey}", LogLevel.Debug);
+            }
+
+            foreach (var farmer in Game1.getAllFarmers())
+            {
+                var dataKey = $"{SMod.ModManifest.UniqueID}/{SalesReportKey}/{farmer.Name}";
+                if (!Game1.getFarm().modData.TryGetValue(dataKey, out var report)) continue;
+                var mailKey = $"md_{farmer.Name}_{Game1.currentSeason}_{Game1.dayOfMonth}_Y{Game1.year}";
+                Mail.Add(mailKey, report);
+                farmer.mailbox.Add(mailKey);
+                Game1.getFarm().modData.Remove(dataKey);
+                helper.Content.InvalidateCache("Data\\mail"); 
+            }
         }
 
         // private static void OnUpdateTicking(object sender, UpdateTickingEventArgs e)
@@ -485,7 +514,7 @@ namespace MarketDay
             Log($"OnDayEnding: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
             if (!Context.IsMainPlayer) return;
             
-            foreach (var store in MapUtility.ShopAtTile().Values) store.EmptyGrangeAndDestroyFurniture();
+            foreach (var store in MapUtility.ShopAtTile().Values) store.CloseShop();
             RemoveStrayFurniture();
             
             Log($"OnDayEnding: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
@@ -730,6 +759,8 @@ namespace MarketDay
 
             Config = Helper.ReadConfig<ModConfig>();
             
+            Helper.Content.AssetEditors.Add(Mail);
+            
             setupGMCM();
             ContentPatcherApi =
                 Helper.ModRegistry.GetApi<IContentPatcherAPI>("Pathoschild.ContentPatcher");
@@ -969,7 +1000,7 @@ namespace MarketDay
             return md;
         }
 
-        internal static Dictionary<string, List<int>> ShopLayouts = new()
+        private static readonly Dictionary<string, List<int>> ShopLayouts = new()
         {
             ["0 Shops"] = new List<int> {},
             ["1 Shop"] = new List<int>  {1},
@@ -988,16 +1019,18 @@ namespace MarketDay
 
         private static bool isGMMDay()
         {
+            if (!StardewValley.Utility.doesAnyFarmerHaveMail("makersmarketletter")) return false;
             return Game1.dayOfMonth is 6 or 7 or 20 or 21;
         }
-        
-        internal static string[] ShopPositions()
+
+        private static string[] ShopPositions()
         {
             if (!Context.IsWorldReady) return null;
             var key = $"{Config.ShopLayout} Shops";
             if (!ShopLayouts.ContainsKey(key)) key = "6 Shops";
             if (!ShopLayouts.TryGetValue(key, out var layout)) return null;
-
+            
+            layout = layout.ToList();
             if (Config.GMMCompat && isGMMDay())
             {
                 if (GMMPaisleyPresent) layout.Remove(5);
@@ -1020,6 +1053,31 @@ namespace MarketDay
                 monitor.Log($"{message}", level);
             else
                 monitor.Log($"[{Game1.player.Name}] {message}", level);
+        }
+
+        internal static void IncrementSharedValue(string key, int amount = 1)
+        {
+            var val = GetSharedValue(key);
+            val += amount;
+            SetSharedValue(key, val);
+        }
+
+        internal static int GetSharedValue(string key)
+        {
+            int val = 0;
+            if (Game1.getFarm().modData.TryGetValue($"{SMod.ModManifest.UniqueID}/{key}", out var strVal))
+                val = int.Parse(strVal);
+            return val;
+        }
+
+        internal static void SetSharedValue(string key, int val)
+        {
+            Game1.getFarm().modData[$"{SMod.ModManifest.UniqueID}/{key}"] = $"{val}";
+        }
+
+        internal static void SetSharedValue(string key, string val)
+        {
+            Game1.getFarm().modData[$"{SMod.ModManifest.UniqueID}/{key}"] = val;
         }
 
     }

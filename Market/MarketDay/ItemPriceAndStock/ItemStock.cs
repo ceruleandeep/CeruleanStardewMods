@@ -39,7 +39,7 @@ namespace MarketDay.ItemPriceAndStock
             DefaultSellPriceMultiplier = defaultSellPriceMultiplier;
             PriceMultiplierWhen = priceMultiplierWhen;
 
-            if (Quality < 0 || Quality == 3 || Quality > 4)
+            if (Quality is < 0 or 3 or > 4)
             {
                 Quality = 0;
                 MarketDay.Log("Item quality can only be 0,1,2, or 4. Defaulting to 0", LogLevel.Warn);
@@ -52,7 +52,7 @@ namespace MarketDay.ItemPriceAndStock
             {
                 StockPrice = price;
             }
-            this._priceMultiplierWhen = priceMultiplierWhen;
+            _priceMultiplierWhen = priceMultiplierWhen;
 
             if (IsRecipe)
                 Stock = 1;

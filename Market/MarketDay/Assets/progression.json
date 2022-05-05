@@ -1,0 +1,75 @@
+{
+  "Levels": 
+  [
+    {
+      "Name": "Starting Out",
+      "MarketSize": 3,
+      "UnlockAtEarnings": 0,
+      "Prizes": [
+        {"Gold": 15000, "Score": 0, "Object": "Quality Fertilizer"},
+        {"Gold": 18000, "Score": 0, "Object": "Egg"},
+        {"Gold": 20000, "Score": 0, "Object": "Milk"},
+        {"Gold": 0, "Score": 60, "Object": "Cheese"},
+        {"Gold": 15000, "Score": 60, "Object": "Fairy Rose"},
+        {"Gold": 18000, "Score": 60, "Object": "Blue Jazz Honey"},
+        {"Gold": 20000, "Score": 60, "Object": "Goat Cheese"}
+      ]
+    },
+    {
+      "Name": "Best in the District",
+      "MarketSize": 6,
+      "UnlockAtEarnings": 40000,
+      "Prizes": [
+        {"Gold": 15000, "Score": 0, "Object": "Oil"},
+        {"Gold": 18000, "Score": 0, "Object": "Bread"},
+        {"Gold": 20000, "Score": 0, "Object": "Wool"},
+        {"Gold": 0, "Score": 60, "Object": "Wheat Flour"},
+        {"Gold": 15000, "Score": 60, "Object": "Wheat Flour"},
+        {"Gold": 18000, "Score": 60, "Object": "Wheat Flour", "Stack": 3},
+        {"Gold": 20000, "Score": 60, "Object": "Unmilled Rice", "Stack": 3}
+      ]
+    },
+    {
+      "Name": "Best in the Republic",
+      "MarketSize": 9,
+      "UnlockAtEarnings": 450000,
+      "Prizes": [
+        {"Gold": 15000, "Score": 0, "Object": "Large Egg"},
+        {"Gold": 18000, "Score": 0, "Object": "Tea Leaves"},
+        {"Gold": 20000, "Score": 0, "Object": "Green Tea"},
+        {"Gold": 0, "Score": 60, "Object": "Cheese", "Quality": 2},
+        {"Gold": 15000, "Score": 60, "Object": "Pumpkin"},
+        {"Gold": 18000, "Score": 60, "Object": "Eggplant Juice"},
+        {"Gold": 20000, "Score": 60, "Object": "Sashimi"}
+      ]
+    },
+    {
+      "Name": "Best on the Continent",
+      "MarketSize": 12,
+      "UnlockAtEarnings": 1500000,
+      "Prizes": [
+        {"Gold": 15000, "Score": 0, "Object": "Mayonnaise", "Quality": 2},
+        {"Gold": 18000, "Score": 0, "Object": "Hot Pepper"},
+        {"Gold": 20000, "Score": 0, "Object": "Coffee Bean"},
+        {"Gold": 0, "Score": 60, "Object": "Wool", "Stack": 3},
+        {"Gold": 15000, "Score": 60, "Object": "Blueberry Jelly"},
+        {"Gold": 18000, "Score": 60, "Object": "Yam Juice"},
+        {"Gold": 20000, "Score": 60, "Object": "Apple Wine"}
+      ]
+    },
+    {
+      "Name": "Best in the World",
+      "MarketSize": 12,
+      "UnlockAtEarnings": 5000000,
+      "Prizes": [
+        {"Gold": 15000, "Score": 0, "Object": "Rhubarb Pie"},
+        {"Gold": 18000, "Score": 0, "Object": "Blueberry Jelly"},
+        {"Gold": 20000, "Score": 0, "Object": "Starfruit Wine", "Quality": 4},
+        {"Gold": 0, "Score": 60, "Object": "Mead", "Quality": 4},
+        {"Gold": 15000, "Score": 60, "Object": "Pink Cake", "Stack": 3},
+        {"Gold": 18000, "Score": 60, "Object": "Starfruit Wine", "Quality": 4},
+        {"Gold": 20000, "Score": 60, "Object": "Copper Bar", "Stack": 3}
+      ]
+    }
+  ]
+}

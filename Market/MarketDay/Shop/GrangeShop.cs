@@ -125,14 +125,18 @@ namespace MarketDay.Shop
             }
         }
 
-        public void EmptyGrangeAndDestroyFurniture()
+        public void CloseShop()
         {
             if (!Context.IsMainPlayer) return;
 
+                
             Log($"    EmptyGrangeAndDestroyFurniture: IsPlayerShop: {IsPlayerShop()}", LogLevel.Trace);
 
             if (IsPlayerShop())
             {
+                MarketDay.IncrementSharedValue(MarketDay.TotalGoldKey, GetSharedValue(GoldTodayKey));
+                MarketDay.SetSharedValue($"{MarketDay.SalesReportKey}/{Owner()}", SalesReport("mail-summary"));
+
                 EmptyStoreIntoChest();
                 EmptyPlayerDayStorageChest();
             }
@@ -527,16 +531,19 @@ namespace MarketDay.Shop
 
         public void ShowSummary()
         {
-            if (!Context.IsMainPlayer)
-            {
-                Log($"ShowSummary: summary for farmhands cannot list items sold", LogLevel.Warn);
-            }
+            var message = SalesReport();
+            Game1.drawLetterMessage(message);
+        }
 
+        private string SalesReport(string key="sales-desc")
+        {
             var FullFarmName = ShopName.Replace("Farmer:", "") + "'s " + Game1.player.farmName.Value;
             var VisitorsToday = GetSharedValue(VisitorsTodayKey);
             var GrumpyVisitorsToday = GetSharedValue(GrumpyVisitorsTodayKey);
             var ItemsSold = GetSharedValue(SalesTodayKey);
-            var TotalGold = GetSharedValue(GoldTodayKey);
+            var TotalGoldToday = GetSharedValue(GoldTodayKey)+"g";
+            var TotalGold = MarketDay.GetSharedValue(MarketDay.TotalGoldKey)+"g";
+            var Date = $"{Game1.currentSeason} {Game1.dayOfMonth}, Year {Game1.year}";
 
             var salesDescriptions = (
                 from sale in Sales
@@ -570,7 +577,7 @@ namespace MarketDay.Shop
                 AverageMult = Get("no-sales-today");
             }
 
-            var message = Get("daily-summary",
+            var message = Get(key,
                 new
                 {
                     FarmName = FullFarmName,
@@ -578,11 +585,13 @@ namespace MarketDay.Shop
                     AverageMult,
                     VisitorsToday,
                     GrumpyVisitorsToday,
+                    TotalGoldToday,
                     TotalGold,
-                    SalesSummary
+                    SalesSummary,
+                    Date
                 }
             );
-            Game1.drawLetterMessage(message);
+            return message;
         }
 
         private double SellPriceMultiplier(Item item, NPC npc)
