@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="57">
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="4" height="5" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="57">
  <properties>
   <property name="Arch" value="102 .02 100 .008 110 .02 115 .002"/>
   <property name="DayTiles" value="AlwaysFront 52 98 907 AlwaysFront 56 98 907 AlwaysFront 24 50 907 AlwaysFront 33 53 907 AlwaysFront 24 58 907 AlwaysFront 27 72 907 AlwaysFront 30 72 907 AlwaysFront 38 65 907 AlwaysFront 27 86 907 AlwaysFront 17 86 907 AlwaysFront 21 64 907 Buildings 92 79 186 Buildings 41 69 560 Buildings 71 67 720"/>
@@ -1754,40 +1754,45 @@
    </properties>
   </tile>
  </tileset>
- <layer id="1" name="Back" width="4" height="4">
+ <layer id="1" name="Back" width="4" height="5">
   <data encoding="csv">
+2748,2748,2749,2748,
 2748,2748,2749,2748,
 2748,2780,2781,2748,
 2750,2685,2719,2719,
 2654,326,327,327
 </data>
  </layer>
- <layer id="2" name="Buildings" width="4" height="4">
+ <layer id="2" name="Buildings" width="4" height="5">
   <data encoding="csv">
+0,0,0,0,
 0,0,0,0,
 0,0,0,0,
 0,0,0,0,
 0,0,0,0
 </data>
  </layer>
- <layer id="3" name="Paths" width="4" height="4">
+ <layer id="3" name="Paths" width="4" height="5">
   <data encoding="csv">
+0,0,0,0,
 0,0,0,0,
 0,0,0,0,
 0,0,0,0,
 0,0,0,0
 </data>
  </layer>
- <layer id="4" name="Front" width="4" height="4">
+ <layer id="4" name="Front" width="4" height="5">
   <data encoding="csv">
+0,0,0,0,
 0,0,0,0,
 0,0,0,0,
 0,0,0,0,
 2919,101,0,0
 </data>
  </layer>
- <layer id="5" name="AlwaysFront" width="4" height="4">
+ <layer id="5" name="AlwaysFront" width="4" height="5">
   <data encoding="csv">
+0,0,0,0,
 0,0,0,0,
 0,0,0,0,
 0,0,0,0,

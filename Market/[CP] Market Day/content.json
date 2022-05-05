@@ -103,8 +103,8 @@
             "Target": "Maps/Town",
             "FromFile": "assets/Town_Shop3_SVE.tmx",
             "PatchMode": "Replace",
-            "FromArea": {"X": 0, "Y": 0, "Width": 3, "Height": 4},
-            "ToArea": {"X": 38, "Y": 61, "Width": 3, "Height": 4},
+            "FromArea": {"X": 0, "Y": 0, "Width": 3, "Height": 5},
+            "ToArea": {"X": 38, "Y": 60, "Width": 3, "Height": 5},
             "When": {
                 "ceruleandeep.MarketDay/ShopPositions": "Shop3",
                 "ceruleandeep.MarketDay/IsMarketDay": true,
@@ -135,7 +135,7 @@
             "ToArea": {"X": 46, "Y": 55, "Width": 8, "Height": 10},
             "When": {
                 "ceruleandeep.MarketDay/ShopPositions": "Shop10",
-                "ceruleandeep.MarketDay/IsMarketDay": true,
+                "ceruleandeep.MarketDay/IsMarketDay": true
             }
         },
         {

@@ -202,7 +202,17 @@ namespace MarketDay
             var ansk = string.Join(", ", AvailableNPCShopKeys);
             state.Add($"Available NPC shops:  {AvailableNPCShopKeys.Count} shops: {ansk}");
 
-
+            state.Add($"NPC interactions:");
+            var times = Schedule.NPCInteractions.Keys.ToList();
+            times.Sort();
+            foreach (var time in times)
+            {
+                var interactions = Schedule.NPCInteractions[time];
+                interactions.Sort();
+                state.Add($"    {time}:");
+                state.AddRange(interactions.Select(interaction => $"        {interaction}").Distinct());
+            }
+            
             foreach (var line in state) Log(line, LogLevel.Debug);
         }
 
@@ -324,10 +334,11 @@ namespace MarketDay
             if (!IsMarketDay()) return;
             
             if (MapChangesSynced) return;
-            SyncMapChanges();
+            if (!MapReady()) return;
             
-            if (!MapChangesSynced) return;
+            MapChangesSynced = true;
             OpenShops();
+            RecalculateSchedules();
             LogModState();
         }
 
@@ -346,38 +357,32 @@ namespace MarketDay
             foreach (var store in MapUtility.ShopAtTile().Values) store.RestockThroughDay(IsMarketDay());
         }
 
-        private static void SyncMapChanges()
+        private static bool MapReady()
         {
-            if (!IsMarketDay()) return;
-            if (!Context.IsMainPlayer) return;
-            
-            Log($"SyncMapChangesAndOpenShops: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+            Log($"MapReady: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
 
             if (MapUtility.ShopTiles is null)
             {
-                Log($"SyncMapChangesAndOpenShops: MarketDay.ShopLocations is null, called too early", LogLevel.Trace);
-                return;
+                Log($"MapReady: MarketDay.ShopLocations is null, called too early", LogLevel.Trace);
+                return false;
             }
             
             if (MapUtility.ShopTiles.Count == 0)
             {
-                Log($"SyncMapChangesAndOpenShops: MarketDay.ShopLocations.Count {MapUtility.ShopTiles.Count}, called too early", LogLevel.Trace);
-                return;
+                Log($"MapReady: MarketDay.ShopLocations.Count {MapUtility.ShopTiles.Count}, called too early", LogLevel.Trace);
+                return false;
             }
-            Log($"    SyncMapChangesAndOpenShops: {Game1.ticks}", LogLevel.Trace);
+            Log($"    MapReady: {Game1.ticks}", LogLevel.Trace);
 
-            RecalculateSchedules();
-            MapChangesSynced = true;
-            Log($"SyncMapChangesAndOpenShops: MapChangesSynced set {MapChangesSynced} at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
-
-            // we used to open the shops here
-            
-            Log($"SyncMapChangesAndOpenShops: completed at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+            Log($"MapReady: true at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+            return true;
         }
         
         private static void RecalculateSchedules()
         {
-            Log($"RecalculateSchedules: begins at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+            Log($"RecalculateSchedules: begins at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Warn);
+
+            Schedule.NPCInteractions = new();
 
             foreach (var npc in StardewValley.Utility.getAllCharacters())
             {
@@ -385,6 +390,7 @@ namespace MarketDay
                 if (!npc.isVillager()) continue;
                 npc.Schedule = npc.getSchedule(Game1.dayOfMonth);
             }
+
             Log($"RecalculateSchedules: completed at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
 
@@ -897,6 +903,13 @@ namespace MarketDay
                 val => Config.NPCVisitors = val,
                 () => Helper.Translation.Get("cfg.npc-visitors"),
                 () => Helper.Translation.Get("cfg.npc-visitors.msg")
+            );
+
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.NPCRescheduling,
+                val => Config.NPCRescheduling = val,
+                () => Helper.Translation.Get("cfg.npc-rescheduling"),
+                () => Helper.Translation.Get("cfg.npc-rescheduling.msg")
             );
 
             configMenu.AddBoolOption(ModManifest,

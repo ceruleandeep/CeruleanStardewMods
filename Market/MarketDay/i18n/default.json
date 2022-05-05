@@ -49,6 +49,8 @@
     "cfg.debug-keybinds.msg": "Enable these debugging keybinds which might clash with your other mods",
     "cfg.npc-visitors": "NPC visitor pathfinding",
     "cfg.npc-visitors.msg": "NPCs visit shops",
+    "cfg.npc-rescheduling": "NPC rescheduling",
+    "cfg.npc-rescheduling.msg": "NPCs are rescheduled to visit and/or staff shops",
     "cfg.open-config": "Config keybind",
     "cfg.reload": "Reload keybind",
     "cfg.warp": "Warp keybind",

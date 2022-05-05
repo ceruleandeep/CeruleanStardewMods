@@ -20,6 +20,7 @@ namespace MarketDay
         public Dictionary<string, bool> ShopsEnabled = new Dictionary<string, bool>();
         public bool VerboseLogging { get; set; } = false;
         public bool NPCVisitors { get; set; } = true;
+        public bool NPCRescheduling { get; set; } = true;
         public bool DebugKeybinds { get; set; } = false;
         public SButton OpenConfigKeybind { get; set; } = SButton.V;
         public SButton WarpKeybind { get; set; } = SButton.Z;

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using MarketDay.Shop;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
@@ -59,6 +60,20 @@ namespace MarketDay.Utility
                 }
 
                 return ShopLocations;
+            }
+        }
+        
+        public static Dictionary<string, GrangeShop> ShopOwners
+        {
+            get
+            {
+                var s = new Dictionary<string, GrangeShop>();
+                foreach (var shop in ShopAtTile().Values)
+                {
+                    s[shop.Owner()] = shop;
+                }
+
+                return s;
             }
         }
 

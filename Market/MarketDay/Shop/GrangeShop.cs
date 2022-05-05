@@ -24,8 +24,9 @@ namespace MarketDay.Shop
 
         public string ShopKey => IsPlayerShop() ? ShopName : $"{ContentPack.Manifest.UniqueID}/{ShopName}";
         public long PlayerID;
-        
+
         public Vector2 Origin => StockChest.TileLocation - new Vector2(3, 1);
+        public Vector2 OwnerTile => Origin + new Vector2(3, 2);
 
         public const string GrangeChestKey = "GrangeDisplay";
         public Chest GrangeChest => FindDisplayChest();
@@ -36,6 +37,7 @@ namespace MarketDay.Shop
         public const string ShopSignKey = "GrangeSign";
         public Sign ShopSign => FindSign();
 
+        public const string OwnerKey = "Owner";
         public const string VisitorsTodayKey = "VisitorsToday";
         public const string GrumpyVisitorsTodayKey = "GrumpyVisitorsToday";
         public const string SalesTodayKey = "SalesToday";
@@ -44,7 +46,7 @@ namespace MarketDay.Shop
         public Dictionary<NPC, int> recentlyLooked = new();
         public Dictionary<NPC, int> recentlyTended = new();
         public List<SalesRecord> Sales = new();
-        
+
         public Texture2D OpenSign;
         public Texture2D ClosedSign;
 
@@ -52,6 +54,12 @@ namespace MarketDay.Shop
         public bool IsPlayerShop()
         {
             return PlayerID != 0;
+        }
+
+        public string Owner()
+        {
+            if (IsPlayerShop()) return ShopName.Replace("Farmer:", "");
+            return NpcName.Length > 0 ? NpcName : null;
         }
 
         private static bool OutsideOpeningHours =>
@@ -307,9 +315,11 @@ namespace MarketDay.Shop
         {
             foreach (var (stockItem, priceAndQty) in StockManager.ItemPriceAndStock)
             {
-                if (item.ParentSheetIndex != ((Item) stockItem).ParentSheetIndex || item.Category != ((Item) stockItem).Category) continue;
+                if (item.ParentSheetIndex != ((Item) stockItem).ParentSheetIndex ||
+                    item.Category != ((Item) stockItem).Category) continue;
                 return priceAndQty;
             }
+
             return null;
         }
 
@@ -330,12 +340,15 @@ namespace MarketDay.Shop
             foreach (var stockItem in GrangeChest.items)
             {
                 if (stockItem is null) continue;
-                
+
                 // var price = getSellPriceFromShopStock(stockItem);
-                
-                var price = getSellPriceArrayFromShopStock(stockItem) 
-                            ?? new[] {
-                                (int) (StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false) * SellPriceMultiplier(stockItem, null))};
+
+                var price = getSellPriceArrayFromShopStock(stockItem)
+                            ?? new[]
+                            {
+                                (int) (StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false) *
+                                       SellPriceMultiplier(stockItem, null))
+                            };
 
                 var sellItem = stockItem.getOne();
                 sellItem.Stack = 1;
@@ -393,7 +406,7 @@ namespace MarketDay.Shop
             foreach (var npc in NearbyNPCs())
             {
                 // the owner
-                if (npc.Name == ShopName) continue;
+                if (npc.Name == Owner()) continue;
 
                 // busy looking
                 if (npc.movementPause is > 2000 or < 500) continue;
@@ -441,7 +454,7 @@ namespace MarketDay.Shop
             else
             {
                 var taste = GetGiftTasteForThisItem(item, npc);
-                
+
                 var dialog = Get("buy", new {ItemName = item.DisplayName});
                 if (taste == NPC.gift_taste_love)
                 {
@@ -494,6 +507,7 @@ namespace MarketDay.Shop
             {
                 Game1.player.Money += salePrice;
             }
+
             Log($"Item {item.ParentSheetIndex} sold for {salePrice}", LogLevel.Trace);
 
             var newSale = new SalesRecord()
@@ -507,7 +521,7 @@ namespace MarketDay.Shop
 
             IncrementSharedValue(SalesTodayKey);
             IncrementSharedValue(GoldTodayKey, salePrice);
-            
+
             Sales.Add(newSale);
         }
 
@@ -539,14 +553,15 @@ namespace MarketDay.Shop
             if (salesDescriptions.Count > 0)
             {
                 SalesSummary = string.Join("^", salesDescriptions);
-            } 
-            
+            }
+
             string AverageMult;
             if (Sales.Count > 0)
             {
                 var avgBonus = Sales.Select(s => s.mult).Average() - 1;
                 AverageMult = $"{Convert.ToInt32(avgBonus * 100)}%";
-            } else if (ItemsSold > 0)  // we sold stuff but the data's not available to this player
+            }
+            else if (ItemsSold > 0) // we sold stuff but the data's not available to this player
             {
                 AverageMult = Get("not-available-mp");
             }
@@ -625,6 +640,7 @@ namespace MarketDay.Shop
                 // because otherwise we get dogs buying clothes
                 taste = NPC.gift_taste_dislike;
             }
+
             return taste;
         }
 
@@ -785,11 +801,18 @@ namespace MarketDay.Shop
         private void MakeStorageChest(GameLocation location, Vector2 OriginTile)
         {
             var VisibleChestPosition = OriginTile + new Vector2(3, 1);
+            string owner = IsPlayerShop()
+                ? ShopName.Replace("Farmer:", "")
+                : NpcName;
 
             Log($"    Creating new StorageChest at {VisibleChestPosition}", LogLevel.Trace);
             var chest = new Chest(true, VisibleChestPosition, 232)
             {
-                modData = {[$"{MarketDay.SMod.ModManifest.UniqueID}/{StockChestKey}"] = ShopKey}
+                modData =
+                {
+                    [$"{MarketDay.SMod.ModManifest.UniqueID}/{StockChestKey}"] = ShopKey,
+                    [$"{MarketDay.SMod.ModManifest.UniqueID}/{OwnerKey}"] = owner
+                }
             };
             location.setObject(VisibleChestPosition, chest);
         }
@@ -872,7 +895,8 @@ namespace MarketDay.Shop
             foreach (var (Salable, priceAndStock) in StockManager.ItemPriceAndStock)
             {
                 // priceAndStock: price, stock, currency obj, currency stack
-                Log($"    Stock item {Salable.DisplayName} price {priceAndStock[0]} stock {priceAndStock[1]}", LogLevel.Trace);
+                Log($"    Stock item {Salable.DisplayName} price {priceAndStock[0]} stock {priceAndStock[1]}",
+                    LogLevel.Trace);
                 var stack = Math.Min(priceAndStock[1], 13);
                 while (stack-- > 0)
                 {
@@ -1034,7 +1058,7 @@ namespace MarketDay.Shop
 
             var sign = OutsideOpeningHours ? ClosedSign : OpenSign;
             if (sign is null) return;
-            
+
             var center = start + new Vector2(24 * 4, 55 * 4);
             var signLoc = center - new Vector2(
                 (int) (sign.Width * Game1.pixelZoom / 2),

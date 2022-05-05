@@ -832,7 +832,7 @@
       "OpenSignPath": "assets/open-haley.png",
       "Quote": "Studio Haley",
       "DefaultSellPriceMultiplier": 1.2,
-      "SignObjectIndex": 769,
+      "SignObjectIndex": 421,
       "ItemStocks": [
         {"ItemNames": ["Fruit Salad", "Sunflower Honey"], "Stock": 2, "ItemType": "Object", "Quality": 1},
         {"ItemNames": ["Dried Sunflowers"], "StockPrice": 300, "Stock": 1, "ItemType": "Furniture"},

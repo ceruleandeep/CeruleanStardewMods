@@ -1,5 +1,11 @@
 # Changes
 
+1.0.9-beta.5
+* schedule time for spouses and shop owners to run their shops
+* owners much less likely to buy their own stuff
+* NPCs take a more sensible path through the market
+* another try at getting the map patching just right
+
 1.0.9-beta.4
   * Fix ordering of NPC gift preferences when buying stuff
 

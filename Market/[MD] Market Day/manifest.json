@@ -1,13 +1,13 @@
 {
     "Name": "[MD] Base Shops",
     "Author": "ceruleandeep",
-    "Version": "1.0.9",
+    "Version": "1.0.9-beta.5",
     "Description": "Market Day: Base Shops",
     "UniqueID": "ceruleandeep.MarketDay.MD",
     "UpdateKeys": ["Nexus:???"],
     "MinimumApiVersion": "3.0.0",
     "ContentPackFor": {
         "UniqueID": "ceruleandeep.MarketDay",
-        "MinimumVersion": "1.0.9"
+        "MinimumVersion": "1.0.9-beta.5"
     }
 }
