@@ -75,7 +75,7 @@ namespace MarketDay
             Helper.Events.GameLoop.GameLaunched += OnLaunched;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_STFRegistrations;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_STFInit;
-            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_ReadProgressionData;
+            Helper.Events.GameLoop.GameLaunched += OnLaunched_ReadProgressionData;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_MakePlayerShops;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateSTFStock_SendPrompt;
@@ -142,6 +142,8 @@ namespace MarketDay
         {
             ConfigChangesSynced = true;
             if (!Context.IsMainPlayer) return;
+            if (!Context.IsWorldReady) return;
+            
             OnDayEnding_CloseShopsAndDestroyFurniture(null, null);
 
             OnDayStarted_UpdateSTFStock_SendPrompt(null, null);
@@ -169,7 +171,7 @@ namespace MarketDay
                 ShopManager.GrangeShops.Remove(ShopKey);
 
             helper.WriteConfig(Config);
-            OnSaveLoaded_ReadProgressionData(null, null);
+            OnLaunched_ReadProgressionData(null, null);
             
             Log($"    Loading content packs", LogLevel.Debug);
             OnLaunched_STFInit(null, null);
@@ -320,7 +322,7 @@ namespace MarketDay
         /// </summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
-        private static void OnSaveLoaded_ReadProgressionData(object sender, EventArgs e)
+        private static void OnLaunched_ReadProgressionData(object sender, EventArgs e)
         {
             Progression = helper.Data.ReadJsonFile<ProgressionModel>("assets/progression.json");
             if (Progression is null)
@@ -558,12 +560,12 @@ namespace MarketDay
         {
             Log($"OnDayEnding: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
             if (!Context.IsMainPlayer) return;
-
-            var levelBeforeClose = Progression.CurrentLevel;
             
+            var levelBeforeClose = Progression.CurrentLevel;
+        
             foreach (var store in MapUtility.ShopAtTile().Values) store.CloseShop();
             RemoveStrayFurniture();
-            
+        
             if (Progression.CurrentLevel != levelBeforeClose || ForceLevelUpMail)
             {
                 var LevelStrapline = Progression.CurrentLevel.Name;
@@ -578,7 +580,7 @@ namespace MarketDay
                     ){TextColor=2}
                 );
             }
-            
+
             Log($"OnDayEnding: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
 
@@ -1112,6 +1114,7 @@ namespace MarketDay
             layout = layout.ToList();
             if (Config.GMMCompat && isGMMDay())
             {
+                if (GMMPaisleyPresent) layout.Remove(0);
                 if (GMMPaisleyPresent) layout.Remove(5);
                 if (GMMJosephPresent) layout.Remove(2);
                 if (GMMJosephPresent) layout.Remove(7);

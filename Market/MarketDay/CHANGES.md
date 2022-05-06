@@ -1,5 +1,9 @@
 # Changes
 
+1.0.9-beta.7
+* Load challenge mode data earlier, fix item check
+* Disable Shop 0 when Paisley's Bridal is open
+
 1.0.9-beta.6
 * Add challenge mode, send progress and prize emails with MFM
 * Stop chests appearing in Chests Anywhere

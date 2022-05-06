@@ -86,25 +86,15 @@ namespace MarketDay.Data
                 foreach (var prizeLevel in level.Prizes)
                 {
                     var name = prizeLevel.Object;
-                    if (name.Contains("Jelly") || name.Contains("Wine") || name.Contains("Honey") || name.Contains("Juice"))
+
+                    var item = ItemsUtil.GetIndexByName(name);
+                    if (item == -1) MarketDay.Log($"    Could not get index for object: {name}", LogLevel.Warn);
+                    
+                    if (name is "Wine" or "Jelly" or "Juice" or "Pickle" or "Roe" or "Aged Roe")
                     {
-                        var bits = name.Split(" ");
-                        var preservedGoods = string.Join(" ", bits[..^1]);
-                        var preserveMethod = bits[^1];
-                        
+                        var preservedGoods = prizeLevel.Flavor;
                         var item1 = ItemsUtil.GetIndexByName(preservedGoods);
-                        if (item1 == -1) MarketDay.Log($"    Could not get index for {preservedGoods}", LogLevel.Warn);
-                        // else MarketDay.Log($"    Level {level.Name} Prize {preservedGoods} idx {item1}", LogLevel.Debug);
-                        
-                        var item2 = ItemsUtil.GetIndexByName(preserveMethod);
-                        if (item2 == -1) MarketDay.Log($"    Could not get index for {preserveMethod}", LogLevel.Warn);
-                        // else MarketDay.Log($"    Level {level.Name} Prize {preserveMethod} idx {item2}", LogLevel.Debug);
-                    }
-                    else
-                    {
-                        var item = ItemsUtil.GetIndexByName(name);
-                        if (item == -1) MarketDay.Log($"    Could not get index for {name}", LogLevel.Warn);
-                        // else MarketDay.Log($"    Level {level.Name} Prize {name} idx {item}", LogLevel.Debug);
+                        if (item1 == -1) MarketDay.Log($"    Could not get index for flavor: {preservedGoods}", LogLevel.Warn);
                     }
                 }
             }
