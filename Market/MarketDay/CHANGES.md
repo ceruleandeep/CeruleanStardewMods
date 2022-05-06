@@ -1,5 +1,9 @@
 # Changes
 
+1.0.9-beta.6
+* Add challenge mode, send progress and prize emails with MFM
+* Stop chests appearing in Chests Anywhere
+
 1.0.9-beta.5
 * schedule time for spouses and shop owners to run their shops
 * owners much less likely to buy their own stuff

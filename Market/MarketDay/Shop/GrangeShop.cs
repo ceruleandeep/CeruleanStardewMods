@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using MailFrameworkMod;
+using MarketDay.Data;
 using MarketDay.ItemPriceAndStock;
+using MarketDay.Utility;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -117,7 +120,7 @@ namespace MarketDay.Shop
 
             if (IsPlayerShop())
             {
-                if (MarketDay.Config.RestockItemsPerHour > 0) RestockGrangeFromChest();
+                if (MarketDay.Progression.AutoRestock > 0) RestockGrangeFromChest();
             }
             else
             {
@@ -135,13 +138,82 @@ namespace MarketDay.Shop
             if (IsPlayerShop())
             {
                 MarketDay.IncrementSharedValue(MarketDay.TotalGoldKey, GetSharedValue(GoldTodayKey));
-                MarketDay.SetSharedValue($"{MarketDay.SalesReportKey}/{Owner()}", SalesReport("mail-summary"));
+                SendSalesReport();
 
                 EmptyStoreIntoChest();
                 EmptyPlayerDayStorageChest();
             }
 
             DestroyFurniture();
+        }
+
+        private void SendSalesReport()
+        {
+            var dayProfit = GetSharedValue(GoldTodayKey);
+            var prize = MarketDay.Progression.CurrentLevel.PrizeForEarnings(dayProfit);
+            var mailKey = $"md_prize_{Owner()}_{Game1.currentSeason}_{Game1.dayOfMonth}_Y{Game1.year}";
+
+            if (prize is not null)
+            {
+                var text = SalesReport("mail-summary", prize.Name);
+                var attachment = AttachmentForPrizeMail(prize);
+                MarketDay.Log($"Sending prize mail {mailKey}", LogLevel.Debug);
+                MailDao.SaveLetter(
+                    new Letter(mailKey, text, new List<Item> {attachment}, 
+                        l => !Game1.player.mailReceived.Contains(l.Id), 
+                        l => Game1.player.mailReceived.Add(l.Id),
+                        whichBG: 1
+                    ){TextColor=8}
+                );
+            }
+            else
+            {
+                var text = SalesReport("mail-summary");
+                MarketDay.Log($"Sending non-prize mail {mailKey}", LogLevel.Debug);
+                MailDao.SaveLetter(
+                    new Letter(mailKey, text, 
+                        l => (Game1.player.Name == Owner() && !Game1.player.mailReceived.Contains(l.Id)), 
+                        l => Game1.player.mailReceived.Add(l.Id),
+                        whichBG: 1
+                    ){TextColor=8}
+                );
+            }
+        }
+
+        private static Object AttachmentForPrizeMail(PrizeLevel prize)
+        {
+            var idx = ItemsUtil.GetIndexByName(prize.Object);
+            if (idx < 0)
+            {
+                MarketDay.Log($"Could not find prize object {prize.Object}", LogLevel.Error);
+                idx = 169;
+            }
+
+            var stack = Math.Max(prize.Stack, 1);
+            MarketDay.Log($"prize is {stack} x {prize.Object} ({idx})", LogLevel.Debug);
+            var attachment = new Object(idx, stack);
+            if (prize.Quality is 0 or 1 or 2 or 4) attachment.Quality = prize.Quality;
+            if (prize.Flavor is null || prize.Flavor.Length <= 0) return attachment;
+            
+            var prIdx = ItemsUtil.GetIndexByName(prize.Flavor);
+            if (prIdx < 0)
+            {
+                MarketDay.Log($"Could not find flavor object {prize.Flavor}", LogLevel.Error);
+                prIdx = 258;
+            }
+            attachment.preservedParentSheetIndex.Value = prIdx;
+            attachment.preserve.Value = prize.Object switch
+            {
+                "Wine" => Object.PreserveType.Wine,
+                "Jelly" => Object.PreserveType.Jelly,
+                "Juice" => Object.PreserveType.Juice,
+                "Pickle" => Object.PreserveType.Pickle,
+                "Roe" => Object.PreserveType.Roe,
+                "Aged Roe" => Object.PreserveType.AgedRoe,
+                _ => Object.PreserveType.Jelly
+            };
+
+            return attachment;
         }
 
         private void EmptyPlayerDayStorageChest()
@@ -191,13 +263,13 @@ namespace MarketDay.Shop
             StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"] = $"{val}";
         }
 
-        private int GetSharedValue(string key)
+        internal int GetSharedValue(string key)
         {
             var val = int.Parse(StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"]);
             return val;
         }
 
-        private void SetSharedValue(string key, int val = 1)
+        internal void SetSharedValue(string key, int val = 1)
         {
             StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"] = $"{val}";
         }
@@ -227,7 +299,8 @@ namespace MarketDay.Shop
                 }
                 else
                 {
-                    Game1.activeClickableMenu = new StorageContainer(GrangeChest.items, 9, 3, onGrangeChange,
+                    var rows = MarketDay.Progression.ShopSize / 3;
+                    Game1.activeClickableMenu = new StorageContainer(GrangeChest.items, MarketDay.Progression.ShopSize, rows, onGrangeChange,
                         StardewValley.Utility.highlightSmallObjects);
                 }
             }
@@ -535,15 +608,19 @@ namespace MarketDay.Shop
             Game1.drawLetterMessage(message);
         }
 
-        private string SalesReport(string key="sales-desc")
+        private string SalesReport(string key="daily-summary", string prizeName="")
         {
+            var LevelStrapline = MarketDay.Progression.CurrentLevel.Name;
             var FullFarmName = ShopName.Replace("Farmer:", "") + "'s " + Game1.player.farmName.Value;
             var VisitorsToday = GetSharedValue(VisitorsTodayKey);
             var GrumpyVisitorsToday = GetSharedValue(GrumpyVisitorsTodayKey);
             var ItemsSold = GetSharedValue(SalesTodayKey);
-            var TotalGoldToday = GetSharedValue(GoldTodayKey)+"g";
-            var TotalGold = MarketDay.GetSharedValue(MarketDay.TotalGoldKey)+"g";
+            var TotalGoldToday = StardewValley.Utility.getNumberWithCommas(GetSharedValue(GoldTodayKey))+"g";
+            var TotalGold = StardewValley.Utility.getNumberWithCommas(MarketDay.GetSharedValue(MarketDay.TotalGoldKey))+"g";
             var Date = $"{Game1.currentSeason} {Game1.dayOfMonth}, Year {Game1.year}";
+            var Prize = prizeName.Length > 0
+                ? Get("summary.prize", new {PrizeName = prizeName})
+                : "";
 
             var salesDescriptions = (
                 from sale in Sales
@@ -580,7 +657,10 @@ namespace MarketDay.Shop
             var message = Get(key,
                 new
                 {
+                    LevelStrapline,
+                    Date,
                     FarmName = FullFarmName,
+                    Prize,
                     ItemsSold,
                     AverageMult,
                     VisitorsToday,
@@ -588,7 +668,6 @@ namespace MarketDay.Shop
                     TotalGoldToday,
                     TotalGold,
                     SalesSummary,
-                    Date
                 }
             );
             return message;
@@ -598,6 +677,9 @@ namespace MarketDay.Shop
         {
             var mult = 1.0;
 
+            // * market fame
+            mult += MarketDay.Progression.PriceMultiplier;
+            
             // * general quality of display
             mult += GetPointsMultiplier(GetGrangeScore());
 
@@ -801,10 +883,14 @@ namespace MarketDay.Shop
             Log($"    Creating new DisplayChest at {freeTile}", LogLevel.Trace);
             var chest = new Chest(true, freeTile, 232)
             {
-                modData = {[$"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeChestKey}"] = ShopKey}
+                modData =
+                {
+                    ["Pathoschild.ChestsAnywhere/IsIgnored"] = "true",
+                    [$"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeChestKey}"] = ShopKey
+                }
             };
             location.setObject(freeTile, chest);
-            while (GrangeChest.items.Count < 9) GrangeChest.items.Add(null);
+            while (GrangeChest.items.Count < MarketDay.Progression.ShopSize) GrangeChest.items.Add(null);
         }
 
         private void MakeStorageChest(GameLocation location, Vector2 OriginTile)
@@ -819,6 +905,7 @@ namespace MarketDay.Shop
             {
                 modData =
                 {
+                    ["Pathoschild.ChestsAnywhere/IsIgnored"] = "true",
                     [$"{MarketDay.SMod.ModManifest.UniqueID}/{StockChestKey}"] = ShopKey,
                     [$"{MarketDay.SMod.ModManifest.UniqueID}/{OwnerKey}"] = owner
                 }
@@ -937,7 +1024,7 @@ namespace MarketDay.Shop
                 return;
             }
 
-            var restockLimitRemaining = MarketDay.Config.RestockItemsPerHour;
+            var restockLimitRemaining = IsPlayerShop() ? MarketDay.Progression.AutoRestock : MarketDay.Config.RestockItemsPerHour;
 
             for (var j = 0; j < GrangeChest.items.Count; j++)
             {
@@ -1050,7 +1137,7 @@ namespace MarketDay.Shop
 
         private void addItemToGrangeDisplay(Item i, int position, bool force)
         {
-            while (GrangeChest.items.Count < 9) GrangeChest.items.Add(null);
+            while (GrangeChest.items.Count < MarketDay.Progression.ShopSize) GrangeChest.items.Add(null);
             // Log($"addItemToGrangeDisplay: item {i?.ParentSheetIndex} position {position} force {force}",
             //     LogLevel.Debug);
 
