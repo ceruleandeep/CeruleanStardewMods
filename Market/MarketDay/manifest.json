@@ -10,6 +10,10 @@
     {
       "UniqueID": "Pathoschild.ContentPatcher",
       "MinimumVersion": "1.23.0"
+    },
+    {
+      "UniqueID": "DIGUS.MailFrameworkMod",
+      "MinimumVersion": "1.12.2"
     }
   ],
   "UpdateKeys": [
