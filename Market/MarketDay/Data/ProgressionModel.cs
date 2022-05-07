@@ -27,7 +27,7 @@ namespace MarketDay.Data
 
         public int ShopSize { get; set; } = 9;
 
-        public double PriceMultiplier { get; set; } = 1;
+        public double SellPriceMultiplierLimit { get; set; } = 1;
         
         public List<PrizeLevel> Prizes { get; set; }
 
@@ -68,11 +68,11 @@ namespace MarketDay.Data
                 : 9
                 ));
 
-        internal double PriceMultiplier =>
+        internal double SellPriceMultiplierLimit =>
             Math.Max(1, Math.Min(4, 
                 MarketDay.Config.Progression 
-                ? CurrentLevel.PriceMultiplier
-                : 1
+                ? CurrentLevel.SellPriceMultiplierLimit
+                : 10
             ));
 
         internal int GoldTarget => CurrentLevel?.Prizes.Where(p => p.Score==0).OrderBy(p => p.Gold).First().Gold ?? 0;

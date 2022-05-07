@@ -76,6 +76,7 @@ namespace MarketDay
             Helper.Events.GameLoop.GameLaunched += OnLaunched_STFRegistrations;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_STFInit;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_ReadProgressionData;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_RehydrateMail;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_MakePlayerShops;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateSTFStock_SendPrompt;
@@ -83,6 +84,8 @@ namespace MarketDay
             // Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_SyncMapOpenShops;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_InteractWithNPCs;
+            helper.Events.GameLoop.OneSecondUpdateTicked += Wizard.ConfigureFromWizard;
+
             Helper.Events.GameLoop.TimeChanged += OnTimeChanged_RestockThroughDay;
             Helper.Events.GameLoop.DayEnding += OnDayEnding_CloseShopsAndDestroyFurniture;
             Helper.Events.GameLoop.Saving += OnSaving_WriteConfig;
@@ -200,7 +203,7 @@ namespace MarketDay
             state.Add($"Market Day: {IsMarketDay()}");
             state.Add($"GMM Compat  Enabled: {Config.GMMCompat}  GMM Day: {isGMMDay()}  Joseph: {GMMJosephPresent}  Paisley: {GMMPaisleyPresent}");
             state.Add($"Progression  Enabled: {Config.Progression}  Level: {Progression.CurrentLevel.Name}  Size: {Progression.CurrentLevel.MarketSize}  Target: {Progression.GoldTarget}");
-            state.Add($"    AutoRestock: {Progression.AutoRestock}  ShopSize: {Progression.ShopSize}  PriceMultiplier: {Progression.PriceMultiplier}");
+            state.Add($"    AutoRestock: {Progression.AutoRestock}  ShopSize: {Progression.ShopSize}  PriceMultiplierLimit: {Progression.SellPriceMultiplierLimit}");
             
             var positions = string.Join(", ", ShopPositions());
             state.Add($"Shop positions: {Config.ShopLayout} shops configured, actual: {positions}");
@@ -331,6 +334,11 @@ namespace MarketDay
                 Progression = new ProgressionModel();
             }
             Progression.CheckItems();
+        }
+
+        private static void OnSaveLoaded_RehydrateMail(object sender, EventArgs e)
+        {
+            Mail.LoadMails();
         }
 
         private static void OnSaveLoaded_DestroyFurniture(object sender, EventArgs e)
@@ -504,12 +512,11 @@ namespace MarketDay
         private static void PruneBushes(Vector2 ShopTile)
         {
             var town = Game1.getLocationFromName("Town");
-            // location.getLargeTerrainFeatureAt(x, y) is TerrainFeature tf and not null
-            for (var dx = -2; dx < 5; dx++)
+            for (var dx = -2; dx <= 6; dx++)
             {
-                for (var dy = -1; dy < 5; dy++)
+                for (var dy = -2; dy <= 6; dy++)
                 {
-                    var (x, y) = ShopTile - new Vector2(dx, dy);
+                    var (x, y) = ShopTile + new Vector2(dx, dy);
                     if (town.getLargeTerrainFeatureAt((int)x, (int)y) is Bush bush)
                     {
                         town.largeTerrainFeatures.Remove(bush);
@@ -573,12 +580,7 @@ namespace MarketDay
                 var mailKey = $"md_levelup_{Name}_{Game1.currentSeason}_{Game1.dayOfMonth}_Y{Game1.year}";
                 var text = Get("level-up", new {Name, LevelStrapline});
                 Log($"Sending level-up mail {mailKey}", LogLevel.Debug);
-                MailDao.SaveLetter(
-                    new Letter(mailKey, text, 
-                        l => !Game1.player.mailReceived.Contains(l.Id), 
-                        l => Game1.player.mailReceived.Add(l.Id)
-                    ){TextColor=2}
-                );
+                Mail.Send(mailKey, text, null, 0, 2);
             }
 
             Log($"OnDayEnding: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
@@ -952,7 +954,7 @@ namespace MarketDay
                 () => Helper.Translation.Get("cfg.shop-layout"),
                 () => Helper.Translation.Get("cfg.shop-layout.msg"),
                 0,
-                12,
+                15,
                 fieldId: "fm_ShopLayout"
             );
             
@@ -1064,8 +1066,8 @@ namespace MarketDay
             // );
         }
 
-        private void SaveConfig() {
-            Helper.WriteConfig(Config);
+        public static void SaveConfig() {
+            helper.WriteConfig(Config);
             if (! ConfigChangesSynced) SyncAfterConfigChanges();
         }
         
@@ -1094,6 +1096,9 @@ namespace MarketDay
             ["10 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
             ["11 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
             ["12 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+            ["13 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+            ["14 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+            ["15 Shops"] = new List<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
         };
 
         private static bool isGMMDay()
@@ -1116,6 +1121,8 @@ namespace MarketDay
             {
                 if (GMMPaisleyPresent) layout.Remove(0);
                 if (GMMPaisleyPresent) layout.Remove(5);
+                if (GMMPaisleyPresent) layout.Remove(12);
+                if (GMMPaisleyPresent) layout.Remove(13);
                 if (GMMJosephPresent) layout.Remove(2);
                 if (GMMJosephPresent) layout.Remove(7);
             }
@@ -1123,7 +1130,12 @@ namespace MarketDay
             return layout.Select(i => $"Shop{i}").ToArray();
         }
 
-        private static string Get(string key, object tokens)
+        internal static string Get(string key)
+        {
+            return helper.Translation.Get(key);
+        }
+
+        internal static string Get(string key, object tokens)
         {
             return helper.Translation.Get(key, tokens);
         }
@@ -1146,10 +1158,16 @@ namespace MarketDay
 
         internal static int GetSharedValue(string key)
         {
-            int val = 0;
-            if (Game1.getFarm().modData.TryGetValue($"{SMod.ModManifest.UniqueID}/{key}", out var strVal))
-                val = int.Parse(strVal);
+            var val = 0;
+            var strVal = GetSharedString(key);
+            if (strVal is not null) val = int.Parse(strVal);
             return val;
+        }
+
+        internal static string GetSharedString(string key)
+        {
+            Game1.getFarm().modData.TryGetValue($"{SMod.ModManifest.UniqueID}/{key}", out var strVal);
+            return strVal;
         }
 
         internal static void SetSharedValue(string key, int val)

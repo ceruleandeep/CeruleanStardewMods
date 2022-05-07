@@ -150,70 +150,22 @@ namespace MarketDay.Shop
         private void SendSalesReport()
         {
             var dayProfit = GetSharedValue(GoldTodayKey);
-            var prize = MarketDay.Progression.CurrentLevel.PrizeForEarnings(dayProfit);
             var mailKey = $"md_prize_{Owner()}_{Game1.currentSeason}_{Game1.dayOfMonth}_Y{Game1.year}";
-
-            if (prize is not null)
+            string text;
+            if (MarketDay.Config.Progression)
             {
-                var text = SalesReport("mail-summary", prize.Name);
-                var attachment = AttachmentForPrizeMail(prize);
-                MarketDay.Log($"Sending prize mail {mailKey}", LogLevel.Debug);
-                MailDao.SaveLetter(
-                    new Letter(mailKey, text, new List<Item> {attachment}, 
-                        l => !Game1.player.mailReceived.Contains(l.Id), 
-                        l => Game1.player.mailReceived.Add(l.Id),
-                        whichBG: 1
-                    ){TextColor=8}
-                );
+                var prize = MarketDay.Progression.CurrentLevel.PrizeForEarnings(dayProfit);
+                if (prize is not null)
+                {
+                    text = SalesReport("mail-summary", prize.Name);
+                    MarketDay.Log($"Submitting prize mail {mailKey}", LogLevel.Debug);
+                    Mail.Send(mailKey, text, Owner(), 1, 8, prize);
+                    return;
+                }
             }
-            else
-            {
-                var text = SalesReport("mail-summary");
-                MarketDay.Log($"Sending non-prize mail {mailKey}", LogLevel.Debug);
-                MailDao.SaveLetter(
-                    new Letter(mailKey, text, 
-                        l => (Game1.player.Name == Owner() && !Game1.player.mailReceived.Contains(l.Id)), 
-                        l => Game1.player.mailReceived.Add(l.Id),
-                        whichBG: 1
-                    ){TextColor=8}
-                );
-            }
-        }
-
-        private static Object AttachmentForPrizeMail(PrizeLevel prize)
-        {
-            var idx = ItemsUtil.GetIndexByName(prize.Object);
-            if (idx < 0)
-            {
-                MarketDay.Log($"Could not find prize object {prize.Object}", LogLevel.Error);
-                idx = 169;
-            }
-
-            var stack = Math.Max(prize.Stack, 1);
-            MarketDay.Log($"prize is {stack} x {prize.Object} ({idx})", LogLevel.Debug);
-            var attachment = new Object(idx, stack);
-            if (prize.Quality is 0 or 1 or 2 or 4) attachment.Quality = prize.Quality;
-            if (prize.Flavor is null || prize.Flavor.Length <= 0) return attachment;
-            
-            var prIdx = ItemsUtil.GetIndexByName(prize.Flavor);
-            if (prIdx < 0)
-            {
-                MarketDay.Log($"Could not find flavor object {prize.Flavor}", LogLevel.Error);
-                prIdx = 258;
-            }
-            attachment.preservedParentSheetIndex.Value = prIdx;
-            attachment.preserve.Value = prize.Object switch
-            {
-                "Wine" => Object.PreserveType.Wine,
-                "Jelly" => Object.PreserveType.Jelly,
-                "Juice" => Object.PreserveType.Juice,
-                "Pickle" => Object.PreserveType.Pickle,
-                "Roe" => Object.PreserveType.Roe,
-                "Aged Roe" => Object.PreserveType.AgedRoe,
-                _ => Object.PreserveType.Jelly
-            };
-
-            return attachment;
+            text = SalesReport("mail-summary");
+            MarketDay.Log($"Submitting non-prize mail {mailKey}", LogLevel.Debug);
+            Mail.Send(mailKey, text, Owner(), 1, 8);
         }
 
         private void EmptyPlayerDayStorageChest()
@@ -677,9 +629,6 @@ namespace MarketDay.Shop
         {
             var mult = 1.0;
 
-            // * market fame
-            mult += MarketDay.Progression.PriceMultiplier;
-            
             // * general quality of display
             mult += GetPointsMultiplier(GetGrangeScore());
 
@@ -694,7 +643,7 @@ namespace MarketDay.Shop
                 mult += signSellPrice / 1000.0 / 10.0;
             }
 
-            if (npc is null) return mult;
+            if (npc is null) return Math.Min(mult, MarketDay.Progression.SellPriceMultiplierLimit);
 
             // * gift taste
             switch (GetGiftTasteForThisItem(item, npc))
@@ -714,7 +663,7 @@ namespace MarketDay.Shop
             // * talked today;
             if (Game1.player.hasPlayerTalkedToNPC(npc.Name)) mult += 0.1;
 
-            return mult;
+            return Math.Min(mult, MarketDay.Progression.SellPriceMultiplierLimit);
         }
 
         private static int GetGiftTasteForThisItem(Item item, NPC npc)

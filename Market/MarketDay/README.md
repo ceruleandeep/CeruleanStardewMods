@@ -217,6 +217,27 @@ patch reload ceruleandeep.MarketDay.CP
 patch summary ceruleandeep.MarketDay.CP
 patch summary ceruleandeep.MarketDay
 
+eventforget 117780001
+patch reload ceruleandeep.MarketDay.Wizard
+
+responseforget 117789010
+responseforget 117789011
+responseforget 117789012
+responseforget 117789020
+responseforget 117789021
+responseforget 117789022
+responseforget 117789023
+responseforget 117789024
+responseforget 117789030
+responseforget 117789031
+responseforget 117789032
+responseforget 117789040
+responseforget 117789041
+responseforget 117789050
+responseforget 117789051
+patch reload ceruleandeep.MarketDay.Wizard
+debug ebi 117780001
+
   "37": "Wood Sign/5/-300/Crafting -9/Use an item on this to change what's displayed. The item won't be consumed./true/true/0/Wood Sign",
   "130": "Chest/0/-300/Crafting -9/A place to store your items./true/true/0/Chest",
   "232": "Stone Chest/0/-300/Crafting -9/A place to store your items./true/true/0/Stone Chest",

@@ -1,5 +1,10 @@
 # Changes
 
+1.0.9-beta.8
+* Persist mails into modData
+* Add visit from Lewis to do initial setup
+* Cap bonus multiplier at each level of challenge mode
+
 1.0.9-beta.7
 * Load challenge mode data earlier, fix item check
 * Disable Shop 0 when Paisley's Bridal is open

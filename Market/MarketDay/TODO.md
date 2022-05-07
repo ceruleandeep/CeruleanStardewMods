@@ -1,7 +1,7 @@
-Progression
+Challenge Mode
 ---
 
-
+* Rep points for grange display, sales, being there, ???
 
 Future
 ---

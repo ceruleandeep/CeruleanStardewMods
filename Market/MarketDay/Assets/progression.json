@@ -7,7 +7,7 @@
       "UnlockAtEarnings": 0,
       "AutoRestock": 0,
       "ShopSize": 3,
-      "PriceBonus": 0,
+      "SellPriceMultiplierLimit": 1.2,
       "Prizes": [
         {"Name": "3rd Prize (Profit)", "Gold": 15000, "Score": 0, "Object": "Quality Fertilizer"},
         {"Name": "2nd Prize (Profit)", "Gold": 18000, "Score": 0, "Object": "Egg"},
@@ -24,7 +24,7 @@
       "UnlockAtEarnings": 40000,
       "AutoRestock": 0,
       "ShopSize": 6,
-      "PriceBonus": 0.2,
+      "SellPriceMultiplierLimit": 1.5,
       "Prizes": [
         {"Name": "3rd Prize", "Gold": 40000, "Score": 0, "Object": "Oil"},
         {"Name": "2nd Prize (Profit)", "Gold": 45000, "Score": 0, "Object": "Bread"},
@@ -41,7 +41,7 @@
       "UnlockAtEarnings": 450000,
       "AutoRestock": 3,
       "ShopSize": 9,
-      "PriceBonus": 0.4,
+      "SellPriceMultiplierLimit": 2.0,
       "Prizes": [
         {"Name": "3rd Prize", "Gold": 80000, "Score": 0, "Object": "Large Egg"},
         {"Name": "2nd Prize (Profit)", "Gold": 90000, "Score": 0, "Object": "Tea Leaves"},
@@ -58,7 +58,7 @@
       "UnlockAtEarnings": 1500000,
       "AutoRestock": 6,
       "ShopSize": 9,
-      "PriceBonus": 0.7,
+      "SellPriceMultiplierLimit": 4.0,
       "Prizes": [
         {"Name": "3rd Prize", "Gold": 150000, "Score": 0, "Object": "Mayonnaise", "Quality": 2},
         {"Name": "2nd Prize (Profit)", "Gold": 175000, "Score": 0, "Object": "Hot Pepper"},
@@ -71,11 +71,11 @@
     },
     {
       "Name": "Best Market in the World",
-      "MarketSize": 12,
+      "MarketSize": 15,
       "UnlockAtEarnings": 5000000,
       "AutoRestock": 9,
       "ShopSize": 9,
-      "PriceBonus": 1.0,
+      "SellPriceMultiplierLimit": 10,
       "Prizes": [
         {"Name": "3rd Prize", "Gold": 500000, "Score": 0, "Object": "Rhubarb Pie"},
         {"Name": "2nd Prize (Profit)", "Gold": 550000, "Score": 0, "Object": "Jelly", "Flavor": "Blueberry"},

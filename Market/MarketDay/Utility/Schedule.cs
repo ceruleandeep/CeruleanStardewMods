@@ -448,6 +448,9 @@ namespace MarketDay.Utility
 							StardewValley.Utility.ConvertMinutesToTime(
 								StardewValley.Utility.ConvertTimeToMinutes(stepTime) - minutes), time);
 					}
+					
+					if (stepTime == 0) MarketDay.Log($"stepTime is 0, watch for problems", LogLevel.Warn);
+					if (masterSchedule.ContainsKey(stepTime)) MarketDay.Log($"stepTime {stepTime} already in schedule, watch for problems", LogLevel.Warn);
 
 					masterSchedule.Add(stepTime, schedulePathDescription);
 				}
