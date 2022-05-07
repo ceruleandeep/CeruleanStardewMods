@@ -1,4 +1,7 @@
 {
+  "date": "{{season}} {{day}}, Year {{year}}",
+  "mail-summary": "Pelican Town Market^\"{{LevelStrapline}}\"^^Sales for {{Farmer}}'s {{Farm}} Farm Shop^Date: {{Date}}^^{{Prize}}Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Sales today: {{TotalGoldToday}}g^Average bonus: {{AverageMult}}^^Items sold:^{{SalesSummary}}^^Total gold so far: {{TotalGold}}g[#]Sales for {{Farmer}}'s {{Farm}} Farm Shop, {{Date}}",
+  "daily-summary": "Sales Today for {{Farmer}}'s {{Farm}} Farm Shop^^Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Sales today: {{TotalGoldToday}}g^Average bonus: {{AverageMult}}^^Items sold:^{{SalesSummary}}",
     "like": "< {{itemName}}",
     "love": "Mmm, {{itemName}}",
     "buy": "I'll have that {{itemName}}",
@@ -11,8 +14,6 @@
     "sales-desc": "* {{ItemName}} sold to {{NpcName}} for {{Price}}g ({{Mult}}%)",
     "no-sales-today": "No sales today",
     "not-available-mp": "Not available",
-    "daily-summary": "Sales Today for {{FarmName}} Farm Shop^^Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Sales today: {{TotalGoldToday}}^Average bonus: {{AverageMult}}^^Items sold:^{{SalesSummary}}",
-    "mail-summary": "Pelican Town Market^\"{{LevelStrapline}}\"^^Sales for {{FarmName}} Farm Shop^Date: {{Date}}^^{{Prize}}Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Sales today: {{TotalGoldToday}}^Average bonus: {{AverageMult}}^^Items sold:^{{SalesSummary}}^^Total gold so far: {{TotalGold}}[#]Sales for {{FarmName}} Farm Shop, {{Date}}",
     "summary.prize": "You won {{PrizeName}}! Your reward is enclosed.^^",
     "level-up": "Dear {{Name}} Farm,^^Thanks to your hard work, the Pelican Town Market is now recognised as:^^\"{{LevelStrapline}}\"!^^Congratulations, and keep up the good work.^^-Mayor Lewis[#]Level up to {{LevelStrapline}}",
     "closed": "It's closed... (Open {{openingTime}} - {{closingTime}})",
