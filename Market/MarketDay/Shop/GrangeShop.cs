@@ -132,7 +132,7 @@ namespace MarketDay.Shop
         {
             if (!Context.IsMainPlayer) return;
 
-                
+
             Log($"    EmptyGrangeAndDestroyFurniture: IsPlayerShop: {IsPlayerShop()}", LogLevel.Trace);
 
             if (IsPlayerShop())
@@ -159,8 +159,8 @@ namespace MarketDay.Shop
                 var attachment = AttachmentForPrizeMail(prize);
                 MarketDay.Log($"Sending prize mail {mailKey}", LogLevel.Debug);
                 MailDao.SaveLetter(
-                    new Letter(mailKey, text, new List<Item> {attachment}, 
-                        l => !Game1.player.mailReceived.Contains(l.Id), 
+                    new Letter(mailKey, text, new List<Item> {attachment},
+                        l => !Game1.player.mailReceived.Contains(l.Id),
                         l => Game1.player.mailReceived.Add(l.Id),
                         whichBG: 1
                     ){TextColor=8}
@@ -171,8 +171,8 @@ namespace MarketDay.Shop
                 var text = SalesReport("mail-summary");
                 MarketDay.Log($"Sending non-prize mail {mailKey}", LogLevel.Debug);
                 MailDao.SaveLetter(
-                    new Letter(mailKey, text, 
-                        l => (Game1.player.Name == Owner() && !Game1.player.mailReceived.Contains(l.Id)), 
+                    new Letter(mailKey, text,
+                        l => (Game1.player.Name == Owner() && !Game1.player.mailReceived.Contains(l.Id)),
                         l => Game1.player.mailReceived.Add(l.Id),
                         whichBG: 1
                     ){TextColor=8}
@@ -194,7 +194,7 @@ namespace MarketDay.Shop
             var attachment = new Object(idx, stack);
             if (prize.Quality is 0 or 1 or 2 or 4) attachment.Quality = prize.Quality;
             if (prize.Flavor is null || prize.Flavor.Length <= 0) return attachment;
-            
+
             var prIdx = ItemsUtil.GetIndexByName(prize.Flavor);
             if (prIdx < 0)
             {
@@ -611,13 +611,21 @@ namespace MarketDay.Shop
         private string SalesReport(string key="daily-summary", string prizeName="")
         {
             var LevelStrapline = MarketDay.Progression.CurrentLevel.Name;
-            var FullFarmName = ShopName.Replace("Farmer:", "") + "'s " + Game1.player.farmName.Value;
+            var FarmerName = ShopName.Replace("Farmer:", "");
+            var FarmName = Game1.player.farmName.Value;
             var VisitorsToday = GetSharedValue(VisitorsTodayKey);
             var GrumpyVisitorsToday = GetSharedValue(GrumpyVisitorsTodayKey);
             var ItemsSold = GetSharedValue(SalesTodayKey);
-            var TotalGoldToday = StardewValley.Utility.getNumberWithCommas(GetSharedValue(GoldTodayKey))+"g";
-            var TotalGold = StardewValley.Utility.getNumberWithCommas(MarketDay.GetSharedValue(MarketDay.TotalGoldKey))+"g";
-            var Date = $"{Game1.currentSeason} {Game1.dayOfMonth}, Year {Game1.year}";
+            var TotalGoldToday = StardewValley.Utility.getNumberWithCommas(GetSharedValue(GoldTodayKey));
+            var TotalGold = StardewValley.Utility.getNumberWithCommas(MarketDay.GetSharedValue(MarketDay.TotalGoldKey));
+            string Date;
+            {
+                int year = Game1.year;
+                string season = StardewValley.Utility.getSeasonNameFromNumber(StardewValley.Utility.getSeasonNumber(Game1.currentSeason));
+                int day = Game1.dayOfMonth;
+                Date = Get("date", new { year, season, day });
+            }
+
             var Prize = prizeName.Length > 0
                 ? Get("summary.prize", new {PrizeName = prizeName})
                 : "";
@@ -659,7 +667,8 @@ namespace MarketDay.Shop
                 {
                     LevelStrapline,
                     Date,
-                    FarmName = FullFarmName,
+                    Farmer = FarmerName,
+                    Farm = FarmName,
                     Prize,
                     ItemsSold,
                     AverageMult,
@@ -679,7 +688,7 @@ namespace MarketDay.Shop
 
             // * market fame
             mult += MarketDay.Progression.PriceMultiplier;
-            
+
             // * general quality of display
             mult += GetPointsMultiplier(GetGrangeScore());
 
@@ -763,8 +772,8 @@ namespace MarketDay.Shop
             if (location is null) return new List<NPC>();
 
             var nearby = (from npc in location.characters
-                where npc.getTileX() >= Origin.X && npc.getTileX() <= Origin.X + 2 && npc.getTileY() == Origin.Y + 4
-                select npc).ToList();
+                          where npc.getTileX() >= Origin.X && npc.getTileX() <= Origin.X + 2 && npc.getTileY() == Origin.Y + 4
+                          select npc).ToList();
             return nearby;
         }
 
