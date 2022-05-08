@@ -157,22 +157,8 @@
         {  "ItemType": "Object",  "ItemNames": ["Dressed Spinner"], "StockPrice":1000, "Stock": 1 },
         {  "ItemType": "Furniture",  "ItemNames": ["Large Fish Tank"], "StockPrice":2000, "Stock": 1 },
         {  "ItemType": "Furniture",  "ItemNames": ["Fisher Double Bed"], "StockPrice":25000, "Stock": 1 },
-        {
-          "ItemType": "Object",
-          "ItemNames": [
-            "Catfish"
-          ],
-          "StockPrice": 700,
-          "Stock": 2
-        },
-        {
-          "ItemType": "Object",
-          "ItemNames": [
-            "Octopus"
-          ],
-          "StockPrice": 300,
-          "Stock": 2
-        }
+        {"ItemType": "Object", "ItemNames": ["Catfish"], "StockPrice": 700, "Stock": 2},
+        {"ItemType": "Object", "ItemNames": ["Octopus"], "StockPrice": 300, "Stock": 2}
       ]
     },
     {
@@ -576,32 +562,10 @@
       "SignObjectIndex": 169,
         "When": ["n afterArtShow"],
       "ItemStocks": [
-        {
-          "ItemType": "Object",
-          "ItemNames": [
-            "Malachite",
-            "Marble"
-          ],
-          "Stock": 0
-        },
+        {"ItemType": "Object", "ItemNames": ["Malachite", "Marble"], "Stock": 0},
         {"ItemType": "Furniture", "ItemNames": ["'Blue City'", "'Blueberries'", "'Dancing Grass'", "'The Muzzamaroo'", "'Sun #45'", "'Sun #44'", "'Queen of the Gem Sea'", "'Pathways'", "'Little Tree'", "'Vanilla Villa'", "'VGA Paradise'", "Calico Falls", "Colorful Set", "Needlepoint Flower", "'Spires'"], "Stock": 1, "StockPrice": 500},
-        {
-          "ItemType": "Furniture",
-          "ItemNames": [
-            "Leah's Sculpture"
-          ],
-          "StockPrice": 5000,
-          "Stock": 1
-        },
-        {
-          "ItemType": "BigCraftable",
-          "ItemNames": [
-            "Stone Frog",
-            "Stone Parrot"
-          ],
-          "StockPrice": 1000,
-          "Stock": 1
-        },
+        {"ItemType": "Furniture", "ItemNames": ["Leah's Sculpture"], "StockPrice": 5000, "Stock": 1},
+        {"ItemType": "BigCraftable", "ItemNames": ["Stone Frog", "Stone Parrot"], "StockPrice": 1000, "Stock": 1},
         {"ItemNames": ["Leah's Whittler"], "When": ["e 54"], "StockPrice": 2000, "Stock": 1, "ItemType": "Weapon"}
       ]
     },
@@ -614,34 +578,10 @@
       "SignObjectIndex": 336,
       "ShopColor": "64, 64, 64, 0",
       "ItemStocks": [
-        {
-          "ItemType": "Object",
-          "ItemNames": [
-            "Copper Bar",
-            "Iron Bar",
-            "Gold Bar",
-            "Iridium Bar"
-          ],
-          "Stock": 3
-        },
-        {
-          "ItemType": "Weapon",
-          "ItemNames": ["Steel Smallsword"],
-          "Stock": 1,
-          "StockPrice": 1000
-        },
-        {
-          "ItemType": "Furniture",
-          "ItemNames": ["Hanging Shield"],
-          "Stock": 1,
-          "StockPrice": 1000
-        },
-        {
-          "ItemType": "Weapon",
-          "ItemNames": ["Tempered Broadsword"],
-          "Stock": 1,
-          "StockPrice": 10000
-        }
+        {"ItemType": "Object", "ItemNames": ["Copper Bar", "Iron Bar", "Gold Bar", "Iridium Bar"], "Stock": 3},
+        {"ItemType": "Weapon", "ItemNames": ["Steel Smallsword"], "Stock": 1, "StockPrice": 1000},
+        {"ItemType": "Furniture", "ItemNames": ["Hanging Shield"], "Stock": 1, "StockPrice": 1000},
+        {"ItemType": "Weapon", "ItemNames": ["Tempered Broadsword"], "Stock": 1, "StockPrice": 10000}
       ]
     },
     {
@@ -653,26 +593,11 @@
       "SignObjectIndex": 614,
       "DefaultSellPriceMultiplier": 1.2,
       "ItemStocks": [
-        {
-          "ItemType": "Object",
-          "ItemNames": ["Green Tea", "Nettle Tea", "Mahonia Tea", "Christmas Rose Tea"], "Stock": 3
-        },
-        {
-          "ItemType": "Object",
-          "ItemNames": ["Chocolate Cake", "Sweet Cranberry Cheesecake", "Lemon and Persimmon Cake"], "Stock": 3
-        },
-        {
-          "ItemType": "Object",
-          "ItemNames": ["Tea Leaves"], "Stock": 4
-        },
-        {
-          "ItemType": "Object",
-          "ItemNames": ["Tea Sapling"], "Stock": 2
-        },
-        {
-          "ItemType": "Object",
-          "ItemNames": ["Tea Set"], "Stock": 3
-        }
+        {"ItemType": "Object", "ItemNames": ["Green Tea", "Nettle Tea", "Mahonia Tea", "Christmas Rose Tea"], "Stock": 3},
+        {"ItemType": "Object", "ItemNames": ["Chocolate Cake", "Sweet Cranberry Cheesecake", "Lemon and Persimmon Cake"], "Stock": 3},
+        {"ItemType": "Object", "ItemNames": ["Tea Leaves"], "Stock": 4},
+        {"ItemType": "Object", "ItemNames": ["Tea Sapling"], "Stock": 2},
+        {"ItemType": "Object", "ItemNames": ["Tea Set"], "Stock": 3}
       ]
     },
     {
@@ -684,18 +609,9 @@
       "SignObjectIndex": 749,
       "DefaultSellPriceMultiplier": 10,
       "ItemStocks": [
-        {
-          "ItemType": "Object",
-          "ItemNames": ["%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral"], "Stock": 1
-        },
-        {
-          "ItemType": "BigCraftable",
-          "ItemNames": ["Crystalarium", "Skeleton Model"], "Stock": 1
-        },
-        {
-          "ItemType": "BigCraftable",
-          "ItemNames": ["Standing Geode"], "Stock": 1, "StockPrice": 5000
-        }
+        {"ItemType": "Object", "ItemNames": ["%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral", "%Category:Mineral"], "Stock": 1},
+        {"ItemType": "BigCraftable", "ItemNames": ["Crystalarium", "Skeleton Model"], "Stock": 1},
+        {"ItemType": "BigCraftable", "ItemNames": ["Standing Geode"], "Stock": 1, "StockPrice": 5000}
       ]
     },
     {
@@ -707,34 +623,8 @@
       "SignObjectIndex": 428,
       "ShopColor": "143, 0, 255, 0",
       "ItemStocks": [
-        {
-          "ItemType": "Object",
-          "ItemNames": [
-            "Cloth"
-          ],
-          "Stock": 6
-        },
-        {
-          "ItemType": "Clothing",
-          "ItemNames": [
-            "%Match:Pants",
-            "%Match:Pants",
-            "%Match:Pants",
-            "%Match:Pants",
-            "%Match:Pants",
-            "%Match:Pants",
-            "%Match:Pants",
-            "%Match:Shirt",
-            "%Match:Shirt",
-            "%Match:Shirt",
-            "%Match:Shirt",
-            "%Match:Shirt",
-            "%Match:Shirt",
-            "%Match:Shirt",
-            "%Match:Shirt"
-          ],
-          "Stock": 1
-        }
+        {"ItemType": "Object", "ItemNames": ["Cloth"], "Stock": 6},
+        {"ItemType": "Clothing", "ItemNames": ["%Match:Pants", "%Match:Pants", "%Match:Pants", "%Match:Pants", "%Match:Pants", "%Match:Pants", "%Match:Pants", "%Match:Shirt", "%Match:Shirt", "%Match:Shirt", "%Match:Shirt", "%Match:Shirt", "%Match:Shirt", "%Match:Shirt", "%Match:Shirt"], "Stock": 1}
       ]
     },
     {
@@ -748,30 +638,8 @@
       "PortraitPath": "assets/HatMousePlace.png",
       "When": ["n hatter"],
       "ItemStocks": [
-        {
-          "ItemType": "Object",
-          "ItemNames": [
-            "Cheese"
-          ],
-          "Stock": 1
-        },
-        {
-          "ItemType": "Hat",
-          "ItemNames": [
-            "%Match: Hat",
-            "%Match: Hat",
-            "%Match: Hat",
-            "%Match: Hat",
-            "%Match: Hat",
-            "%Match: Cap",
-            "%Match: Cap",
-            "%Match: Cap",
-            "%Match: Cap",
-            "%Match: Cap"
-          ],
-          "Stock": 1,
-          "StockPrice": 1000
-        }
+        {"ItemType": "Object", "ItemNames": ["Cheese"], "Stock": 1},
+        {"ItemType": "Hat", "ItemNames": ["%Match: Hat", "%Match: Hat", "%Match: Hat", "%Match: Hat", "%Match: Hat", "%Match: Cap", "%Match: Cap", "%Match: Cap", "%Match: Cap", "%Match: Cap"], "Stock": 1, "StockPrice": 1000}
       ]
     },
     {

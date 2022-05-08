@@ -10,6 +10,7 @@
                 "ceruleandeep.MarketDay/IsMarketDay": true,
                 "HasMod": "FlashShifter.StardewValleyExpandedCP"
             },
+            "Update": "OnTimeChange",
             "MapTiles": [
                 {"Position": { "X": 35, "Y": 67 }, "Layer": "Front", "Remove": true},
 
@@ -35,6 +36,7 @@
                 "ceruleandeep.MarketDay/IsMarketDay": true,
                 "HasMod": "FlashShifter.StardewValleyExpandedCP"
             },
+            "Update": "OnTimeChange",
             "MapTiles": [
                 {"Position": { "X": 35, "Y": 70 }, "Layer": "Front", "Remove": true},
 
@@ -59,7 +61,7 @@
             "LogName": "Patch north path for Shop 0",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/Town_Shop0c.tmx",
+            "FromFile": "assets/Town_Shop0_NoSVE.tmx",
             "PatchMode": "Replace",
             "FromArea": {"X": 0, "Y": 0, "Width": 6, "Height": 9},
             "ToArea": {"X": 19, "Y": 53, "Width": 6, "Height": 9},
@@ -67,7 +69,8 @@
                 "ceruleandeep.MarketDay/ShopPositions": "Shop0", 
                 "ceruleandeep.MarketDay/IsMarketDay": true,
                 "HasMod |contains=FlashShifter.StardewValleyExpandedCP": false
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Patch north path for Shop 0",
@@ -81,13 +84,14 @@
                 "ceruleandeep.MarketDay/ShopPositions": "Shop0", 
                 "ceruleandeep.MarketDay/IsMarketDay": true,
                 "HasMod |contains=FlashShifter.StardewValleyExpandedCP": true
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Patch tree for Shop 3 (no SVE))",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/Town_Shop3_noSVE.tmx",
+            "FromFile": "assets/Town_Shop3_NoSVE.tmx",
             "PatchMode": "Replace",
             "FromArea": {"X": 0, "Y": 0, "Width": 4, "Height": 6},
             "ToArea": {"X": 38, "Y": 61, "Width": 4, "Height": 6},
@@ -95,7 +99,8 @@
                 "ceruleandeep.MarketDay/ShopPositions": "Shop3",
                 "ceruleandeep.MarketDay/IsMarketDay": true,
                 "HasMod |contains=FlashShifter.StardewValleyExpandedCP": false
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Patch tree for Shop 3 (SVE)",
@@ -109,7 +114,8 @@
                 "ceruleandeep.MarketDay/ShopPositions": "Shop3",
                 "ceruleandeep.MarketDay/IsMarketDay": true,
                 "HasMod |contains=FlashShifter.StardewValleyExpandedCP": true
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Patch path for Shop 4",
@@ -123,7 +129,8 @@
                 "ceruleandeep.MarketDay/ShopPositions": "Shop4",
                 "ceruleandeep.MarketDay/IsMarketDay": true,
                 "HasMod |contains=FlashShifter.StardewValleyExpandedCP": false
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Patch path for Shop 10",
@@ -136,46 +143,50 @@
             "When": {
                 "ceruleandeep.MarketDay/ShopPositions": "Shop10",
                 "ceruleandeep.MarketDay/IsMarketDay": true
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Patch path for Shop 12-14 (12)",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/Town_13c.tmx",
+            "FromFile": "assets/Town_Shop12-14.tmx",
             "PatchMode": "Replace",
             "FromArea": {"X": 0, "Y": 0, "Width": 11, "Height": 26},
             "ToArea": {"X": 15, "Y": 52, "Width": 11, "Height": 26},
             "When": {
                 "ceruleandeep.MarketDay/ShopPositions": "Shop12",
                 "ceruleandeep.MarketDay/IsMarketDay": true
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Patch path for Shop 12-14 (13)",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/Town_13c.tmx",
+            "FromFile": "assets/Town_Shop12-14.tmx",
             "PatchMode": "Replace",
             "FromArea": {"X": 0, "Y": 0, "Width": 11, "Height": 26},
             "ToArea": {"X": 15, "Y": 52, "Width": 11, "Height": 26},
             "When": {
                 "ceruleandeep.MarketDay/ShopPositions": "Shop13",
                 "ceruleandeep.MarketDay/IsMarketDay": true
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Patch path for Shop 12-14 (14)",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/Town_13c.tmx",
+            "FromFile": "assets/Town_Shop12-14.tmx",
             "PatchMode": "Replace",
             "FromArea": {"X": 0, "Y": 0, "Width": 11, "Height": 26},
             "ToArea": {"X": 15, "Y": 52, "Width": 11, "Height": 26},
             "When": {
                 "ceruleandeep.MarketDay/ShopPositions": "Shop14",
                 "ceruleandeep.MarketDay/IsMarketDay": true
-            }
+            },
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 0",
@@ -186,7 +197,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 23, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop0", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop0", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 1",
@@ -197,7 +209,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 28, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop1", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop1", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 2",
@@ -208,7 +221,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 33, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop2", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop2", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 3",
@@ -219,7 +233,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 37, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 38, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop3", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop3", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 4",
@@ -230,7 +245,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 42, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 43, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop4", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop4", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 5",
@@ -241,7 +257,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 63, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 23, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop5", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop5", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 6",
@@ -252,7 +269,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 63, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 28, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop6", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop6", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 7",
@@ -263,7 +281,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 63, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 33, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop7", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop7", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 8",
@@ -274,7 +293,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 68, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 28, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop8", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop8", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 9",
@@ -285,7 +305,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 68, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 33, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop9", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop9", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 10",
@@ -296,7 +317,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 47, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 48, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop10", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop10", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 11",
@@ -307,7 +329,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 68, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 23, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop11", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop11", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 12",
@@ -318,7 +341,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 58, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 18, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop12", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop12", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 13",
@@ -329,7 +353,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 63, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 18, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop13", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop13", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         },
         {
             "LogName": "Load Market Day map: Shop 14",
@@ -340,7 +365,8 @@
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 68, "Width": 5, "Height": 5},
             "MapTiles": [{"Position": { "X": 18, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
-            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop14", "ceruleandeep.MarketDay/IsMarketDay": true}
+            "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop14", "ceruleandeep.MarketDay/IsMarketDay": true},
+            "Update": "OnTimeChange"
         }
     ]
 }
