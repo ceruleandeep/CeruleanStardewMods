@@ -563,7 +563,22 @@ namespace MarketDay.Shop
 
         private string SalesReport(string key="daily-summary", string prizeName="")
         {
-            var LevelStrapline = MarketDay.Progression.CurrentLevel.Name;
+            var LevelStrapline = "";
+            var WeeklyGoalProgress = "";
+            var LevelGoalProgress = "";
+            if (MarketDay.Config.Progression)
+            {
+                LevelStrapline = Get("level-strapline", new {LevelStrapline=MarketDay.Progression.CurrentLevel.Name});
+                var weeklyProgress = (int)(GetSharedValue(GoldTodayKey) * 100.0 / (double)MarketDay.Progression.WeeklyGoldTarget);
+                WeeklyGoalProgress = Get("weekly-goal-progress", new {Progress = $"{weeklyProgress}"});
+                
+                if (MarketDay.Progression.NextLevel is not null)
+                {
+                    var levelProgress = (int)(MarketDay.GetSharedValue(MarketDay.TotalGoldKey) * 100.0 / (double)MarketDay.Progression.NextLevel.UnlockAtEarnings);
+                    levelProgress = Math.Max(0, Math.Min(100, levelProgress));
+                    LevelGoalProgress = Get("level-goal-progress", new {Progress = $"{levelProgress}", NextLevelName=MarketDay.Progression.NextLevel.Name});
+                }
+            }
             var FarmerName = ShopName.Replace("Farmer:", "");
             var FarmName = Game1.player.farmName.Value;
             var VisitorsToday = GetSharedValue(VisitorsTodayKey);
@@ -594,10 +609,11 @@ namespace MarketDay.Shop
                     })
             ).ToList();
 
-            string SalesSummary = "";
+            string SalesDetail = "";
             if (salesDescriptions.Count > 0)
             {
-                SalesSummary = string.Join("^", salesDescriptions);
+                var ItemSalesList = string.Join("^", salesDescriptions);
+                SalesDetail = Get("sales-detail", new {ItemSalesList});
             }
 
             string AverageMult;
@@ -629,7 +645,9 @@ namespace MarketDay.Shop
                     GrumpyVisitorsToday,
                     TotalGoldToday,
                     TotalGold,
-                    SalesSummary,
+                    SalesDetail,
+                    WeeklyGoalProgress,
+                    LevelGoalProgress
                 }
             );
             return message;

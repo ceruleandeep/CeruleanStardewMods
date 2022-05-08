@@ -19,6 +19,7 @@ namespace MarketDay.Data
     
     public class ProgressionLevel
     {
+        public int Number { get; set; }
         public string Name { get; set; }
         public int NumberOfShops { get; set; }
         public int UnlockAtEarnings { get; set; }
@@ -53,6 +54,15 @@ namespace MarketDay.Data
                 return highestUnlocked;
             }
         }
+        
+        internal ProgressionLevel NextLevel
+        {
+            get
+            {
+                var gold = MarketDay.GetSharedValue(MarketDay.TotalGoldKey);
+                return Levels.OrderBy(l => l.UnlockAtEarnings).FirstOrDefault(level => level.UnlockAtEarnings > gold);
+            }
+        }
 
         internal int AutoRestock =>
             Math.Max(0, 
@@ -82,7 +92,7 @@ namespace MarketDay.Data
                 : 10
             ));
 
-        internal int GoldTarget => CurrentLevel?.Prizes.Where(p => p.Score==0).OrderBy(p => p.Gold).First().Gold ?? 0;
+        internal int WeeklyGoldTarget => CurrentLevel?.Prizes.Where(p => p.Score==0).OrderBy(p => p.Gold).First().Gold ?? 0;
 
         internal void CheckItems()
         {

@@ -2,6 +2,7 @@
   "Levels": 
   [
     {
+      "Number": 1,
       "Name": "Best Market in Pelican Town",
       "NumberOfShops": 3,
       "UnlockAtEarnings": 0,
@@ -19,6 +20,7 @@
       ]
     },
     {
+      "Number": 2,
       "Name": "Best Market in Stardew Valley",
       "NumberOfShops": 6,
       "UnlockAtEarnings": 40000,
@@ -36,6 +38,7 @@
       ]
     },
     {
+      "Number": 3,
       "Name": "Best Market in the Ferngill Republic",
       "NumberOfShops": 9,
       "UnlockAtEarnings": 450000,
@@ -53,6 +56,7 @@
       ]
     },
     {
+      "Number": 4,
       "Name": "Best Market on the Continent",
       "NumberOfShops": 12,
       "UnlockAtEarnings": 1500000,
@@ -70,6 +74,7 @@
       ]
     },
     {
+      "Number": 5,
       "Name": "Best Market in the World",
       "NumberOfShops": 15,
       "UnlockAtEarnings": 5000000,
