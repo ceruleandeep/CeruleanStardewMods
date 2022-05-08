@@ -75,15 +75,14 @@ namespace MarketDay
 
             Helper.Events.GameLoop.GameLaunched += OnLaunched;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_STFRegistrations;
-            Helper.Events.GameLoop.GameLaunched += OnLaunched_STFInit;
             Helper.Events.GameLoop.GameLaunched += OnLaunched_ReadProgressionData;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_STFInit;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_RehydrateMail;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_MakePlayerShops;
-            Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateSTFStock_SendPrompt;
+            Helper.Events.GameLoop.DayStarted += OnDayStarted_SendPrompt;
             Helper.Events.Content.AssetReady += OnAssetReady_FlagSyncNeeded;
-            // Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
-            Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_SyncMapOpenShops;
+            Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_SyncMapUpdateStockOpenShop;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_InteractWithNPCs;
             helper.Events.GameLoop.OneSecondUpdateTicked += Wizard.ConfigureFromWizard;
 
@@ -146,8 +145,8 @@ namespace MarketDay
         {
             if (!Context.IsMainPlayer) return;
             if (!Context.IsWorldReady) return;
-            Log($"SyncAfterConfigChanges: does nothing at the moment", LogLevel.Info);
-            LogShopPositions();
+            Log($"SyncAfterConfigChanges: does nothing at the moment", LogLevel.Info, true);
+            LogShopPositions("SyncAfterConfigChanges");
         }
         
         private static void HotReload(string command=null, string[] args=null)
@@ -170,7 +169,7 @@ namespace MarketDay
             OnLaunched_ReadProgressionData(null, null);
             
             Log($"    Loading content packs", LogLevel.Debug);
-            OnLaunched_STFInit(null, null);
+            OnSaveLoaded_STFInit(null, null);
             OnSaveLoaded_DestroyFurniture(null, null);
             // end: this bit is just for hot reload of data, not normal life cycle
 
@@ -178,7 +177,7 @@ namespace MarketDay
             OnDayStarted_MakePlayerShops(null, null);
 
             Log($"    Updating stock", LogLevel.Debug);
-            OnDayStarted_UpdateSTFStock_SendPrompt(null, null);
+            OnDayStarted_SendPrompt(null, null);
 
             Log($"    Opening stores", LogLevel.Debug);
             OnAssetReady_FlagSyncNeeded(null, null);
@@ -195,9 +194,21 @@ namespace MarketDay
             state.Add($"Weather  Rain: {Game1.isRaining}  Snow: {Game1.isSnowing}  Festival: {festival}");
             state.Add($"Market Day: {IsMarketDay()}");
             state.Add($"GMM Compat  Enabled: {Config.GMMCompat}  GMM Day: {isGMMDay()}  Joseph: {GMMJosephPresent}  Paisley: {GMMPaisleyPresent}");
-            state.Add($"Progression  Enabled: {Config.Progression}  Level: {Progression.CurrentLevel.Name}  Shops: {Progression.CurrentLevel.NumberOfShops}  Shop Size: {Progression.CurrentLevel.ShopSize} Target: {Progression.GoldTarget}");
-            state.Add($"    AutoRestock: {Progression.AutoRestock}  ShopSize: {Progression.ShopSize}  PriceMultiplierLimit: {Progression.SellPriceMultiplierLimit}");
-            
+            if (Config.Progression)
+            {
+                state.Add($"Progression:  Enabled  Shops: {Progression.NumberOfShops}  Weekly Target: {Progression.WeeklyGoldTarget}");   
+                state.Add($"    AutoRestock: {Progression.AutoRestock}  ShopSize: {Progression.ShopSize}  PriceMultiplierLimit: {Progression.SellPriceMultiplierLimit}");
+                state.Add($"    Current level: [{MarketDay.Progression.CurrentLevel.Number}] {MarketDay.Progression.CurrentLevel.Name}");
+                if (MarketDay.Progression.NextLevel is not null)
+                {
+                    state.Add($"    Next level: [{MarketDay.Progression.NextLevel.Number}] {MarketDay.Progression.NextLevel.Name} unlocks at {MarketDay.Progression.NextLevel.UnlockAtEarnings}");
+                }
+            }
+            else
+            {
+                state.Add($"Progression:  Disabled");
+            }
+
             var positions = string.Join(", ", ShopPositions());
             state.Add($"Shop positions: {Config.NumberOfShops} shops requested in config, {Progression.NumberOfShops} shops actual");
             state.Add($"    Positions sent to CP: {positions}");
@@ -233,17 +244,24 @@ namespace MarketDay
             foreach (var line in state) Log(line, LogLevel.Debug);
         }
         
-        private static void LogShopPositions()
+        private static void LogShopPositions(string caller="unspecified")
         {
             var state = new List<string>();
-            state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:");
+            state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} shop positions  [caller: {caller}]");
             state.Add($"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}");
             var positions = string.Join(", ", ShopPositions());
             state.Add($"Shop positions: {Config.NumberOfShops} shops requested in config, {Progression.NumberOfShops} shops actual");
             state.Add($"    Positions sent to CP: {positions}");
 
-            var mapPositions = string.Join(", ", MapUtility.ShopTiles);
-            state.Add($"    Positions on map: {mapPositions}");
+            if (MapUtility.ShopTiles.Count > 0)
+            {
+                var mapPositions = string.Join(", ", MapUtility.ShopTiles);
+                state.Add($"    Positions on map: {mapPositions}");
+            }
+            else
+            {
+                state.Add($"    No shop positions on the map");
+            }
 
             state.AddRange(MapUtility.ShopAtTile().Select(kvp => $"    {kvp.Key}: {kvp.Value.ShopName}"));
             foreach (var line in state) Log(line, LogLevel.Debug);
@@ -348,7 +366,6 @@ namespace MarketDay
                 Log("Could not read progression data", LogLevel.Error);
                 Progression = new ProgressionModel();
             }
-            Progression.CheckItems();
         }
 
         private static void OnSaveLoaded_RehydrateMail(object sender, EventArgs e)
@@ -367,19 +384,16 @@ namespace MarketDay
 
         }
 
-        private static void OnDayStarted_UpdateSTFStock_SendPrompt(object sender, EventArgs e)
+        private static void OnDayStarted_SendPrompt(object sender, EventArgs e)
         {
             Log($"OnDayStarted: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
             if (!IsMarketDay()) return;
 
-            // STF 
-            ShopManager.UpdateStock();
-            
             // send market day prompt
             var openingTime = (Config.OpeningTime*100).ToString();
             openingTime = openingTime[..^2] + ":" + openingTime[^2..];
 
-            var ProfitTarget = StardewValley.Utility.getNumberWithCommas(Progression.GoldTarget);
+            var ProfitTarget = StardewValley.Utility.getNumberWithCommas(Progression.WeeklyGoldTarget);
             var prompt = Config.Progression 
                 ? Get("market-day-progression", new {ProfitTarget}) 
                 : Get("market-day", new {openingTime});
@@ -426,18 +440,17 @@ namespace MarketDay
         {
             if (!Context.IsWorldReady) return;
             if (!Context.IsMainPlayer) return;
-            if (!IsMarketDay()) return;
             
             if (e is not null && e.Name.Name != "Maps/Town") return;
             
-            Log($"OnAssetReady: closing shops", LogLevel.Info);
+            Log($"OnAssetReady: closing shops", LogLevel.Info, true);
             OnDayEnding_CloseShopsAndDestroyFurniture(null, null);
             
-            Log($"OnAssetReady: requesting sync", LogLevel.Info);
+            Log($"OnAssetReady: requesting sync", LogLevel.Info, true);
             MapChangesSynced = false;
         }
         
-        private static void OnOneSecondUpdateTicking_SyncMapOpenShops(object sender, OneSecondUpdateTickingEventArgs e)
+        private static void OnOneSecondUpdateTicking_SyncMapUpdateStockOpenShop(object sender, OneSecondUpdateTickingEventArgs e)
         {
             if (!Context.IsWorldReady) return;
             if (!Context.IsMainPlayer) return;
@@ -446,20 +459,24 @@ namespace MarketDay
             
             if (!MapReady())
             {
-                Log($"OnOneSecondUpdateTicking: no shop locations, suspicious", LogLevel.Warn);
-                LogShopPositions();
+                Log($"OnOneSecondUpdateTicking: no shop locations", LogLevel.Debug);
+                LogShopPositions("OnOneSecondUpdateTicking_SyncMap (no shop locs)");
                 return;
             }
             
-            Log($"OnOneSecondUpdateTicking: syncing and opening shops", LogLevel.Info);
+            Log($"OnOneSecondUpdateTicking: syncing and opening shops", LogLevel.Info, true);
             
             MapChangesSynced = true;
-            OnDayStarted_UpdateSTFStock_SendPrompt(null, null);
+            
+            ShopManager.UpdateStock();
             OpenShops();
             RecalculateSchedules();
-            LogShopPositions();
-        }
 
+            OnDayStarted_SendPrompt(null, null);
+
+            LogShopPositions("OnOneSecondUpdateTicking_SyncMap end");
+        }
+        
         private static void OnOneSecondUpdateTicking_InteractWithNPCs(object sender, OneSecondUpdateTickingEventArgs e)
         {
             if (!Context.IsWorldReady) return;
@@ -896,7 +913,7 @@ namespace MarketDay
             APIs.RegisterFAVR();
         }
 
-        private static void OnLaunched_STFInit(object sender, GameLaunchedEventArgs e)
+        private static void OnSaveLoaded_STFInit(object sender, SaveLoadedEventArgs e)
         {
             
             // some hooks for STF
