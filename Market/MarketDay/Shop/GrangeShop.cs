@@ -12,6 +12,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
+using StardewValley.Network;
 using StardewValley.Objects;
 using StardewValley.Tools;
 using Object = StardewValley.Object;
@@ -474,7 +475,7 @@ namespace MarketDay.Shop
         }
 
 
-        private static void EmoteForPurchase(NPC npc, Item item)
+        private void EmoteForPurchase(NPC npc, Item item)
         {
             if (Game1.random.NextDouble() < 0.25)
             {
@@ -666,7 +667,7 @@ namespace MarketDay.Shop
             return Math.Min(mult, MarketDay.Progression.SellPriceMultiplierLimit);
         }
 
-        private static int GetGiftTasteForThisItem(Item item, NPC npc)
+        private int GetGiftTasteForThisItem(Item item, NPC npc)
         {
             int taste;
             try
@@ -676,15 +677,14 @@ namespace MarketDay.Shop
             }
             catch (Exception)
             {
-                // the default is dislike 
-                // because otherwise we get dogs buying clothes
-                taste = NPC.gift_taste_dislike;
+                // stop players selling rubbish but also stop NPCs hating NPC merch
+                taste = IsPlayerShop() ? NPC.gift_taste_dislike : NPC.gift_taste_like;
             }
 
             return taste;
         }
 
-        private static double ItemPreferenceIndex(Item item, NPC npc)
+        private double ItemPreferenceIndex(Item item, NPC npc)
         {
             if (item is null || npc is null) return 1.0;
 
