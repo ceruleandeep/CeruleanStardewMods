@@ -92,22 +92,22 @@ namespace MarketDay.Utility
 
             switch (s)
             {
-                case Shops.S3: MarketDay.Config.ShopLayout = 3; break;
-                case Shops.S6: MarketDay.Config.ShopLayout = 6; break;
-                case Shops.S9: MarketDay.Config.ShopLayout = 9; break;
-                case Shops.S12: MarketDay.Config.ShopLayout = 12; break;
-                case Shops.S15: MarketDay.Config.ShopLayout = 15; break;
+                case Shops.S3: MarketDay.Config.NumberOfShops = 3; break;
+                case Shops.S6: MarketDay.Config.NumberOfShops = 6; break;
+                case Shops.S9: MarketDay.Config.NumberOfShops = 9; break;
+                case Shops.S12: MarketDay.Config.NumberOfShops = 12; break;
+                case Shops.S15: MarketDay.Config.NumberOfShops = 15; break;
                 case Shops.NotAnswered: break;
                 default: throw new Exception($"Unhandled value {s} for Shops");
             }
 
             switch (s)
             {
-                case Shops.S3: MarketDay.Config.ShopLayout = 3; break;
-                case Shops.S6: MarketDay.Config.ShopLayout = 6; break;
-                case Shops.S9: MarketDay.Config.ShopLayout = 9; break;
-                case Shops.S12: MarketDay.Config.ShopLayout = 12; break;
-                case Shops.S15: MarketDay.Config.ShopLayout = 15; break;
+                case Shops.S3: MarketDay.Config.NumberOfShops = 3; break;
+                case Shops.S6: MarketDay.Config.NumberOfShops = 6; break;
+                case Shops.S9: MarketDay.Config.NumberOfShops = 9; break;
+                case Shops.S12: MarketDay.Config.NumberOfShops = 12; break;
+                case Shops.S15: MarketDay.Config.NumberOfShops = 15; break;
                 case Shops.NotAnswered: break;
                 default: throw new Exception($"Unhandled value {s} for Shops");
             }

@@ -20,7 +20,7 @@ namespace MarketDay.Data
     public class ProgressionLevel
     {
         public string Name { get; set; }
-        public int MarketSize { get; set; }
+        public int NumberOfShops { get; set; }
         public int UnlockAtEarnings { get; set; }
 
         public int AutoRestock { get; set; } = 4;
@@ -67,6 +67,13 @@ namespace MarketDay.Data
                 ? CurrentLevel.ShopSize
                 : 9
                 ));
+        
+        internal int NumberOfShops =>
+            Math.Max(1, Math.Min(15, 
+                MarketDay.Config.Progression 
+                    ? CurrentLevel.NumberOfShops
+                    : MarketDay.Config.NumberOfShops
+            ));
 
         internal double SellPriceMultiplierLimit =>
             Math.Max(1, Math.Min(4, 
