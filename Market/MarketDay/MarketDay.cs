@@ -10,6 +10,7 @@ using MarketDay.ItemPriceAndStock;
 using MarketDay.Shop;
 using MarketDay.Utility;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -80,7 +81,7 @@ namespace MarketDay
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_MakePlayerShops;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateSTFStock_SendPrompt;
-            
+            Helper.Events.Content.AssetReady += OnAssetReady_FlagSyncNeeded;
             // Helper.Events.GameLoop.UpdateTicking += OnUpdateTicking;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_SyncMapOpenShops;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_InteractWithNPCs;
@@ -143,18 +144,10 @@ namespace MarketDay
 
         private static void SyncAfterConfigChanges()
         {
-            ConfigChangesSynced = true;
             if (!Context.IsMainPlayer) return;
             if (!Context.IsWorldReady) return;
-            
-            OnDayEnding_CloseShopsAndDestroyFurniture(null, null);
-
-            OnDayStarted_UpdateSTFStock_SendPrompt(null, null);
-
-            helper.ConsoleCommands.Trigger("patch", new[]{"reload", SMod.ModManifest.UniqueID+".CP"});
-            MapChangesSynced = false;
-            OnOneSecondUpdateTicking_SyncMapOpenShops(null, null);
-            LogModState();
+            Log($"SyncAfterConfigChanges: does nothing at the moment", LogLevel.Info);
+            LogShopPositions();
         }
         
         private static void HotReload(string command=null, string[] args=null)
@@ -166,7 +159,7 @@ namespace MarketDay
             Log($"    Closing {MapUtility.ShopAtTile().Values.Count} stores", LogLevel.Debug);
             OnDayEnding_CloseShopsAndDestroyFurniture(null, null);
 
-            helper.ConsoleCommands.Trigger("patch", new[]{"reload", SMod.ModManifest.UniqueID+".CP"});
+            // helper.ConsoleCommands.Trigger("patch", new[]{"reload", SMod.ModManifest.UniqueID+".CP"});
             
             // this bit is just for hot reload of data, not normal life cycle
             Log($"    Removing non-player stores", LogLevel.Debug);
@@ -188,7 +181,7 @@ namespace MarketDay
             OnDayStarted_UpdateSTFStock_SendPrompt(null, null);
 
             Log($"    Opening stores", LogLevel.Debug);
-            OnOneSecondUpdateTicking_SyncMapOpenShops(null, null);
+            OnAssetReady_FlagSyncNeeded(null, null);
 
             LogModState();
         }
@@ -202,11 +195,17 @@ namespace MarketDay
             state.Add($"Weather  Rain: {Game1.isRaining}  Snow: {Game1.isSnowing}  Festival: {festival}");
             state.Add($"Market Day: {IsMarketDay()}");
             state.Add($"GMM Compat  Enabled: {Config.GMMCompat}  GMM Day: {isGMMDay()}  Joseph: {GMMJosephPresent}  Paisley: {GMMPaisleyPresent}");
-            state.Add($"Progression  Enabled: {Config.Progression}  Level: {Progression.CurrentLevel.Name}  Size: {Progression.CurrentLevel.MarketSize}  Target: {Progression.GoldTarget}");
+            state.Add($"Progression  Enabled: {Config.Progression}  Level: {Progression.CurrentLevel.Name}  Shops: {Progression.CurrentLevel.NumberOfShops}  Shop Size: {Progression.CurrentLevel.ShopSize} Target: {Progression.GoldTarget}");
             state.Add($"    AutoRestock: {Progression.AutoRestock}  ShopSize: {Progression.ShopSize}  PriceMultiplierLimit: {Progression.SellPriceMultiplierLimit}");
             
             var positions = string.Join(", ", ShopPositions());
-            state.Add($"Shop positions: {Config.ShopLayout} shops configured, actual: {positions}");
+            state.Add($"Shop positions: {Config.NumberOfShops} shops requested in config, {Progression.NumberOfShops} shops actual");
+            state.Add($"    Positions sent to CP: {positions}");
+
+            var mapPositions = string.Join(", ", MapUtility.ShopTiles);
+            state.Add($"    Positions on map: {mapPositions}");
+
+            state.AddRange(MapUtility.ShopAtTile().Select(kvp => $"    {kvp.Key}: {kvp.Value.ShopName}"));
 
             state.Add($"Shop config:");
             var enabled = Config.ShopsEnabled.Select(kvp => $"    {kvp.Key}: {kvp.Value}").ToList();
@@ -231,6 +230,22 @@ namespace MarketDay
                 state.AddRange(interactions.Select(interaction => $"        {interaction}").Distinct());
             }
             
+            foreach (var line in state) Log(line, LogLevel.Debug);
+        }
+        
+        private static void LogShopPositions()
+        {
+            var state = new List<string>();
+            state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:");
+            state.Add($"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}");
+            var positions = string.Join(", ", ShopPositions());
+            state.Add($"Shop positions: {Config.NumberOfShops} shops requested in config, {Progression.NumberOfShops} shops actual");
+            state.Add($"    Positions sent to CP: {positions}");
+
+            var mapPositions = string.Join(", ", MapUtility.ShopTiles);
+            state.Add($"    Positions on map: {mapPositions}");
+
+            state.AddRange(MapUtility.ShopAtTile().Select(kvp => $"    {kvp.Key}: {kvp.Value.ShopName}"));
             foreach (var line in state) Log(line, LogLevel.Debug);
         }
 
@@ -298,8 +313,8 @@ namespace MarketDay
             }
             Log($"Will send level-up mail tonight", LogLevel.Debug);
             ForceLevelUpMail = true;
-            ConfigChangesSynced = false; 
-            SyncAfterConfigChanges();
+            // ConfigChangesSynced = false; 
+            // SyncAfterConfigChanges();
         }
 
         /// <summary>Raised after the game is saved</summary>
@@ -355,10 +370,6 @@ namespace MarketDay
         private static void OnDayStarted_UpdateSTFStock_SendPrompt(object sender, EventArgs e)
         {
             Log($"OnDayStarted: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
-
-            MapChangesSynced = false;
-            Log($"OnDayStarted: MapChangesSynced set {MapChangesSynced} at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
-
             if (!IsMarketDay()) return;
 
             // STF 
@@ -411,19 +422,42 @@ namespace MarketDay
         //     if (!Context.IsWorldReady) return;
         // }
 
-        private static void OnOneSecondUpdateTicking_SyncMapOpenShops(object sender, OneSecondUpdateTickingEventArgs e)
+        private static void OnAssetReady_FlagSyncNeeded(object sender, AssetReadyEventArgs e)
         {
             if (!Context.IsWorldReady) return;
             if (!Context.IsMainPlayer) return;
             if (!IsMarketDay()) return;
             
+            if (e is not null && e.Name.Name != "Maps/Town") return;
+            
+            Log($"OnAssetReady: closing shops", LogLevel.Info);
+            OnDayEnding_CloseShopsAndDestroyFurniture(null, null);
+            
+            Log($"OnAssetReady: requesting sync", LogLevel.Info);
+            MapChangesSynced = false;
+        }
+        
+        private static void OnOneSecondUpdateTicking_SyncMapOpenShops(object sender, OneSecondUpdateTickingEventArgs e)
+        {
+            if (!Context.IsWorldReady) return;
+            if (!Context.IsMainPlayer) return;
+            if (!IsMarketDay()) return;
             if (MapChangesSynced) return;
-            if (!MapReady()) return;
+            
+            if (!MapReady())
+            {
+                Log($"OnOneSecondUpdateTicking: no shop locations, suspicious", LogLevel.Warn);
+                LogShopPositions();
+                return;
+            }
+            
+            Log($"OnOneSecondUpdateTicking: syncing and opening shops", LogLevel.Info);
             
             MapChangesSynced = true;
+            OnDayStarted_UpdateSTFStock_SendPrompt(null, null);
             OpenShops();
             RecalculateSchedules();
-            LogModState();
+            LogShopPositions();
         }
 
         private static void OnOneSecondUpdateTicking_InteractWithNPCs(object sender, OneSecondUpdateTickingEventArgs e)
@@ -447,13 +481,13 @@ namespace MarketDay
 
             if (MapUtility.ShopTiles is null)
             {
-                Log($"MapReady: MarketDay.ShopLocations is null, called too early", LogLevel.Trace);
+                Log($"MapReady: MarketDay.ShopTiles is null, called too early", LogLevel.Debug);
                 return false;
             }
             
             if (MapUtility.ShopTiles.Count == 0)
             {
-                Log($"MapReady: MarketDay.ShopLocations.Count {MapUtility.ShopTiles.Count}, called too early", LogLevel.Trace);
+                Log($"MapReady: MarketDay.ShopTiles.Count {MapUtility.ShopTiles.Count}, called too early", LogLevel.Debug);
                 return false;
             }
             Log($"    MapReady: {Game1.ticks}", LogLevel.Trace);
@@ -832,6 +866,10 @@ namespace MarketDay
                 () => { return Context.IsWorldReady ? new[] {IsMarketDay() ? "true" : "false"} : null; });
             ContentPatcherApi.RegisterToken(ModManifest, "ShopPositions", ShopPositions);
             
+            // APIs.RegisterAlmanac();
+            // var weather = APIs.IsWeatherEnabled();
+            // Log($"weather: {weather}", LogLevel.Info);
+            
             GMMJosephPresent = this.Helper.ModRegistry.IsLoaded("Elaho.JosephsSeedShopDisplayCP");
             GMMPaisleyPresent = this.Helper.ModRegistry.IsLoaded("Elaho.PaisleysBridalBoutiqueCP");
             
@@ -949,8 +987,8 @@ namespace MarketDay
             );
             
             configMenu.AddNumberOption(ModManifest,
-                () => Config.ShopLayout,
-                val => Config.ShopLayout = val,
+                () => Config.NumberOfShops,
+                val => Config.NumberOfShops = val,
                 () => Helper.Translation.Get("cfg.shop-layout"),
                 () => Helper.Translation.Get("cfg.shop-layout.msg"),
                 0,
@@ -1111,7 +1149,7 @@ namespace MarketDay
         {
             if (!Context.IsWorldReady) return null;
 
-            int shopCount = Config.Progression ? Progression.CurrentLevel.MarketSize : Config.ShopLayout;
+            int shopCount = Progression.NumberOfShops;
             var key = $"{shopCount} Shops";
             if (!ShopLayouts.ContainsKey(key)) key = "6 Shops";
             if (!ShopLayouts.TryGetValue(key, out var layout)) return null;

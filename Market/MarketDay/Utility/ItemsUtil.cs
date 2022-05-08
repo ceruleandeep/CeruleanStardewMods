@@ -30,42 +30,26 @@ namespace MarketDay.Utility
             //load up all the object information into a static dictionary
             ObjectInfoSource = new Dictionary<string, IDictionary<int, string>>
             {
-                { "Object", Game1.objectInformation },
-                { "BigCraftable", Game1.bigCraftablesInformation },
-                { "Clothing", Game1.clothingInformation },
-                { "Ring", Game1.objectInformation },
-                {
-                    "Hat",
-                    MarketDay.helper.Content.Load<Dictionary<int, string>>
-                        (@"Data/hats", ContentSource.GameContent)
-                },
-                {
-                    "Boot",
-                    MarketDay.helper.Content.Load<Dictionary<int, string>>
-                            (@"Data/Boots", ContentSource.GameContent)
-                },
-                {
-                    "Furniture",
-                    MarketDay.helper.Content.Load<Dictionary<int, string>>
-                            (@"Data/Furniture", ContentSource.GameContent)
-                },
-                {
-                    "Weapon",
-                    MarketDay.helper.Content.Load<Dictionary<int, string>>
-                            (@"Data/weapons", ContentSource.GameContent)
-                }
+                {"Object", Game1.objectInformation },
+                {"BigCraftable", Game1.bigCraftablesInformation },
+                {"Clothing", Game1.clothingInformation },
+                {"Ring", Game1.objectInformation },
+                {"Hat", MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/hats")},
+                {"Boot", MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Boots")},
+                {"Furniture", MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Furniture")},
+                {"Weapon", MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/weapons")}
             };
 
             //load up recipe information
-            RecipesList = MarketDay.helper.Content.Load<Dictionary<string, string>>(@"Data/CraftingRecipes", ContentSource.GameContent).Keys.ToList();
-            RecipesList.AddRange(MarketDay.helper.Content.Load<Dictionary<string, string>>(@"Data/CookingRecipes", ContentSource.GameContent).Keys.ToList());
+            RecipesList = MarketDay.helper.GameContent.Load<Dictionary<string, string>>(@"Data/CraftingRecipes").Keys.ToList();
+            RecipesList.AddRange(MarketDay.helper.GameContent.Load<Dictionary<string, string>>(@"Data/CookingRecipes").Keys.ToList());
 
             //add "recipe" to the end of every element
             RecipesList = RecipesList.Select(s => s + " Recipe").ToList();
 
             //load up tree and crop data
-            _fruitTreeData = MarketDay.helper.Content.Load<Dictionary<int, string>>(@"Data/fruitTrees", ContentSource.GameContent);
-            _cropData = MarketDay.helper.Content.Load<Dictionary<int, string>>(@"Data/Crops", ContentSource.GameContent);
+            _fruitTreeData = MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/fruitTrees");
+            _cropData = MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Crops");
         }
 
         /// <summary>

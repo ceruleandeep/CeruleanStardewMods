@@ -12,7 +12,7 @@ namespace MarketDay
         public int DayOfWeek { get; set; } = 6;
         public int OpeningTime { get; set; } = 8;
         public int ClosingTime { get; set; } = 18;
-        public int ShopLayout { get; set; } = 6;
+        public int NumberOfShops { get; set; } = 6;
         public bool OpenInRain { get; set; }
         public bool OpenInSnow { get; set; }
         public bool GMMCompat { get; set; } = true;

@@ -117,7 +117,7 @@ namespace MarketDay.Shop
             {
                 try
                 {
-                    shopPack.OpenSign = contentPack.LoadAsset<Texture2D>(shopPack.OpenSignPath);
+                    shopPack.OpenSign = contentPack.ModContent.Load<Texture2D>(shopPack.OpenSignPath);
                     MarketDay.Log($"[{shopPack.ShopName}] Loaded asset {shopPack.OpenSignPath}", LogLevel.Trace);
                 }
                 catch (Exception ex)
@@ -131,7 +131,7 @@ namespace MarketDay.Shop
             {
                 try
                 {
-                    shopPack.ClosedSign = contentPack.LoadAsset<Texture2D>(shopPack.ClosedSignPath);
+                    shopPack.ClosedSign = contentPack.ModContent.Load<Texture2D>(shopPack.ClosedSignPath);
                     MarketDay.Log($"[{shopPack.ShopName}] Loaded asset {shopPack.ClosedSignPath}", LogLevel.Trace);
                 }
                 catch (Exception ex)
