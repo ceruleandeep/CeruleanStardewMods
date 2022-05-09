@@ -1,6 +1,12 @@
 # Changes
 
-1.0.9
+1.0.9 RELEASE
+
+1.0.9-beta.9
+* Re-design state model to respond to Maps/Town reloads
+  * (if your market opens and closes through the day, this is why, let me know!)
+* Move shop stock caching around to let JA finish
+
 * Add Chinese translations from Becks723
 * Add plain version of shop
 * Add CP player option to have rugs/plain shops
