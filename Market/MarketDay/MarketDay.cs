@@ -37,6 +37,7 @@ namespace MarketDay
         // set true when NPC schedules have been re-planned 
         // following CP map patching
         private static bool MapChangesSynced;
+        private static List<Vector2> lastShopLayout = new();
 
         // set true when hot reload is done 
         // following a GMCM change to market day
@@ -442,6 +443,10 @@ namespace MarketDay
             if (!Context.IsMainPlayer) return;
             
             if (e is not null && e.Name.Name != "Maps/Town") return;
+
+            if (lastShopLayout.Count == MapUtility.ShopTiles.Count) return;
+            if (lastShopLayout.All(MapUtility.ShopTiles.Contains)) return;
+            
             
             Log($"OnAssetReady: closing shops", LogLevel.Info, true);
             OnDayEnding_CloseShopsAndDestroyFurniture(null, null);
@@ -467,6 +472,7 @@ namespace MarketDay
             Log($"OnOneSecondUpdateTicking: syncing and opening shops", LogLevel.Info, true);
             
             MapChangesSynced = true;
+            lastShopLayout = MapUtility.ShopTiles;
             
             ShopManager.UpdateStock();
             OpenShops();
