@@ -1,5 +1,31 @@
 {
     "Format": "1.25.0",
+    "ConfigSchema": {
+        "Rugs": {
+            "AllowValues": "Festive Rugs, Red Ones, Plain Ole Ground",
+            "Default": "Festive Rugs"
+        }
+    },
+    "DynamicTokens": [
+        {"Name": "Bismarck", "Value": "Bismarck"},  
+        {"Name": "Bismarck", "Value": "Plain", "When": {"Rugs": "Plain Ole Ground"}},
+        {"Name": "Bismarck", "Value": "Bismarck", "When": {"Rugs": "Red Ones"}},
+        {"Name": "BurntOrange", "Value": "BurntOrange"},  
+        {"Name": "BurntOrange", "Value": "Plain", "When": {"Rugs": "Plain Ole Ground"}},
+        {"Name": "BurntOrange", "Value": "Bismarck", "When": {"Rugs": "Red Ones"}},
+        {"Name": "Leaves", "Value": "Leaves"},  
+        {"Name": "Leaves", "Value": "Plain", "When": {"Rugs": "Plain Ole Ground"}},
+        {"Name": "Leaves", "Value": "Bismarck", "When": {"Rugs": "Red Ones"}},
+        {"Name": "Purple", "Value": "Purple"},  
+        {"Name": "Purple", "Value": "Plain", "When": {"Rugs": "Plain Ole Ground"}},
+        {"Name": "Purple", "Value": "Bismarck", "When": {"Rugs": "Red Ones"}},
+        {"Name": "Spots", "Value": "Spots"},  
+        {"Name": "Spots", "Value": "Plain", "When": {"Rugs": "Plain Ole Ground"}},
+        {"Name": "Spots", "Value": "Bismarck", "When": {"Rugs": "Red Ones"}},
+        {"Name": "TwoTone", "Value": "TwoTone"},  
+        {"Name": "TwoTone", "Value": "Plain", "When": {"Rugs": "Plain Ole Ground"}},
+        {"Name": "TwoTone", "Value": "Bismarck", "When": {"Rugs": "Red Ones"}}
+    ],
     "Changes": [
         {
             "LogName": "Remove SVE table North",
@@ -11,21 +37,10 @@
                 "HasMod": "FlashShifter.StardewValleyExpandedCP"
             },
             "Update": "OnTimeChange",
-            "MapTiles": [
-                {"Position": { "X": 35, "Y": 67 }, "Layer": "Front", "Remove": true},
-
-                {"Position": { "X": 34, "Y": 66 }, "Layer": "Front", "Remove": true},
-                {"Position": { "X": 35, "Y": 66 }, "Layer": "Front", "Remove": true},
-                {"Position": { "X": 36, "Y": 66 }, "Layer": "Front", "Remove": true},
-                
-                {"Position": { "X": 34, "Y": 67 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 35, "Y": 67 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 36, "Y": 67 }, "Layer": "Buildings", "Remove": true},
-
-                {"Position": { "X": 34, "Y": 68 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 35, "Y": 68 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 36, "Y": 68 }, "Layer": "Buildings", "Remove": true},
-            ]
+            "FromFile": "assets/Town_NoBench_North_SVE.tmx",
+            "PatchMode": "Replace",
+            "FromArea": {"X": 0, "Y": 0, "Width": 3, "Height": 3},
+            "ToArea": {"X": 34, "Y": 66, "Width": 3, "Height": 3}
         },
         {
             "LogName": "Remove SVE table South",
@@ -37,25 +52,10 @@
                 "HasMod": "FlashShifter.StardewValleyExpandedCP"
             },
             "Update": "OnTimeChange",
-            "MapTiles": [
-                {"Position": { "X": 35, "Y": 70 }, "Layer": "Front", "Remove": true},
-
-                {"Position": { "X": 34, "Y": 69 }, "Layer": "Front", "Remove": true},
-                {"Position": { "X": 35, "Y": 69 }, "Layer": "Front", "Remove": true},
-                {"Position": { "X": 36, "Y": 69 }, "Layer": "Front", "Remove": true},
-
-                {"Position": { "X": 34, "Y": 69 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 35, "Y": 69 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 36, "Y": 69 }, "Layer": "Buildings", "Remove": true},
-
-                {"Position": { "X": 34, "Y": 70 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 35, "Y": 70 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 36, "Y": 70 }, "Layer": "Buildings", "Remove": true},
-
-                {"Position": { "X": 34, "Y": 71 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 35, "Y": 71 }, "Layer": "Buildings", "Remove": true},
-                {"Position": { "X": 36, "Y": 71 }, "Layer": "Buildings", "Remove": true}
-            ]
+            "FromFile": "assets/Town_NoBench_South_SVE.tmx",
+            "PatchMode": "Replace",
+            "FromArea": {"X": 0, "Y": 0, "Width": 3, "Height": 3},
+            "ToArea": {"X": 34, "Y": 69, "Width": 3, "Height": 3}
         },
         {
             "LogName": "Patch north path for Shop 0",
@@ -192,7 +192,7 @@
             "LogName": "Load Market Day map: Shop 0",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopPurple.tmx",
+            "FromFile": "assets/GrangeShop{{Purple}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 58, "Width": 5, "Height": 5},
@@ -204,7 +204,7 @@
             "LogName": "Load Market Day map: Shop 1",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopBurntOrange.tmx",
+            "FromFile": "assets/GrangeShop{{BurntOrange}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 58, "Width": 5, "Height": 5},
@@ -216,7 +216,7 @@
             "LogName": "Load Market Day map: Shop 2",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopLeaves.tmx",
+            "FromFile": "assets/GrangeShop{{Leaves}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 58, "Width": 5, "Height": 5},
@@ -228,7 +228,7 @@
             "LogName": "Load Market Day map: Shop 3",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopPurple.tmx",
+            "FromFile": "assets/GrangeShop{{Purple}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 37, "Y": 58, "Width": 5, "Height": 5},
@@ -240,7 +240,7 @@
             "LogName": "Load Market Day map: Shop 4",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopSpots.tmx",
+            "FromFile": "assets/GrangeShop{{Spots}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 42, "Y": 58, "Width": 5, "Height": 5},
@@ -252,7 +252,7 @@
             "LogName": "Load Market Day map: Shop 5",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopTwoTone.tmx",
+            "FromFile": "assets/GrangeShop{{TwoTone}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 63, "Width": 5, "Height": 5},
@@ -264,7 +264,7 @@
             "LogName": "Load Market Day map: Shop 6",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopBismarck.tmx",
+            "FromFile": "assets/GrangeShop{{Bismarck}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 63, "Width": 5, "Height": 5},
@@ -276,7 +276,7 @@
             "LogName": "Load Market Day map: Shop 7",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopBurntOrange.tmx",
+            "FromFile": "assets/GrangeShop{{BurntOrange}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 63, "Width": 5, "Height": 5},
@@ -288,7 +288,7 @@
             "LogName": "Load Market Day map: Shop 8",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopLeaves.tmx",
+            "FromFile": "assets/GrangeShop{{Leaves}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 68, "Width": 5, "Height": 5},
@@ -300,7 +300,7 @@
             "LogName": "Load Market Day map: Shop 9",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopPurple.tmx",
+            "FromFile": "assets/GrangeShop{{Purple}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 68, "Width": 5, "Height": 5},
@@ -312,7 +312,7 @@
             "LogName": "Load Market Day map: Shop 10",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopTwoTone.tmx",
+            "FromFile": "assets/GrangeShop{{TwoTone}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 47, "Y": 58, "Width": 5, "Height": 5},
@@ -324,7 +324,7 @@
             "LogName": "Load Market Day map: Shop 11",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopBurntOrange.tmx",
+            "FromFile": "assets/GrangeShop{{BurntOrange}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 68, "Width": 5, "Height": 5},
@@ -336,7 +336,7 @@
             "LogName": "Load Market Day map: Shop 12",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopLeaves.tmx",
+            "FromFile": "assets/GrangeShop{{Leaves}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 58, "Width": 5, "Height": 5},
@@ -348,7 +348,7 @@
             "LogName": "Load Market Day map: Shop 13",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopBismarck.tmx",
+            "FromFile": "assets/GrangeShop{{Bismarck}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 63, "Width": 5, "Height": 5},
@@ -360,7 +360,7 @@
             "LogName": "Load Market Day map: Shop 14",
             "Action": "EditMap",
             "Target": "Maps/Town",
-            "FromFile": "assets/GrangeShopTwoTone.tmx",
+            "FromFile": "assets/GrangeShop{{TwoTone}}.tmx",
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 68, "Width": 5, "Height": 5},

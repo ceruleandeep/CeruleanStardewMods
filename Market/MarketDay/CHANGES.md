@@ -1,5 +1,10 @@
 # Changes
 
+1.0.9
+* Add Chinese translations from Becks723
+* Add plain version of shop
+* Add CP player option to have rugs/plain shops
+
 1.0.9-beta.8
 * Persist mails into modData
 * Add visit from Lewis to do initial setup
