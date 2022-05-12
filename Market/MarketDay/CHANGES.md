@@ -1,5 +1,10 @@
 # Changes
 
+1.1.0-beta.2
+* Add dynamic signs for shops without custom art
+* Change sync strategery againnn
+* Add DGA item support
+
 1.0.9 RELEASE
 
 1.0.9-beta.9
