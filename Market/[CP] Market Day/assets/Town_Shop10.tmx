@@ -1778,7 +1778,7 @@
 0,0,0,0,0,0,0,130,
 0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,
-0,0,0,2053,0,0,2090,0,
+0,0,0,0,0,2053,2090,0,
 0,0,0,0,0,0,0,0
 </data>
  </layer>
@@ -1805,7 +1805,7 @@
 0,0,0,0,0,0,0,101,
 0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,
-0,0,0,2021,0,0,2058,0,
+0,0,0,0,0,2021,2058,0,
 0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0
 </data>
@@ -1826,12 +1826,7 @@
  </layer>
  <objectgroup id="6" name="Back"/>
  <objectgroup id="7" name="Buildings">
-  <object id="12" name="TileData" x="-16" y="16" width="16" height="16">
-   <properties>
-    <property name="Action" value="Message &quot;Town.2&quot;"/>
-   </properties>
-  </object>
-  <object id="14" name="TileData" x="48" y="128" width="16" height="16">
+  <object id="14" name="TileData" x="80" y="128" width="16" height="16">
    <properties>
     <property name="Action" value="TownMailbox 2"/>
    </properties>
