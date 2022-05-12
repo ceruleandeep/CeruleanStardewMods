@@ -95,6 +95,20 @@ namespace MarketDay.Utility
             return shopsAtTiles;
         }
 
+        internal static List<GrangeShop> OpenShops()
+        {
+            var shops = new List<GrangeShop>();
+
+            var location = Game1.getLocationFromName("Town");
+            foreach (var (tile, item) in location.Objects.Pairs)
+            {
+                if (!item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}", out var ShopKey)) continue;
+                shops.Add(ShopManager.GrangeShops.Values.First(s => s.ShopKey==ShopKey));
+            }
+
+            return shops;
+        }
+
         /// <summary>
         /// Find the GrangeShop that the player clicked on
         /// </summary>

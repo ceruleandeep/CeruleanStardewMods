@@ -35,6 +35,7 @@ namespace MarketDay.Shop
         public const string GrangeChestKey = "GrangeDisplay";
         public Chest GrangeChest => FindDisplayChest();
 
+        // all shared state is stored on the stock chest
         public const string StockChestKey = "GrangeStorage";
         public Chest StockChest => FindStorageChest();
 
@@ -945,10 +946,9 @@ namespace MarketDay.Shop
             var location = Game1.getLocationFromName("Town");
             foreach (var (tile, item) in location.Objects.Pairs)
             {
-                foreach (var key in new List<string> {"{ShopSignKey}", "{DayStockChestKey}", "{DisplayChestKey}"})
+                foreach (var key in new List<string> {$"{ShopSignKey}", $"{GrangeChestKey}", $"{StockChestKey}"})
                 {
-                    if (!item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{key}",
-                        out var owner)) continue;
+                    if (!item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{key}", out var owner)) continue;
                     if (owner != ShopKey) continue;
                     Log($"    Scheduling removal of {item.displayName} from {tile}", LogLevel.Trace);
                     toRemove[tile] = item;

@@ -84,7 +84,7 @@ namespace MarketDay
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_STFInit;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_RehydrateMail;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded_DestroyFurniture;
-            Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateStock;
+            // Helper.Events.GameLoop.DayStarted += OnDayStarted_UpdateStock;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_MakePlayerShops;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_FlagSyncNeeded;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_SendPrompt;
@@ -284,10 +284,10 @@ namespace MarketDay
                 state.Add($"    Previous positions on map: {lastMapPositions}");
             }
 
-            if (MapUtility.ShopAtTile().Count > 0)
+            if (MapUtility.OpenShops().Count > 0)
             {
                 state.Add("Open shops:");
-                state.AddRange(MapUtility.ShopAtTile().Select(kvp => $"    {kvp.Key}: {kvp.Value.ShopName}"));
+                state.AddRange(MapUtility.OpenShops().Select(shop => $"    {shop.Origin}: {shop.ShopName}"));
             }
             else
             {
@@ -520,10 +520,20 @@ namespace MarketDay
             Log($"OnAssetReady: nothing changed: {nothingChanged}", LogLevel.Debug);
             // if (nothingChanged) return;
 
+            LogShopPositions("OnOneSecondUpdateTicking_SyncMap checking for invalid shops");
+            var shopTiles = MapUtility.ShopTiles;
+            foreach (var shop in MapUtility.OpenShops().Where(shop => !shopTiles.Contains(shop.Origin)))
+            {
+                Log($"Shop at {shop.Origin} is not on a shop tile", LogLevel.Debug);
+                shop.CloseShop();
+            }
+            LogShopPositions("OnOneSecondUpdateTicking_SyncMap checked for invalid shops");
+
             var availableShopCount = AvailableNPCShopKeys.Count + AvailablePlayerShopKeys.Count;            
             var expectedShopCount = IsMarketDay ? Math.Min(Progression.NumberOfShops, availableShopCount) : 0;
             var actualShopCount = MapUtility.ShopAtTile().Count;
 
+            
             if (actualShopCount == expectedShopCount)
             {
                 Log($"Correct number of shops already open ({actualShopCount})", LogLevel.Debug);
@@ -554,6 +564,7 @@ namespace MarketDay
             previousShopLayout = null;
             previousOpenedShops = null;
             
+            ShopManager.UpdateStock();
             OpenShops();
             RecalculateSchedules();
 
