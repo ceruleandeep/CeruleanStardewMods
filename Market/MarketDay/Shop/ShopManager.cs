@@ -25,6 +25,10 @@ namespace MarketDay.Shop
         /// </summary>
         public static void LoadContentPacks()
         {
+            MarketDay.Log("Clearing content packs (what's the worst that could happen, right?)", LogLevel.Debug);
+            foreach (var grangeShop in GrangeShops.Keys) GrangeShops.Remove(grangeShop);
+            foreach (var animalShop in AnimalShops.Keys) GrangeShops.Remove(animalShop);
+            
             MarketDay.Log("Adding Content Packs...", LogLevel.Info);
             foreach (var contentPack in MarketDay.helper.ContentPacks.GetOwned())
             {
