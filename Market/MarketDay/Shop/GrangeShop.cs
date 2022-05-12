@@ -763,7 +763,7 @@ namespace MarketDay.Shop
                 return;
             }
 
-            if (!MarketDay.IsMarketDay())
+            if (!MarketDay.IsMarketDay)
             {
                 Log("MakeFurniture called on non-market day", LogLevel.Error);
                 return;
@@ -1129,8 +1129,12 @@ namespace MarketDay.Shop
             var start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
 
             var sign = OutsideOpeningHours ? ClosedSign : OpenSign;
-            if (sign is null) return;
-
+            if (sign is null)
+            {
+                DrawTextSign(tileLocation, spriteBatch, layerDepth);
+                return;
+            }
+            
             var center = start + new Vector2(24 * 4, 55 * 4);
             var signLoc = center - new Vector2(
                 (int) (sign.Width * Game1.pixelZoom / 2),
@@ -1146,6 +1150,103 @@ namespace MarketDay.Shop
                 scale: Game1.pixelZoom,
                 effects: SpriteEffects.None,
                 layerDepth: layerDepth
+            );
+        }
+
+        internal string SignText()
+        {
+            var text = (OutsideOpeningHours ? ClosedSignText : OpenSignText) ?? "";
+            if (text.Length == 0)
+            {
+                text = OutsideOpeningHours ? Get("closed-sign") : Get("shop-sign", new {Owner=Owner()});
+            }
+            return text ?? "";
+        }
+
+        private static string TrimSign(string shopName, SpriteFont font, int maxLen)
+        {
+            if (font.MeasureString(shopName).X > maxLen)
+            {
+                shopName = System.Text.RegularExpressions.Regex.Replace(shopName, Get("shop-sign", new {Owner=""}), "");
+                shopName = System.Text.RegularExpressions.Regex.Replace(shopName, Get("farm-sign", new {FarmName=""}), "");
+            }
+            
+            while (shopName.Length > 1 && font.MeasureString(shopName).X > maxLen)
+            {
+                shopName = shopName.Remove(shopName.Length - 1, 1);
+            }
+            return shopName;
+        }
+        
+        internal void DrawTextSign(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
+        {
+            string text;
+            Vector2 textSize;
+            Texture2D blankSign;
+
+            if (MarketDay.Font is null) return;
+            
+            try
+            {
+                text = TrimSign(SignText(), MarketDay.Font, 36 * Game1.pixelZoom);
+                textSize = MarketDay.Font.MeasureString(text);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+            
+            var start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
+            
+            var center = start + new Vector2(24 * 4, 55 * 4);
+            
+            var textLoc = center - new Vector2(
+                (int) (textSize.X / 2),
+                (int) (textSize.Y / 2))
+                + new Vector2(0, 1 * Game1.pixelZoom);
+            
+            
+            // textLoc -= new Vector2(textLoc.X % Game1.pixelZoom, textLoc.Y % Game1.pixelZoom);
+            // don't do this, it causes jitter
+
+            try
+            {
+                blankSign = MarketDay.helper.ModContent.Load<Texture2D>("Assets\\open-brown.png");
+                //font = Game1.tinyFont;
+            }
+            catch (Exception ex)
+            {
+                MarketDay.Log($"Could not load sign texture: {ex}", LogLevel.Error);
+                return;
+            }
+
+            if (blankSign is null) return;
+
+            var signLoc = center - new Vector2(
+                (int) (blankSign.Width * Game1.pixelZoom / 2),
+                (int) (blankSign.Height * Game1.pixelZoom / 2));
+
+            spriteBatch.Draw(
+                texture: blankSign,
+                position: signLoc,
+                sourceRectangle: null,
+                color: Color.White,
+                rotation: 0f,
+                origin: Vector2.Zero,
+                scale: Game1.pixelZoom,
+                effects: SpriteEffects.None,
+                layerDepth: layerDepth
+            );            
+            spriteBatch.DrawString(
+                MarketDay.Font,
+                text,
+                textLoc,
+                new Color(95, 20, 0, 255), 
+                0,
+                Vector2.Zero, 
+                1.0f,
+                SpriteEffects.None,
+                layerDepth + 0.0001f
             );
         }
 

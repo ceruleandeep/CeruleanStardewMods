@@ -78,6 +78,10 @@ namespace MarketDay.Data
                 : 9
                 ));
         
+        /// <summary>
+        /// Number of shops to open, accounting for challenge mode level
+        /// and free play mode configuration
+        /// </summary>
         internal int NumberOfShops =>
             Math.Max(1, Math.Min(15, 
                 MarketDay.Config.Progression 
