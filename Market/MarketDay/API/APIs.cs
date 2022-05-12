@@ -1,4 +1,5 @@
-﻿using MarketDay.src.API;
+﻿using System;
+using MarketDay.src.API;
 using StardewModdingAPI;
 
 namespace MarketDay.API
@@ -12,6 +13,10 @@ namespace MarketDay.API
         internal static IJsonAssetsApi JsonAssets;
         internal static IBFAVApi BFAV;
         internal static IConditionsApi Conditions;
+
+        internal static readonly Lazy<IDynamicGameAssetsApi> dgaApi = new(
+            () => MarketDay.helper.ModRegistry.GetApi<IDynamicGameAssetsApi>("spacechase0.DynamicGameAssets")
+        );
 
         /// <summary>
         /// Register the API for Json Assets
