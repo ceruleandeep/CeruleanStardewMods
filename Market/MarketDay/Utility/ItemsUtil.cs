@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MarketDay.API;
+using StardewValley.Objects;
 
 namespace MarketDay.Utility
 {
@@ -49,7 +50,7 @@ namespace MarketDay.Utility
 
             //load up tree and crop data
             _fruitTreeData = MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/fruitTrees");
-            _cropData = MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Crops");
+            _cropData = MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Crops");  
         }
 
         /// <summary>
@@ -81,7 +82,31 @@ namespace MarketDay.Utility
                     return index;
                 }
             }
+
             return -1;
+        }
+
+        public static ISalable GetDGAObjectByName(string name, string itemType = "Object")
+        {
+            if (APIs.dgaApi.Value is not { } dgaApi)
+            {
+                MarketDay.Log($"{name}/{itemType}: could not get DGA API", LogLevel.Warn);
+                return null;
+            }
+
+            var obj = dgaApi.SpawnDGAItem(name);
+            if (obj is null)
+            {
+                MarketDay.Log($"{name}/{itemType}: not a DGA object", LogLevel.Trace);
+                return null;
+            }
+
+            if (obj is ISalable item)
+            {
+                return item;
+            }
+            MarketDay.Log($"{name}/{itemType}: not a saleable object", LogLevel.Trace);
+            return null;
         }
         
         /// <summary>
