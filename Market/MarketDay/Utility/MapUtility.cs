@@ -27,12 +27,8 @@ namespace MarketDay.Utility
 
 
         /// <summary>
-        /// Returns the tile property found at the given parameters
+        /// A list of the shop positions in the current Town map, if any.
         /// </summary>
-        /// <value>an instance of the the map location</value>
-        /// <value>the name of the layer</value>
-        /// <value>the coordinates of the tile</value>
-        /// <value>The tile property if there is one, null if there isn't</value>
         public static List<Vector2> ShopTiles
         {
             get
@@ -77,6 +73,9 @@ namespace MarketDay.Utility
             }
         }
 
+        /// <summary>
+        /// A dictionary of positions of open GrangeShops 
+        /// </summary>
         internal static Dictionary<Vector2, GrangeShop> ShopAtTile()
         {
             var town = Game1.getLocationFromName("Town");

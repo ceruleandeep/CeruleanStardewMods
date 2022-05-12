@@ -157,7 +157,7 @@ namespace MarketDay
         public static void Postfix(Point startPoint, Point endPoint, GameLocation location, int limit, ref Stack<Point> __result)
         {
             if (location is not Town) return;
-            if (!MarketDay.IsMarketDay()) return;
+            if (!MarketDay.IsMarketDay) return;
             if (!MarketDay.Config.NPCVisitors) return;
             if (MapUtility.ShopTiles.Count == 0) return;
             
@@ -181,7 +181,7 @@ namespace MarketDay
             ref Dictionary<int, SchedulePathDescription> __result)
         {
             if (!MarketDay.Config.NPCRescheduling) return;
-            if (!MarketDay.IsMarketDay()) return;
+            if (!MarketDay.IsMarketDay) return;
             
             if (MapUtility.ShopTiles.Count == 0) return;
             
@@ -202,7 +202,7 @@ namespace MarketDay
             ref Dictionary<int, SchedulePathDescription> __result)
         {
             if (!MarketDay.Config.NPCRescheduling) return;
-            if (!MarketDay.IsMarketDay()) return;
+            if (!MarketDay.IsMarketDay) return;
 
             if (__result is not null && __result.Count > 0) return;
             

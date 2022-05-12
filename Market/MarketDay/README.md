@@ -217,9 +217,9 @@ patch reload ceruleandeep.MarketDay.CP
 patch summary ceruleandeep.MarketDay.CP
 patch summary ceruleandeep.MarketDay
 
-eventforget 117780001
 patch reload ceruleandeep.MarketDay.Wizard
 
+eventforget 117780001
 responseforget 117789010
 responseforget 117789011
 responseforget 117789012
@@ -235,6 +235,7 @@ responseforget 117789040
 responseforget 117789041
 responseforget 117789050
 responseforget 117789051
+
 patch reload ceruleandeep.MarketDay.Wizard
 debug ebi 117780001
 
