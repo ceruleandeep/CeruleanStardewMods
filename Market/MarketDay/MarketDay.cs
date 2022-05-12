@@ -51,6 +51,7 @@ namespace MarketDay
         internal static Mod SMod;
 
         internal static SpriteFont Font;
+        internal static Texture2D BlankSign;
         
         public const string SalesReportKey = "LastSalesReport";
         public const string TotalGoldKey = "TotalGold";
@@ -406,6 +407,15 @@ namespace MarketDay
             catch (Exception ex)
             {
                 Log($"Could not load sign font: {ex}", LogLevel.Error);
+            }
+            
+            try
+            {
+                BlankSign = helper.ModContent.Load<Texture2D>("Assets\\open-brown.png");
+            }
+            catch (Exception ex)
+            {
+                Log($"Could not load sign texture: {ex}", LogLevel.Error);
             }
         }
 

@@ -1177,15 +1177,15 @@ namespace MarketDay.Shop
             }
             return shopName;
         }
-        
-        internal void DrawTextSign(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
+
+        private void DrawTextSign(Vector2 tileLocation, SpriteBatch spriteBatch, float layerDepth)
         {
             string text;
             Vector2 textSize;
-            Texture2D blankSign;
 
             if (MarketDay.Font is null) return;
-            
+            if (MarketDay.BlankSign is null) return;
+
             try
             {
                 text = TrimSign(SignText(), MarketDay.Font, 36 * Game1.pixelZoom);
@@ -1197,7 +1197,6 @@ namespace MarketDay.Shop
             }
             
             var start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
-            
             var center = start + new Vector2(24 * 4, 55 * 4);
             
             var textLoc = center - new Vector2(
@@ -1209,25 +1208,13 @@ namespace MarketDay.Shop
             // textLoc -= new Vector2(textLoc.X % Game1.pixelZoom, textLoc.Y % Game1.pixelZoom);
             // don't do this, it causes jitter
 
-            try
-            {
-                blankSign = MarketDay.helper.ModContent.Load<Texture2D>("Assets\\open-brown.png");
-                //font = Game1.tinyFont;
-            }
-            catch (Exception ex)
-            {
-                MarketDay.Log($"Could not load sign texture: {ex}", LogLevel.Error);
-                return;
-            }
-
-            if (blankSign is null) return;
 
             var signLoc = center - new Vector2(
-                (int) (blankSign.Width * Game1.pixelZoom / 2),
-                (int) (blankSign.Height * Game1.pixelZoom / 2));
+                (int) (MarketDay.BlankSign.Width * Game1.pixelZoom / 2),
+                (int) (MarketDay.BlankSign.Height * Game1.pixelZoom / 2));
 
             spriteBatch.Draw(
-                texture: blankSign,
+                texture: MarketDay.BlankSign,
                 position: signLoc,
                 sourceRectangle: null,
                 color: Color.White,
