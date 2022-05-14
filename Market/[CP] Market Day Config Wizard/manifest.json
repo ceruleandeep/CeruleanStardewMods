@@ -1,7 +1,7 @@
 {
     "Name": "[CP] Market Day Config Wizard",
     "Author": "ceruleandeep",
-    "Version": "1.1.0-beta.2",
+    "Version": "1.1.1",
     "Description": "Market Day Config Wizard",
     "UniqueID": "ceruleandeep.MarketDay.Wizard",
     "UpdateKeys": ["Nexus:???"],
@@ -15,7 +15,7 @@
         },
         {
             "UniqueID": "ceruleandeep.MarketDay",
-            "MinimumVersion": "1.1.0-beta.2",
+            "MinimumVersion": "1.1.1",
             "IsRequired": true
         }
     ]

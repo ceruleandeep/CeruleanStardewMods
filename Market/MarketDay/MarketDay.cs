@@ -523,7 +523,7 @@ namespace MarketDay
             if (!Context.IsWorldReady) return;
             if (!Context.IsMainPlayer) return;
             
-            if (e is not null && e.Name.Name != "Maps/Town") return;
+            if (e is not null && ! e.Name.Name.StartsWith("Maps/Town")) return;
 
             // layout will change next tick
             previousShopLayout = MapUtility.ShopTiles;
