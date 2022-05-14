@@ -196,7 +196,7 @@ namespace MarketDay.Shop
         internal static void UpdateStock()
         {
             if (GrangeShops.Count > 0)
-                MarketDay.Log($"Refreshing stock for all custom shops...", LogLevel.Debug);
+                MarketDay.Log($"Refreshing stock for all custom shops...", LogLevel.Trace);
 
             foreach (var grangeShop in GrangeShops.Values)
             {

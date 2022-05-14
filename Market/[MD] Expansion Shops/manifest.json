@@ -8,6 +8,6 @@
     "MinimumApiVersion": "3.0.0",
     "ContentPackFor": {
         "UniqueID": "ceruleandeep.MarketDay",
-        "MinimumVersion": "1.1.0-beta.2"
+        "MinimumVersion": "1.1.0"
     }
 }

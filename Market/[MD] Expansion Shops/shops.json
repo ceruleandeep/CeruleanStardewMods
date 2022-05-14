@@ -4,7 +4,7 @@
       "ShopName": "LolaWeaponShop",
       "OpenSignText": "Weapons",
       "NpcName": "Lola",
-      "OpenSignPath": "",
+      "OpenSignPath": "assets/open-weapons.png",
       "ClosedSignPath": "",
       "Quote": "How can I help you, dear?",
       "DefaultSellPriceMultiplier": 1.4,
@@ -31,7 +31,7 @@
       "ShopName": "LorenzoFertilizerShop",
       "OpenSignText": "Fertilizer",
       "NpcName": "Lorenzo",
-      "OpenSignPath": "",
+      "OpenSignPath": "assets/open-heaps.png",
       "ClosedSignPath": "",
       "Quote": "All Fertilizer",
       "DefaultSellPriceMultiplier": 1.4,
@@ -58,12 +58,12 @@
       "ShopName": "MaypalSerrupShop",
       "OpenSignText": "Maypal SeRRup",
       "NpcName": "Bear",
-      "OpenSignPath": "",
+      "OpenSignPath": "assets/open-serrup.png",
       "ClosedSignPath": "",
       "Quote": "Pleez bring may-pal serrup.",
       "DefaultSellPriceMultiplier": 1.4,
       "When": [
-        "HasMod FlashShifter.StardewValleyExpandedCP"
+        "HasMod FlashShifter.StardewValleyExpandedCP", "e 2120303"
       ],
       "ItemStocks": [
         {  "ItemType": "Object",  "ItemNames": ["Honey"], "StockPrice": 200, "Stock": 10},
@@ -108,7 +108,7 @@
       "ShopName": "PikasRestaurant",
       "OpenSignText": "Pika's",
       "NpcName": "Pika",
-      "OpenSignPath": "",
+      "OpenSignPath": "assets/open-pika.png",
       "ClosedSignPath": "",
       "Quote": "Smell that?",
       "DefaultSellPriceMultiplier": 1.4,

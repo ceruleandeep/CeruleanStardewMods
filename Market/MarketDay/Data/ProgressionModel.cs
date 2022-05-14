@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MarketDay.Utility;
 using StardewModdingAPI;
+using StardewValley;
 
 namespace MarketDay.Data
 {
@@ -10,6 +11,7 @@ namespace MarketDay.Data
     {
         public string Name { get; set; }
         public int Gold { get; set; }
+        public int GoldForDifficulty => (int)(Gold * Game1.player.difficultyModifier);
         public int Score { get; set; }
         public string Object { get; set; }
         public string Flavor { get; set; }
@@ -23,7 +25,7 @@ namespace MarketDay.Data
         public string Name { get; set; }
         public int NumberOfShops { get; set; }
         public int UnlockAtEarnings { get; set; }
-
+        public int UnlockAtEarningsForDifficulty => (int)(UnlockAtEarnings * Game1.player.difficultyModifier);
         public int AutoRestock { get; set; } = 4;
 
         public int ShopSize { get; set; } = 9;
@@ -34,7 +36,7 @@ namespace MarketDay.Data
 
         public PrizeLevel PrizeForEarnings(int gold)
         {
-            var eligiblePrizes = Prizes.Where(p => p.Score == 0 && p.Gold <= gold).OrderBy(p => p.Gold);
+            var eligiblePrizes = Prizes.Where(p => p.Score == 0 && p.GoldForDifficulty <= gold).OrderBy(p => p.GoldForDifficulty);
             return eligiblePrizes.Any() ? eligiblePrizes.Last() : null;
         }
         
@@ -50,7 +52,7 @@ namespace MarketDay.Data
             {
                 ProgressionLevel highestUnlocked = null;
                 var gold = MarketDay.GetSharedValue(MarketDay.TotalGoldKey);
-                foreach (var level in Levels.Where(level => level.UnlockAtEarnings <= gold)) highestUnlocked = level;
+                foreach (var level in Levels.Where(level => level.UnlockAtEarningsForDifficulty <= gold)) highestUnlocked = level;
                 return highestUnlocked;
             }
         }
@@ -60,7 +62,7 @@ namespace MarketDay.Data
             get
             {
                 var gold = MarketDay.GetSharedValue(MarketDay.TotalGoldKey);
-                return Levels.OrderBy(l => l.UnlockAtEarnings).FirstOrDefault(level => level.UnlockAtEarnings > gold);
+                return Levels.OrderBy(l => l.UnlockAtEarnings).FirstOrDefault(level => level.UnlockAtEarningsForDifficulty > gold);
             }
         }
 
@@ -96,7 +98,7 @@ namespace MarketDay.Data
                 : 10
             ));
 
-        internal int WeeklyGoldTarget => CurrentLevel?.Prizes.Where(p => p.Score==0).OrderBy(p => p.Gold).First().Gold ?? 0;
+        internal int WeeklyGoldTarget => CurrentLevel?.Prizes.Where(p => p.Score==0).OrderBy(p => p.GoldForDifficulty).First().GoldForDifficulty ?? 0;
 
         internal void CheckItems()
         {

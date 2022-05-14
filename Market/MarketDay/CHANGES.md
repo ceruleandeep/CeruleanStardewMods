@@ -1,9 +1,20 @@
 # Changes
 
+1.1.0 RELEASE
+* Forbid Krobus from leaving the house, their sprite can't handle it
+* Scale prize difficulty if player is using a reduced profit margin
+
+
+
 1.1.0-beta.2
 * Add dynamic signs for shops without custom art
 * Change sync strategery againnn
 * Add DGA item support
+
+1.1.0-beta.1
+* Fixes some issues with changing market configuration in-game
+* George's mailbox is back where it should be
+* Reorganised GMCM screen
 
 1.0.9 RELEASE
 

@@ -479,72 +479,66 @@ namespace MarketDay.Utility
 			string endBehavior, string endMessage, int endingX, int endingY, int faceDirection, Dictionary<int, SchedulePathDescription> masterSchedule,
 			ref int stepTime)
 		{
-			GrangeShop shop = null;
-			if (startLoc is not null && endLocationName is not null)
+			if (startLoc is null || endLocationName is null) return null;
+
+			// sorry, Krobus is not permitted in town
+			if (npc.Name == "Krobus") return null;
+
+			var viaLocations = getLocationRoute.Invoke<List<string>>(startLoc, endLocationName);
+			if (viaLocations is null || !viaLocations.Contains("Town")) return null;
+			
+			// see if they own a shop or their spouse owns a shop
+			MapUtility.ShopOwners.TryGetValue(npc.Name, out var shop);
+			if (shop is null && npc.getSpouse() is not null && npc.getSpouse().Name is not null)
+				MapUtility.ShopOwners.TryGetValue(npc.getSpouse().Name, out shop);
+
+			if (shop is null) return null;
+
+			var startToTown = pathfindToNextScheduleLocation(npc, stepTime, nextStepTime, false, startLoc,
+				startPoint.X, startPoint.Y, "Town", (int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, 2, null,
+				null);
+			var arriveInTownAt =
+				StardewValley.Utility.ConvertMinutesToTime(StardewValley.Utility.ConvertTimeToMinutes(stepTime) +
+				                                           Minutes(startToTown));
+			var townToEnd = pathfindToNextScheduleLocation(npc, arriveInTownAt, nextStepTime, true, "Town",
+				(int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, endLocationName, endingX, endingY, faceDirection,
+				endBehavior, endMessage);
+
+			var leaveTownBy =
+				StardewValley.Utility.ConvertMinutesToTime(
+					StardewValley.Utility.ConvertTimeToMinutes(nextStepTime) - Minutes(townToEnd));
+			if (leaveTownBy > MarketDay.Config.ClosingTime * 100)
 			{
-				var viaLocations = getLocationRoute.Invoke<List<string>>(startLoc, endLocationName);
-				if (viaLocations is not null && viaLocations.Contains("Town"))
-				{
-					// see if they own a shop or their spouse owns a shop
-					MapUtility.ShopOwners.TryGetValue(npc.Name, out shop);
-					if (shop is null && npc.getSpouse() is not null && npc.getSpouse().Name is not null)
-						MapUtility.ShopOwners.TryGetValue(npc.getSpouse().Name, out shop);
+				// they don't need to leave the market before it closes
+				// so have them stay until the end and go straight to next scheduled destination
+				townToEnd = pathfindToNextScheduleLocation(npc, arriveInTownAt, nextStepTime, false, "Town",
+					(int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, endLocationName, endingX, endingY,
+					faceDirection, endBehavior, endMessage);
+				leaveTownBy = MarketDay.Config.ClosingTime * 100;
+			}
 
-					if (shop is not null)
-					{
-						// MarketDay.Log($"parseMasterSchedule: {npc.Name} owns {shop.ShopName} ({shop.OwnerTile})",
-						// 	LogLevel.Info);
-						// MarketDay.Log($"time {time} stepTime {stepTime} nextStepTime {nextStepTime} avail {minutesAvailable}",
-						// 	LogLevel.Info);
-
-						var startToTown = pathfindToNextScheduleLocation(npc, stepTime, nextStepTime, false, startLoc,
-							startPoint.X, startPoint.Y, "Town", (int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, 2, null,
-							null);
-						var arriveInTownAt =
-							StardewValley.Utility.ConvertMinutesToTime(StardewValley.Utility.ConvertTimeToMinutes(stepTime) +
-							                                           Minutes(startToTown));
-						var townToEnd = pathfindToNextScheduleLocation(npc, arriveInTownAt, nextStepTime, true, "Town",
-							(int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, endLocationName, endingX, endingY, faceDirection,
-							endBehavior, endMessage);
-
-						var leaveTownBy =
-							StardewValley.Utility.ConvertMinutesToTime(
-								StardewValley.Utility.ConvertTimeToMinutes(nextStepTime) - Minutes(townToEnd));
-						if (leaveTownBy > MarketDay.Config.ClosingTime * 100)
-						{
-							// they don't need to leave the market before it closes
-							// so have them stay until the end and go straight to next scheduled destination
-							townToEnd = pathfindToNextScheduleLocation(npc, arriveInTownAt, nextStepTime, false, "Town",
-								(int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, endLocationName, endingX, endingY,
-								faceDirection, endBehavior, endMessage);
-							leaveTownBy = MarketDay.Config.ClosingTime * 100;
-						}
-
-						if (arriveInTownAt > MarketDay.Config.ClosingTime * 100)
-						{
-							// MarketDay.Log(
-							// 	$"no time for that... would arrive at {arriveInTownAt} which is after closing {MarketDay.Config.ClosingTime * 100}",
-							// 	LogLevel.Info);
-							shop = null;
-						}
-						else if (arriveInTownAt >= leaveTownBy)
-						{
-							// MarketDay.Log(
-							// 	$"no time for that... would arrive at {arriveInTownAt} but we have to leave at {leaveTownBy}",
-							// 	LogLevel.Info);
-							shop = null;
-						}
-						else
-						{
-							// MarketDay.Log($"We can do this... arrive at {arriveInTownAt} leave at {leaveTownBy}",
-							// 	LogLevel.Info);
-							AddWorkingAt(npc, arriveInTownAt, shop, leaveTownBy);
-							masterSchedule.Add(stepTime, startToTown);
-							masterSchedule.Add(leaveTownBy, townToEnd);
-							stepTime = leaveTownBy;
-						}
-					}
-				}
+			if (arriveInTownAt > MarketDay.Config.ClosingTime * 100)
+			{
+				// MarketDay.Log(
+				// 	$"no time for that... would arrive at {arriveInTownAt} which is after closing {MarketDay.Config.ClosingTime * 100}",
+				// 	LogLevel.Info);
+				shop = null;
+			}
+			else if (arriveInTownAt >= leaveTownBy)
+			{
+				// MarketDay.Log(
+				// 	$"no time for that... would arrive at {arriveInTownAt} but we have to leave at {leaveTownBy}",
+				// 	LogLevel.Info);
+				shop = null;
+			}
+			else
+			{
+				// MarketDay.Log($"We can do this... arrive at {arriveInTownAt} leave at {leaveTownBy}",
+				// 	LogLevel.Info);
+				AddWorkingAt(npc, arriveInTownAt, shop, leaveTownBy);
+				masterSchedule.Add(stepTime, startToTown);
+				masterSchedule.Add(leaveTownBy, townToEnd);
+				stepTime = leaveTownBy;
 			}
 
 			return shop;

@@ -18,6 +18,7 @@ using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using xTile.ObjectModel;
+using static MarketDay.MarketDay;
 using SObject = StardewValley.Object;
 
 namespace MarketDay
@@ -202,99 +203,122 @@ namespace MarketDay
 
         private static void LogModState()
         {
-            var state = new List<string>();
-            state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:");
-            state.Add($"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}");
-            var festival = StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
-            state.Add($"Weather  Rain: {Game1.isRaining}  Snow: {Game1.isSnowing}  Festival: {festival}");
-            state.Add($"Market Day: {IsMarketDay}");
-            state.Add($"GMM Compat  Enabled: {Config.GMMCompat}  GMM Day: {isGMMDay()}  Joseph: {GMMJosephPresent}  Paisley: {GMMPaisleyPresent}");
-            if (Config.Progression)
+            try
             {
-                state.Add($"Progression:  Enabled  Shops: {Progression.NumberOfShops}  Weekly Target: {Progression.WeeklyGoldTarget}");   
-                state.Add($"    AutoRestock: {Progression.AutoRestock}  ShopSize: {Progression.ShopSize}  PriceMultiplierLimit: {Progression.SellPriceMultiplierLimit}");
-                state.Add($"    Current level: [{MarketDay.Progression.CurrentLevel.Number}] {MarketDay.Progression.CurrentLevel.Name}");
-                if (MarketDay.Progression.NextLevel is not null)
+                var state = new List<string>();
+                state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:");
+                state.Add($"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}");
+                var festival = StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
+                state.Add($"Weather  Rain: {Game1.isRaining}  Snow: {Game1.isSnowing}  Festival: {festival}");
+                state.Add($"Market Day: {IsMarketDay}");
+                state.Add($"GMM Compat  Enabled: {Config.GMMCompat}  GMM Day: {isGMMDay()}  Joseph: {GMMJosephPresent}  Paisley: {GMMPaisleyPresent}");
+                if (Config.Progression)
                 {
-                    state.Add($"    Next level: [{MarketDay.Progression.NextLevel.Number}] {MarketDay.Progression.NextLevel.Name} unlocks at {MarketDay.Progression.NextLevel.UnlockAtEarnings}");
+                    state.Add($"Progression:  Enabled  Shops: {Progression.NumberOfShops}  Weekly Target: {Progression.WeeklyGoldTarget}");   
+                    state.Add($"    AutoRestock: {Progression.AutoRestock}  ShopSize: {Progression.ShopSize}  PriceMultiplierLimit: {Progression.SellPriceMultiplierLimit}");
+                    state.Add($"    Current level: [{Progression.CurrentLevel.Number}] {Progression.CurrentLevel.Name}");
+                    if (Progression.NextLevel is not null)
+                    {
+                        state.Add($"    Next level: [{Progression.NextLevel.Number}] {Progression.NextLevel.Name} unlocks at {Progression.NextLevel.UnlockAtEarningsForDifficulty}");
+                    }
                 }
+                else
+                {
+                    state.Add($"Progression:  Disabled");
+                }
+
+                var positions = string.Join(", ", ShopPositions());
+                state.Add($"Shop positions: {Config.NumberOfShops} shops requested in config, {Progression.NumberOfShops} shops actual");
+                state.Add($"    Positions sent to CP: {positions}");
+
+                var mapPositions = string.Join(", ", MapUtility.ShopTiles);
+                state.Add($"    Positions on map: {mapPositions}");
+
+                state.AddRange(MapUtility.ShopAtTile().Select(kvp => $"    {kvp.Key}: {kvp.Value.ShopName}"));
+
+                state.Add($"Shop config:");
+                var enabled = Config.ShopsEnabled.Select(kvp => $"    {kvp.Key}: {kvp.Value}").ToList();
+                if (enabled.Count == 0)
+                    state.Add("    No shops enabled/disabled in config.json");
+                state.AddRange(enabled);
+
+                var apsk = string.Join(", ", AvailablePlayerShopKeys);
+                state.Add($"Available player shops:  {AvailablePlayerShopKeys.Count} shops: {apsk}");
+
+                var ansk = string.Join(", ", AvailableNPCShopKeys);
+                state.Add($"Available NPC shops:  {AvailableNPCShopKeys.Count} shops: {ansk}");
+
+                state.Add($"NPC interactions:");
+                var times = Schedule.NPCInteractions.Keys.ToList();
+                times.Sort();
+                foreach (var time in times)
+                {
+                    var interactions = Schedule.NPCInteractions[time];
+                    interactions.Sort();
+                    state.Add($"    {time}:");
+                    state.AddRange(interactions.Select(interaction => $"        {interaction}").Distinct());
+                }
+                
+                foreach (var line in state) Log(line, Config.VerboseLogging ? LogLevel.Debug : LogLevel.Trace);
             }
-            else
+            catch (Exception ex)
             {
-                state.Add($"Progression:  Disabled");
+                Log($"Unable to log mod state ({ex})", LogLevel.Trace);
             }
-
-            var positions = string.Join(", ", ShopPositions());
-            state.Add($"Shop positions: {Config.NumberOfShops} shops requested in config, {Progression.NumberOfShops} shops actual");
-            state.Add($"    Positions sent to CP: {positions}");
-
-            var mapPositions = string.Join(", ", MapUtility.ShopTiles);
-            state.Add($"    Positions on map: {mapPositions}");
-
-            state.AddRange(MapUtility.ShopAtTile().Select(kvp => $"    {kvp.Key}: {kvp.Value.ShopName}"));
-
-            state.Add($"Shop config:");
-            var enabled = Config.ShopsEnabled.Select(kvp => $"    {kvp.Key}: {kvp.Value}").ToList();
-            if (enabled.Count == 0)
-                state.Add("    No shops enabled/disabled in config.json");
-            state.AddRange(enabled);
-
-            var apsk = string.Join(", ", AvailablePlayerShopKeys);
-            state.Add($"Available player shops:  {AvailablePlayerShopKeys.Count} shops: {apsk}");
-
-            var ansk = string.Join(", ", AvailableNPCShopKeys);
-            state.Add($"Available NPC shops:  {AvailableNPCShopKeys.Count} shops: {ansk}");
-
-            state.Add($"NPC interactions:");
-            var times = Schedule.NPCInteractions.Keys.ToList();
-            times.Sort();
-            foreach (var time in times)
-            {
-                var interactions = Schedule.NPCInteractions[time];
-                interactions.Sort();
-                state.Add($"    {time}:");
-                state.AddRange(interactions.Select(interaction => $"        {interaction}").Distinct());
-            }
-            
-            foreach (var line in state) Log(line, LogLevel.Debug);
         }
         
         private static void LogShopPositions(string caller="unspecified")
         {
-            var state = new List<string>();
-            state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} shop positions  [caller: {caller}]");
-            var md = IsMarketDay ? "market day" : "not market day";
-            state.Add($"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}  ({md})");
-            var positions = string.Join(", ", ShopPositions());
-            state.Add($"Shops: {Progression.NumberOfShops}");
-            state.Add($"    Positions sent to CP: {positions}");
+            try
+            {
+                var state = new List<string>();
+                state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} shop positions  [caller: {caller}]");
+                var md = IsMarketDay ? "market day" : "not market day";
+                state.Add($"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}  ({md})");
 
-            if (MapUtility.ShopTiles.Count > 0)
-            {
-                var mapPositions = string.Join(", ", MapUtility.ShopTiles);
-                state.Add($"    Positions on map: {mapPositions}");
-            }
-            else
-            {
-                state.Add($"    No shop positions on the map");
-            }
+                state.Add($"Shops: {Progression.NumberOfShops}");
+                if (ShopPositions() is not null)
+                {
+                    var positions = string.Join(", ", ShopPositions());
+                    state.Add($"    Positions sent to CP: {positions}");
+                }
+                else
+                {
+                    state.Add($"    Positions sent to CP: null");
+                }
 
-            if (previousShopLayout is not null && previousShopLayout.Count > 0)
-            {
-                var lastMapPositions = string.Join(", ", previousShopLayout);
-                state.Add($"    Previous positions on map: {lastMapPositions}");
-            }
+                if (MapUtility.ShopTiles.Count > 0)
+                {
+                    var mapPositions = string.Join(", ", MapUtility.ShopTiles);
+                    state.Add($"    Positions on map: {mapPositions}");
+                }
+                else
+                {
+                    state.Add($"    No shop positions on the map");
+                }
 
-            if (MapUtility.OpenShops().Count > 0)
-            {
-                state.Add("Open shops:");
-                state.AddRange(MapUtility.OpenShops().Select(shop => $"    {shop.Origin}: {shop.ShopName}"));
+                if (previousShopLayout is not null && previousShopLayout.Count > 0)
+                {
+                    var lastMapPositions = string.Join(", ", previousShopLayout);
+                    state.Add($"    Previous positions on map: {lastMapPositions}");
+                }
+
+                if (MapUtility.OpenShops().Count > 0)
+                {
+                    state.Add("Open shops:");
+                    state.AddRange(MapUtility.OpenShops().Select(shop => $"    {shop.Origin}: {shop.ShopName}"));
+                }
+                else
+                {
+                    state.Add("No shops open");
+                }
+
+                foreach (var line in state) Log(line, Config.VerboseLogging ? LogLevel.Debug : LogLevel.Trace);
             }
-            else
+            catch (Exception ex)
             {
-                state.Add("No shops open");
+                Log($"Could not log shop state ({ex})", LogLevel.Trace);
             }
-            foreach (var line in state) Log(line, LogLevel.Debug);
         }
 
         private static void ListShopTiles(string command, string[] args)
@@ -357,7 +381,7 @@ namespace MarketDay
                 }
                 var level = Progression.Levels[int.Parse(args[0])];
                 Log($"Setting level to {level.Name}", LogLevel.Debug);
-                SetGold("", new[]{$"{level.UnlockAtEarnings}"});
+                SetGold("", new[]{$"{level.UnlockAtEarningsForDifficulty}"});
             }
             Log($"Will send level-up mail tonight", LogLevel.Debug);
             ForceLevelUpMail = true;
@@ -400,9 +424,10 @@ namespace MarketDay
         
         private static void OnLaunched_ReadFontData(object sender, EventArgs e)
         {
+            var t = Game1.player.difficultyModifier;
             try
             {
-                Font = helper.ModContent.Load<SpriteFont>("Assets\\IckleFont");
+                Font = helper.ModContent.Load<SpriteFont>("assets\\IckleFont.xnb");
             }
             catch (Exception ex)
             {
@@ -526,15 +551,11 @@ namespace MarketDay
             // the map is updated at this point so whatever's there is what there is
             MapChangesSynced = true;
 
-            var nothingChanged = previousShopLayout.Count == MapUtility.ShopTiles.Count && previousShopLayout.All(MapUtility.ShopTiles.Contains);
-            Log($"OnAssetReady: nothing changed: {nothingChanged}", LogLevel.Debug);
-            // if (nothingChanged) return;
-
             LogShopPositions("OnOneSecondUpdateTicking_SyncMap checking for invalid shops");
             var shopTiles = MapUtility.ShopTiles;
             foreach (var shop in MapUtility.OpenShops().Where(shop => !shopTiles.Contains(shop.Origin)))
             {
-                Log($"Shop at {shop.Origin} is not on a shop tile", LogLevel.Debug);
+                Log($"Shop at {shop.Origin} is not on a shop tile", LogLevel.Trace);
                 shop.CloseShop();
             }
             LogShopPositions("OnOneSecondUpdateTicking_SyncMap checked for invalid shops");
@@ -546,11 +567,11 @@ namespace MarketDay
             
             if (actualShopCount == expectedShopCount)
             {
-                Log($"Correct number of shops already open ({actualShopCount})", LogLevel.Debug);
+                Log($"Correct number of shops already open ({actualShopCount})", LogLevel.Trace);
                 return;
             }
 
-            Log($"Incorrect number of shops open (expected {expectedShopCount} actual {actualShopCount} available {availableShopCount})", LogLevel.Debug);
+            Log($"Incorrect number of shops open (expected {expectedShopCount} actual {actualShopCount} available {availableShopCount})", LogLevel.Trace);
 
             if (actualShopCount > 0)
             {
@@ -560,7 +581,7 @@ namespace MarketDay
             }
 
             if (!IsMarketDay) return;
-            Log($"SyncMapUpdateStockOpenShop: syncing and opening shops", LogLevel.Info, false);
+            Log($"SyncMapUpdateStockOpenShop: syncing and opening shops", LogLevel.Info, true);
 
             if (!AnyShopTilesOnMap())
             {
@@ -580,7 +601,7 @@ namespace MarketDay
 
             OnDayStarted_SendPrompt(null, null);
 
-            LogShopPositions("OnOneSecondUpdateTicking_SyncMap end");
+            LogModState();
         }
         
         private static void OnOneSecondUpdateTicking_InteractWithNPCs(object sender, OneSecondUpdateTickingEventArgs e)
@@ -646,7 +667,7 @@ namespace MarketDay
             availableShopKeys.InsertRange(0, AvailablePlayerShopKeys);
             
             var strNames = string.Join(", ", availableShopKeys);
-            Log($"OpenShops: Adding shops ({MapUtility.ShopTiles.Count} of {strNames})", LogLevel.Debug);
+            Log($"OpenShops: Adding shops ({MapUtility.ShopTiles.Count} of {strNames})", LogLevel.Trace);
 
             foreach (var ShopLocation in MapUtility.ShopTiles)
             {
@@ -1307,22 +1328,20 @@ namespace MarketDay
         {
             if (!Context.IsWorldReady) return null;
 
-            int shopCount = Progression.NumberOfShops;
+            var shopCount = Progression.NumberOfShops;
             var key = $"{shopCount} Shops";
             if (!ShopLayouts.ContainsKey(key)) key = "6 Shops";
             if (!ShopLayouts.TryGetValue(key, out var layout)) return null;
             
             layout = layout.ToList();
-            if (Config.GMMCompat && isGMMDay())
-            {
-                if (GMMPaisleyPresent) layout.Remove(0);
-                if (GMMPaisleyPresent) layout.Remove(5);
-                if (GMMPaisleyPresent) layout.Remove(12);
-                if (GMMPaisleyPresent) layout.Remove(13);
-                if (GMMJosephPresent) layout.Remove(2);
-                if (GMMJosephPresent) layout.Remove(7);
-            }
-            
+            if (!Config.GMMCompat || !isGMMDay()) return layout.Select(i => $"Shop{i}").ToArray();
+            if (GMMPaisleyPresent) layout.Remove(0);
+            if (GMMPaisleyPresent) layout.Remove(5);
+            if (GMMPaisleyPresent) layout.Remove(12);
+            if (GMMPaisleyPresent) layout.Remove(13);
+            if (GMMJosephPresent) layout.Remove(2);
+            if (GMMJosephPresent) layout.Remove(7);
+
             return layout.Select(i => $"Shop{i}").ToArray();
         }
 

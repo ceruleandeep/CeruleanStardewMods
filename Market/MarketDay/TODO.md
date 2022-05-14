@@ -39,6 +39,14 @@ Market mechanics:
 * Critics and reviews
 * Gain friendship if items bought while you're there
 
+
+## c/o Airyn
+
+Faye could have a clothing stall and Kimpoi could have a sapling stall?
+Oh, Jeric could have a seed & produce stall too
+(also if you want more ES/Lemurverse characters, it'd be hilarious if Juliet had a stall selling stuff she's shoplifted from JojaMart 😂)
+
+
 ## c/o dollynhoevida:
 
 Hello, I have many ideas for your market day mod, I'm sending message because it's a lot of text to put on a post sorry, also it's just ideas I had fun making, tell me what you think and if you need help to find items on the list.
@@ -230,50 +238,22 @@ craftables: torch and campfire.
 
 Shop Updates, you could add:
 
-Clint: copper pan hat, copper breastplate, steel breastplate, gold breastplate, iridium breastplate, blacksmith apron (friendship), work boots, miner's crest and industrial pipe.
-
-Gus: chef hat (friendship), cheft coat, decorative bowl, starfruit, many drinks except joja cola, burger shirt, fried egg shirt, oil stained shirt, and toasted shirt.
+Gus: starfruit, many drinks except joja cola
 
 Willy: fishing hat, fishing vest, rain coat, sou'wester hat, shirt o' the sea (friendship), fish shirt, carp shirt, lifesaver, oceanic rug, anchor,  and model ship.
 
-Evelyn: normal honey, various honey flavours, salad, vegetable medley, spring shirt, spotted headscarf and daisy (hat).
-
-Pierre: store owner's jacket (friendship) and ceiling flags.
-
-Caroline: tea shirt (friendship), bonsai tree and decorative bowl.
-
-Sam: sunglasses and joja shirt﻿.
-
-Haley: long dress, wall flower and s. wall flower.
+Evelyn: various honey flavours, salad, vegetable medley, spring shirt, spotted headscarf and daisy (hat).
 
 Jas & Vincent: dinosaur hats & dinosaur pants (friendship), doll shirt, wumbus shirt, bobo shirt, lucky bow, polka bow, butterfly bow, pink bow, ancient doll, strange doll (yellow & green).
 
-Hat Mouse: panda hat, hat mouse shirt and mouse ears.
-
 Emily: yoba shirt, happy shirt, sign of the vessel, cloud decals, bridal shirt, bridal veil, simple dress, navy tuxedo, gray suit and suit top.
 
-Wizard: arcane shirt & arcane hat (friendship)﻿, witch hat﻿ (fall), good night shirt, star shirt, witch rarecrow (year 2, fall).
+Wizard: good night shirt, star shirt, witch rarecrow (year 2, fall).
 
 Linus: garbage hat & trash can shirt (friendship), decorative trash can, dirt shirt, grass skirt, caveman shirt and trash.
 
 Gunther: excavator shirt, relic shirt, rusty shirt, stone slab, neolithic table, luxuy bookcase, modern bookcase,
 
-Maru: pendant shirt, prismatic shirt, prismatic pants and small magnet ring.
-
-Harvey: pour-over shirt.
-
-
-
-Leah: artist bookcase, cone hat and tye dye shirt.
-
-
-
-Marnie: ornamental hay bale and decorative pitchfork.
-
-
-
-Jodi: decorative bowl and house plants.
-
-
-
 Demetrius: floor tv, budget tv, plasma tv, quartz, modern lamp and battery pack. 
+
+

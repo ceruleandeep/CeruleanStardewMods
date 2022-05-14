@@ -160,13 +160,13 @@ namespace MarketDay.Shop
                 if (prize is not null)
                 {
                     text = SalesReport("mail-summary", prize.Name);
-                    MarketDay.Log($"Submitting prize mail {mailKey}", LogLevel.Debug);
+                    MarketDay.Log($"Submitting prize mail {mailKey}", LogLevel.Trace);
                     Mail.Send(mailKey, text, Owner(), 1, 8, prize);
                     return;
                 }
             }
             text = SalesReport("mail-summary");
-            MarketDay.Log($"Submitting non-prize mail {mailKey}", LogLevel.Debug);
+            MarketDay.Log($"Submitting non-prize mail {mailKey}", LogLevel.Trace);
             Mail.Send(mailKey, text, Owner(), 1, 8);
         }
 
@@ -200,7 +200,7 @@ namespace MarketDay.Shop
                 {
                     if (Game1.timeOfDay - time < 100) continue;
                 }
-
+                    
                 npc.Halt();
                 npc.faceDirection(0);
                 npc.movementPause = 5000;
@@ -440,13 +440,23 @@ namespace MarketDay.Shop
                 if (npc.Name == Owner()) continue;
 
                 // busy looking
-                if (npc.movementPause is > 2000 or < 500) continue;
+                if (npc.movementPause is > 2000 or < 500)
+                {
+                    continue;
+                }
 
                 // already bought
-                if (RecentlyBought(npc)) continue;
+                if (RecentlyBought(npc))
+                {
+                    continue;
+                }
 
                 // unlucky
-                if (Game1.random.NextDouble() > BUY_CHANCE + Game1.player.DailyLuck) continue;
+                var rnd = Game1.random.NextDouble();
+                if (rnd > BUY_CHANCE + Game1.player.DailyLuck)
+                {
+                    continue;
+                }
 
                 // check stock                
                 // also remove items the NPC dislikes
@@ -461,8 +471,7 @@ namespace MarketDay.Shop
                 }
 
                 // find what the NPC likes best
-                available.Sort((a, b) =>
-                    ItemPreferenceIndex(a, npc).CompareTo(ItemPreferenceIndex(b, npc)));
+                available.Sort((a, b) => ItemPreferenceIndex(a, npc).CompareTo(ItemPreferenceIndex(b, npc)));
 
                 var i = GrangeChest.items.IndexOf(available[0]);
                 var item = GrangeChest.items[i];
@@ -575,7 +584,7 @@ namespace MarketDay.Shop
                 
                 if (MarketDay.Progression.NextLevel is not null)
                 {
-                    var levelProgress = (int)(MarketDay.GetSharedValue(MarketDay.TotalGoldKey) * 100.0 / (double)MarketDay.Progression.NextLevel.UnlockAtEarnings);
+                    var levelProgress = (int)(MarketDay.GetSharedValue(MarketDay.TotalGoldKey) * 100.0 / MarketDay.Progression.NextLevel.UnlockAtEarningsForDifficulty);
                     levelProgress = Math.Max(0, Math.Min(100, levelProgress));
                     LevelGoalProgress = Get("level-goal-progress", new {Progress = $"{levelProgress}", NextLevelName=MarketDay.Progression.NextLevel.Name});
                 }

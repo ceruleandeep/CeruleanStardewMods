@@ -1,7 +1,7 @@
 {
   "Name": "[CP] Market Day",
   "Author": "ceruleandeep",
-  "Version": "1.1.0-beta.2",
+  "Version": "1.1.0",
   "Description": "Market Day: Sell Your Items",
   "UniqueID": "ceruleandeep.MarketDay.CP",
   "UpdateKeys": [
@@ -17,7 +17,7 @@
     },
     {
       "UniqueID": "ceruleandeep.MarketDay",
-      "MinimumVersion": "1.1.0-beta.2",
+      "MinimumVersion": "1.1.0",
       "IsRequired": true
     }
   ]
