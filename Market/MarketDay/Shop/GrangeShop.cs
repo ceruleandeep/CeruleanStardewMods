@@ -71,13 +71,13 @@ namespace MarketDay.Shop
             Game1.timeOfDay < MarketDay.Config.OpeningTime * 100 ||
             Game1.timeOfDay > MarketDay.Config.ClosingTime * 100;
 
-        public void OpenAt(Vector2 Origin)
+        public void OpenAt(Vector2 origin)
         {
             Debug.Assert(Context.IsMainPlayer, "OpenAt: only main player can open shops");
 
-            Log($"Opening at {Origin}", LogLevel.Trace);
+            Log($"Opening at {origin}", LogLevel.Trace);
 
-            MakeFurniture(Origin);
+            MakeFurniture(origin);
 
             recentlyLooked = new Dictionary<NPC, int>();
             recentlyTended = new Dictionary<NPC, int>();
@@ -200,7 +200,9 @@ namespace MarketDay.Shop
                 {
                     if (Game1.timeOfDay - time < 100) continue;
                 }
-                    
+                
+                if (MatureContent && NPCUtility.IsChild(npc)) continue;
+
                 npc.Halt();
                 npc.faceDirection(0);
                 npc.movementPause = 5000;
@@ -225,7 +227,12 @@ namespace MarketDay.Shop
 
         internal void SetSharedValue(string key, int val = 1)
         {
-            StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"] = $"{val}";
+            SetSharedValue(key, $"{val}");
+        }
+
+        internal void SetSharedValue(string key, string val)
+        {
+            StockChest.modData[$"{MarketDay.SMod.ModManifest.UniqueID}/{key}"] = val;
         }
 
         internal void InteractWithNearbyNPCs()
@@ -346,8 +353,7 @@ namespace MarketDay.Shop
         {
             foreach (var (stockItem, priceAndQty) in StockManager.ItemPriceAndStock)
             {
-                if (item.ParentSheetIndex != ((Item) stockItem).ParentSheetIndex ||
-                    item.Category != ((Item) stockItem).Category) continue;
+                if (item.ParentSheetIndex != ((Item) stockItem).ParentSheetIndex || item.Category != ((Item) stockItem).Category) continue;
                 return priceAndQty;
             }
 
@@ -375,11 +381,7 @@ namespace MarketDay.Shop
                 // var price = getSellPriceFromShopStock(stockItem);
 
                 var price = getSellPriceArrayFromShopStock(stockItem)
-                            ?? new[]
-                            {
-                                (int) (StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false) *
-                                       SellPriceMultiplier(stockItem, null))
-                            };
+                    ?? new[] {(int) (StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false) * SellPriceMultiplier(stockItem, null))};
 
                 var sellItem = stockItem.getOne();
                 sellItem.Stack = 1;
@@ -438,7 +440,7 @@ namespace MarketDay.Shop
             {
                 // the owner
                 if (npc.Name == Owner()) continue;
-
+                
                 // busy looking
                 if (npc.movementPause is > 2000 or < 500)
                 {
@@ -457,6 +459,8 @@ namespace MarketDay.Shop
                 {
                     continue;
                 }
+
+                if (MatureContent && NPCUtility.IsChild(npc)) continue;
 
                 // check stock                
                 // also remove items the NPC dislikes
@@ -1138,7 +1142,7 @@ namespace MarketDay.Shop
             var start = Game1.GlobalToLocal(Game1.viewport, tileLocation * 64);
 
             var sign = OutsideOpeningHours ? ClosedSign : OpenSign;
-            if (sign is null)
+            if (sign is null || MarketDay.Config.ShowShopPositions)
             {
                 DrawTextSign(tileLocation, spriteBatch, layerDepth);
                 return;
@@ -1162,12 +1166,28 @@ namespace MarketDay.Shop
             );
         }
 
-        internal string SignText()
+        private string SignText()
         {
+            if (MarketDay.Config.ShowShopPositions)
+            {
+                var town = Game1.getLocationFromName("Town");
+                var tileProperty = TileUtility.GetTileProperty(town, "Back", Origin);
+                if (tileProperty is not null)
+                {
+                    if (tileProperty.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}.Position",
+                        out var positionName))
+                    {
+                        return positionName;
+                    }
+                }
+            }
+            
             var text = (OutsideOpeningHours ? ClosedSignText : OpenSignText) ?? "";
             if (text.Length == 0)
             {
                 text = OutsideOpeningHours ? Get("closed-sign") : Get("shop-sign", new {Owner=Owner()});
+
+                    
             }
             return text ?? "";
         }

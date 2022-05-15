@@ -18,8 +18,8 @@ namespace MarketDay.Utility
 	public static class Schedule
 	{
 		public static Dictionary<int, List<string>> NPCInteractions = new();
-		
-		public static Stack<Point> findPathForNPCSchedules(
+
+		private static Stack<Point> findPathForNPCSchedules(
 			Point startPoint,
 			Point endPoint,
 			GameLocation location,
@@ -74,33 +74,14 @@ namespace MarketDay.Utility
 			return null;
 		}
 
-		private static readonly sbyte[,] Directions = new sbyte[4, 2]
-		{
-			{
-				-1,
-				0
-			},
-			{
-				1,
-				0
-			},
-			{
-				0,
-				1
-			},
-			{
-				0,
-				-1
-			}
-		};
+		private static readonly sbyte[,] Directions = {{-1, 0}, {1, 0}, {0, 1}, {0, -1}};
 
 		private static bool isPositionImpassableForNPCSchedule(GameLocation loc, int x, int y)
 		{
 			Tile tile = loc.Map.GetLayer("Buildings").Tiles[x, y];
 			if (tile != null && tile.TileIndex != -1)
 			{
-				PropertyValue propertyValue = null;
-				tile.TileIndexProperties.TryGetValue("Action", out propertyValue);
+				tile.TileIndexProperties.TryGetValue("Action", out var propertyValue);
 				if (propertyValue == null)
 					tile.Properties.TryGetValue("Action", out propertyValue);
 				if (propertyValue != null)
@@ -809,7 +790,7 @@ namespace MarketDay.Utility
 		{
 			var placesToVisit = new List<Point> {startPoint};
 
-			var available = MapUtility.ShopTiles.Select(shopLoc => shopLoc.ToPoint()).ToList();
+			var available = MapUtility.ShopTiles.Keys.Select(shopLoc => shopLoc.ToPoint()).ToList();
 
 			while (available.Count > 0)
 			{

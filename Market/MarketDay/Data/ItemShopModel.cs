@@ -33,5 +33,6 @@ namespace MarketDay.Data
         
         public string OpenSignText { get; set; }
         public string ClosedSignText { get; set; }
+        public bool MatureContent { get; set; }
     }
 }
