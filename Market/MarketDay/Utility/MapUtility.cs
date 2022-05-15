@@ -17,7 +17,7 @@ namespace MarketDay.Utility
         // dictionary provides location of the storage chest given the ID of the tile clicked on
         // turns out it's actually faster to just scan 12 nearby tiles
         //
-        private static Dictionary<int, Vector2> ChestOffsetForTile = new()
+        private static readonly Dictionary<int, Vector2> ChestOffsetForTile = new()
         {
             [253] = new Vector2(3, 1), [254] = new Vector2(2, 1), [255] = new Vector2(1, 1),
             [285] = new Vector2(3, 0), [286] = new Vector2(2, 0), [287] = new Vector2(1, 0),
@@ -29,11 +29,11 @@ namespace MarketDay.Utility
         /// <summary>
         /// A list of the shop positions in the current Town map, if any.
         /// </summary>
-        public static List<Vector2> ShopTiles
+        public static Dictionary<Vector2, string> ShopTiles
         {
             get
             {
-                List<Vector2> ShopLocations = new();
+                Dictionary<Vector2, string> ShopLocations = new();
                 var town = Game1.getLocationFromName("Town");
                 if (town?.map?.Layers is null || town.map.Layers.Count < 1)
                 {
@@ -51,12 +51,30 @@ namespace MarketDay.Utility
                         var v = new Vector2(x, y);
                         var tileProperty = TileUtility.GetTileProperty(town, "Back", v);
                         if (tileProperty is null) continue;
-                        if (tileProperty.ContainsKey($"{MarketDay.SMod.ModManifest.UniqueID}.GrangeShop")) ShopLocations.Add(v);
+                        if (tileProperty.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}.GrangeShop", out var ShopKey))
+                        {
+                            ShopLocations[v] = ShopKey.ToString();
+                        }
                     }
                 }
 
                 return ShopLocations;
             }
+        }
+
+        public static Dictionary<Vector2, string> EmptyShopLocations()
+        {
+            Dictionary<Vector2, string> emptyShopLocations = new Dictionary<Vector2, string>();
+            
+            var town = Game1.getLocationFromName("Town");
+            foreach (var (tile, shopKey) in ShopTiles)
+            {
+                var chestTile = tile + new Vector2(3, 1);
+                if (town.objects.TryGetValue(chestTile, out var obj) && obj is Chest) continue;
+                emptyShopLocations[tile] = shopKey;
+            }
+
+            return emptyShopLocations;
         }
         
         public static Dictionary<string, GrangeShop> ShopOwners
@@ -64,11 +82,7 @@ namespace MarketDay.Utility
             get
             {
                 var s = new Dictionary<string, GrangeShop>();
-                foreach (var shop in ShopAtTile().Values)
-                {
-                    s[shop.Owner()] = shop;
-                }
-
+                foreach (var shop in ShopAtTile().Values) s[shop.Owner()] = shop;
                 return s;
             }
         }
@@ -81,7 +95,7 @@ namespace MarketDay.Utility
             var town = Game1.getLocationFromName("Town");
             var shopsAtTiles = new Dictionary<Vector2, GrangeShop>();
 
-            foreach (var tile in ShopTiles)
+            foreach (var tile in ShopTiles.Keys)
             {
                 var signTile = tile + new Vector2(3, 3);
                 if (!town.objects.TryGetValue(signTile, out var obj) || obj is not Sign sign) continue;
@@ -100,7 +114,7 @@ namespace MarketDay.Utility
             var shops = new List<GrangeShop>();
 
             var location = Game1.getLocationFromName("Town");
-            foreach (var (tile, item) in location.Objects.Pairs)
+            foreach (var item in location.Objects.Values)
             {
                 if (!item.modData.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeShop.StockChestKey}", out var ShopKey)) continue;
                 shops.Add(ShopManager.GrangeShops.Values.First(s => s.ShopKey==ShopKey));

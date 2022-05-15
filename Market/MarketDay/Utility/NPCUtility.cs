@@ -3,9 +3,9 @@ using StardewValley;
 
 namespace MarketDay.Utility
 {
-    public class NPCs
+    public static class NPCUtility
     {
-        private static bool IsChild(NPC npc)
+        internal static bool IsChild(NPC npc)
         {
             if (npc is StardewValley.Characters.Child) return true; //should get vanilla player-children
             var dispositions = Game1.content.Load<Dictionary<string, string>>("Data\\NPCDispositions");

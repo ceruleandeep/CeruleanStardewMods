@@ -72,6 +72,8 @@
   "cfg.hide-furniture.msg": "Hide player shop chest somewhere actually inaccessible between market days",
   "cfg.verbose-logging": "Verbose logging",
   "cfg.verbose-logging.msg": "Generate extra log messages for debugging",
+  "cfg.shop-positions": "Show shop positions",
+  "cfg.shop-positions.msg": "Show Content Patcher position token values on shop signs",
   "cfg.debug-keybinds": "Debug keybinds",
   "cfg.debug-keybinds.msg": "Enable these debugging keybinds which might clash with your other mods",
   "cfg.always-market-day": "Always market day",

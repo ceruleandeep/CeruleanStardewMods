@@ -48,13 +48,12 @@ namespace MarketDay
         internal static ModConfig Config;
         internal static ProgressionModel Progression;
         internal static IModHelper helper;
-        internal static IMonitor monitor;
+        private static IMonitor monitor;
         internal static Mod SMod;
 
         internal static SpriteFont Font;
         internal static Texture2D BlankSign;
         
-        public const string SalesReportKey = "LastSalesReport";
         public const string TotalGoldKey = "TotalGold";
         
         // ChroniclerCherry
@@ -188,7 +187,7 @@ namespace MarketDay
             OnDayStarted_MakePlayerShops(null, null);
 
             Log($"    Updating stock", LogLevel.Debug);
-            OnDayStarted_UpdateStock(null, null);
+            ShopManager.UpdateStock();
             OnDayStarted_SendPrompt(null, null);
 
             Log($"    Opening stores", LogLevel.Debug);
@@ -205,9 +204,11 @@ namespace MarketDay
         {
             try
             {
-                var state = new List<string>();
-                state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:");
-                state.Add($"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}");
+                var state = new List<string>
+                {
+                    $"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:",
+                    $"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}"
+                };
                 var festival = StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
                 state.Add($"Weather  Rain: {Game1.isRaining}  Snow: {Game1.isSnowing}  Festival: {festival}");
                 state.Add($"Market Day: {IsMarketDay}");
@@ -271,8 +272,10 @@ namespace MarketDay
         {
             try
             {
-                var state = new List<string>();
-                state.Add($"{SMod.ModManifest.Name} {SMod.ModManifest.Version} shop positions  [caller: {caller}]");
+                var state = new List<string>
+                {
+                    $"{SMod.ModManifest.Name} {SMod.ModManifest.Version} shop positions  [caller: {caller}]"
+                };
                 var md = IsMarketDay ? "market day" : "not market day";
                 state.Add($"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}  ({md})");
 
@@ -295,6 +298,16 @@ namespace MarketDay
                 else
                 {
                     state.Add($"    No shop positions on the map");
+                }
+
+                if (MapUtility.EmptyShopLocations().Count > 0)
+                {
+                    var mapPositions = string.Join(", ", MapUtility.EmptyShopLocations());
+                    state.Add($"    Empty shop locations: {mapPositions}");
+                }
+                else
+                {
+                    state.Add($"    No empty shop locations");
                 }
 
                 if (previousShopLayout is not null && previousShopLayout.Count > 0)
@@ -424,7 +437,6 @@ namespace MarketDay
         
         private static void OnLaunched_ReadFontData(object sender, EventArgs e)
         {
-            var t = Game1.player.difficultyModifier;
             try
             {
                 Font = helper.ModContent.Load<SpriteFont>("assets\\IckleFont.xnb");
@@ -484,40 +496,6 @@ namespace MarketDay
             MakePlayerShops();
         }
         
-        private static void OnDayStarted_UpdateStock(object sender, EventArgs e)
-        {
-            if (!IsMarketDay) return;
-            ShopManager.UpdateStock();
-        }
-
-        private static void OnDayStarted_SendMail(object sender, EventArgs e)
-        {
-            var prefix = $"{SMod.ModManifest.UniqueID}/{SalesReportKey}/";
-            foreach (var (dataKey, dataValue) in Game1.getFarm().modData.Pairs)
-            {
-                if (!dataKey.StartsWith(prefix)) continue;
-                var farmer = dataKey.Replace(prefix, "");
-                Log($"Available sales report for {farmer}: {dataKey}", LogLevel.Debug);
-            }
-
-            // foreach (var farmer in Game1.getAllFarmers())
-            // {
-            //     var dataKey = $"{SMod.ModManifest.UniqueID}/{SalesReportKey}/{farmer.Name}";
-            //     if (!Game1.getFarm().modData.TryGetValue(dataKey, out var report)) continue;
-            //     var mailKey = $"md_{farmer.Name}_{Game1.currentSeason}_{Game1.dayOfMonth}_Y{Game1.year}";
-            //     Mail.Add(mailKey, report);
-            //     farmer.mailbox.Add(mailKey);
-            //     Game1.getFarm().modData.Remove(dataKey);
-            //     helper.Content.InvalidateCache("Data\\mail"); 
-            // }
-        }
-
-        // private static void OnUpdateTicking(object sender, UpdateTickingEventArgs e)
-        // {
-        //     if (!e.IsMultipleOf(10)) return;
-        //     if (!Context.IsWorldReady) return;
-        // }
-
         private static void OnAssetReady_FlagSyncNeeded(object sender, AssetReadyEventArgs e)
         {
             if (!Context.IsWorldReady) return;
@@ -526,7 +504,7 @@ namespace MarketDay
             if (e is not null && ! e.Name.Name.StartsWith("Maps/Town")) return;
 
             // layout will change next tick
-            previousShopLayout = MapUtility.ShopTiles;
+            previousShopLayout = MapUtility.ShopTiles.Keys.ToList();
             previousOpenedShops = MapUtility.ShopAtTile().Values.ToList();
 
             LogShopPositions("OnAssetReady_FlagSyncNeeded");
@@ -553,7 +531,7 @@ namespace MarketDay
 
             LogShopPositions("OnOneSecondUpdateTicking_SyncMap checking for invalid shops");
             var shopTiles = MapUtility.ShopTiles;
-            foreach (var shop in MapUtility.OpenShops().Where(shop => !shopTiles.Contains(shop.Origin)))
+            foreach (var shop in MapUtility.OpenShops().Where(shop => !shopTiles.Keys.Contains(shop.Origin)))
             {
                 Log($"Shop at {shop.Origin} is not on a shop tile", LogLevel.Trace);
                 shop.CloseShop();
@@ -660,8 +638,8 @@ namespace MarketDay
         {
             if (!MapChangesSynced) throw new Exception("Map changes not synced");
 
-            StardewValley.Utility.Shuffle(Game1.random, MapUtility.ShopTiles);
-
+            StardewValley.Utility.Shuffle(Game1.random, MapUtility.ShopTiles.Keys.ToList());
+            
             var availableShopKeys = AvailableNPCShopKeys;
             StardewValley.Utility.Shuffle(Game1.random, availableShopKeys);
             availableShopKeys.InsertRange(0, AvailablePlayerShopKeys);
@@ -669,7 +647,36 @@ namespace MarketDay
             var strNames = string.Join(", ", availableShopKeys);
             Log($"OpenShops: Adding shops ({MapUtility.ShopTiles.Count} of {strNames})", LogLevel.Trace);
 
-            foreach (var ShopLocation in MapUtility.ShopTiles)
+            LogShopPositions("OpenShops");
+            // pass 1 
+            
+            foreach (var (ShopLocation, RequestedShopKey) in MapUtility.EmptyShopLocations())
+            {
+                if (RequestedShopKey == "Random") continue;
+                if (availableShopKeys.Count == 0) break;
+
+                if (!availableShopKeys.Contains(RequestedShopKey))
+                {
+                    Log($"OpenShops: {RequestedShopKey} not in availableShopKeys", LogLevel.Trace);
+                    continue;
+                }
+
+                if (!ShopManager.GrangeShops.ContainsKey(RequestedShopKey))
+                {
+                    Log($"OpenShops: {RequestedShopKey} not in GrangeShops", LogLevel.Trace);
+                    continue;
+                }
+
+                availableShopKeys.Remove(RequestedShopKey);
+                Log($"    {RequestedShopKey} at {ShopLocation}", LogLevel.Trace);
+                ShopManager.GrangeShops[RequestedShopKey].OpenAt(ShopLocation);
+                PruneBushes(ShopLocation);
+            }
+            LogShopPositions("OpenShops pass 1");
+
+            // pass 2
+            
+            foreach (var (ShopLocation, RequestedShopKey) in MapUtility.EmptyShopLocations())
             {
                 if (availableShopKeys.Count == 0) break;
                 var ShopKey = availableShopKeys[0];
@@ -685,6 +692,9 @@ namespace MarketDay
                     Log($"    {ShopKey} is not in shopManager.GrangeShops", LogLevel.Trace);
                 }
             }
+            
+            LogShopPositions("OpenShops pass 2");
+
         }
 
         private static void PruneBushes(Vector2 ShopTile)
@@ -781,11 +791,10 @@ namespace MarketDay
 
             var toRemove = new Dictionary<Vector2, SObject>();
             var location = Game1.getLocationFromName("Town");
-            string owner;
-            
+
             foreach (var (tile, item) in location.Objects.Pairs)
             {
-                if (item.modData.TryGetValue($"{SMod.ModManifest.UniqueID}/{GrangeShop.GrangeChestKey}", out owner))
+                if (item.modData.TryGetValue($"{SMod.ModManifest.UniqueID}/{GrangeShop.GrangeChestKey}", out var owner))
                 {
                     Log($"    {owner} {GrangeShop.GrangeChestKey} at {item.TileLocation}", LogLevel.Trace);
                     toRemove[tile] = item;
@@ -858,7 +867,7 @@ namespace MarketDay
         {
             if (e.Button == Config.ReloadKeybind)
             {
-                HotReload("", null);
+                HotReload("");
                 Helper.Input.Suppress(e.Button);
             }
 
@@ -893,118 +902,6 @@ namespace MarketDay
             }
         }
 
-
-        /// <summary>
-        /// When input is received, check that the player is free and used an action button
-        /// If so, attempt open the shop if it exists
-        ///
-        /// From STF/ChroniclerCherry
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void STF_Input_ButtonPressed(object sender, StardewModdingAPI.Events.ButtonPressedEventArgs e)
-        {
-            //context and button check
-            if (!Context.CanPlayerMove)
-                return;
-
-            //Resets the boolean I use to check if a menu used to move the player around came from my mod
-            //and lets me return them to their original location
-            SourceLocation = null;
-            _playerPos = Vector2.Zero;
-
-            if (Constants.TargetPlatform == GamePlatform.Android)
-            {
-                if (e.Button != SButton.MouseLeft)
-                    return;
-                if (e.Cursor.GrabTile != e.Cursor.Tile)
-                    return;
-
-                if (VerboseLogging) Log("Input detected!", LogLevel.Trace);
-            }
-            else if (!e.Button.IsActionButton())
-                return;
-
-            Vector2 clickedTile = Helper.Input.GetCursorPosition().GrabTile;
-
-            //check if there is a tile property on Buildings layer
-            IPropertyCollection tileProperty = TileUtility.GetTileProperty(Game1.currentLocation, "Buildings", clickedTile);
-
-            if (tileProperty == null)
-                return;
-
-            //if there is a tile property, attempt to open shop if it exists
-            CheckForShopToOpen(tileProperty,e);
-        }
-
-        /// <summary>
-        /// Checks the tile property for shops, and open them
-        /// </summary>
-        /// <param name="tileProperty"></param>
-        /// <param name="e"></param>
-        private void CheckForShopToOpen(IPropertyCollection tileProperty, StardewModdingAPI.Events.ButtonPressedEventArgs e)
-        {
-            //check if there is a Shop property on clicked tile
-            tileProperty.TryGetValue("Shop", out var shopProperty);
-            if (VerboseLogging) Log($"Shop Property value is: {shopProperty}", LogLevel.Trace);
-            if (shopProperty != null) //There was a `Shop` property so attempt to open shop
-            {
-                //check if the property is for a vanilla shop, and gets the shopmenu for that shop if it exists
-                IClickableMenu menu = TileUtility.CheckVanillaShop(shopProperty, out bool warpingShop);
-                if (menu != null)
-                {
-                    if (warpingShop)
-                    {
-                        SourceLocation = Game1.currentLocation;
-                        _playerPos = Game1.player.position.Get();
-                    }
-
-                    //stop the click action from going through after the menu has been opened
-                    helper.Input.Suppress(e.Button);
-                    Game1.activeClickableMenu = menu;
-
-                }
-                else //no vanilla shop found
-                {
-                    //Extract the tile property value
-                    string ShopKey = shopProperty.ToString();
-
-                    if (ShopManager.GrangeShops.ContainsKey(ShopKey))
-                    {
-                        //stop the click action from going through after the menu has been opened
-                        helper.Input.Suppress(e.Button);
-                        ShopManager.GrangeShops[ShopKey].DisplayShop();
-                    }
-                    else
-                    {
-                        Log($"A Shop tile was clicked, but a shop by the name \"{ShopKey}\" " +
-                            $"was not found.", LogLevel.Debug);
-                    }
-                }
-            }
-            else //no shop property found
-            {
-                tileProperty.TryGetValue("AnimalShop", out shopProperty); //see if there's an AnimalShop property
-                if (shopProperty != null) //no animal shop found
-                {
-                    string ShopKey = shopProperty.ToString();
-                    if (ShopManager.AnimalShops.ContainsKey(ShopKey))
-                    {
-                        //stop the click action from going through after the menu has been opened
-                        helper.Input.Suppress(e.Button);
-                        ShopManager.AnimalShops[ShopKey].DisplayShop();
-                    }
-                    else
-                    {
-                        Log($"An Animal Shop tile was clicked, but a shop by the name \"{ShopKey}\" " +
-                            $"was not found.", LogLevel.Debug);
-                    }
-                }
-
-            } //end shopProperty null check
-        }
-        
         private void OnLaunched(object sender, GameLaunchedEventArgs e)
         {
             Log($"OnLaunched: {Game1.ticks}", LogLevel.Trace);
@@ -1069,7 +966,7 @@ namespace MarketDay
             ItemsUtil.RegisterItemsToRemove();
         }
         
-        private void JsonAssets_AddedItemsToShop(object sender, System.EventArgs e)
+        private static void JsonAssets_AddedItemsToShop(object sender, EventArgs e)
         {
             if (Game1.activeClickableMenu is ShopMenu shop)
             {
@@ -1245,6 +1142,14 @@ namespace MarketDay
             );
             
             configMenu.AddBoolOption(ModManifest,
+                () => Config.ShowShopPositions,
+                val => Config.ShowShopPositions = val,
+                () => Helper.Translation.Get("cfg.shop-positions"),
+                () => Helper.Translation.Get("cfg.shop-position.msg")
+
+            );
+            
+            configMenu.AddBoolOption(ModManifest,
                 () => Config.DebugKeybinds,
                 val => Config.DebugKeybinds = val,
                 () => Helper.Translation.Get("cfg.debug-keybinds"),
@@ -1300,7 +1205,7 @@ namespace MarketDay
 
         private static readonly Dictionary<string, List<int>> ShopLayouts = new()
         {
-            ["0 Shops"] = new List<int> {},
+            ["0 Shops"] = new List<int>(),
             ["1 Shop"] = new List<int>  {1},
             ["2 Shops"] = new List<int> {1, 6},
             ["3 Shops"] = new List<int> {1, 7, 8},
@@ -1350,7 +1255,7 @@ namespace MarketDay
             return helper.Translation.Get(key);
         }
 
-        internal static string Get(string key, object tokens)
+        private static string Get(string key, object tokens)
         {
             return helper.Translation.Get(key, tokens);
         }
@@ -1358,10 +1263,7 @@ namespace MarketDay
         internal static void Log(string message, LogLevel level, bool VerboseOnly = false)
         {
             if (VerboseOnly && Config is not null && !Config.VerboseLogging) return;
-            if (!Context.IsWorldReady)
-                monitor.Log($"{message}", level);
-            else
-                monitor.Log($"[{Game1.player.Name}] {message}", level);
+            monitor.Log(!Context.IsWorldReady ? $"{message}" : $"[{Game1.player.Name}] {message}", level);
         }
 
         internal static void IncrementSharedValue(string key, int amount = 1)
