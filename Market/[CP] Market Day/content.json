@@ -211,7 +211,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 58, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 23, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 23, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop0"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop0", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -223,7 +223,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 58, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 28, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 28, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop1"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop1", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -235,7 +235,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 58, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 33, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 33, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop2"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop2", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -247,7 +247,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 37, "Y": 58, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 38, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 38, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop3"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop3", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -259,7 +259,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 42, "Y": 58, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 43, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 43, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop4"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop4", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -271,7 +271,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 63, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 23, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 23, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop5"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop5", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -283,7 +283,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 63, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 28, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 28, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop6"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop6", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -295,7 +295,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 63, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 33, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 33, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop7"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop7", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -307,7 +307,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 27, "Y": 68, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 28, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 28, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop8"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop8", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -319,7 +319,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 32, "Y": 68, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 33, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 33, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop9"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop9", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -331,7 +331,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 47, "Y": 58, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 48, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 48, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop10"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop10", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -343,7 +343,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 22, "Y": 68, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 23, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 23, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop11"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop11", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -355,7 +355,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 58, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 18, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 18, "Y": 58 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop12"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop12", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -367,7 +367,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 63, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 18, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 18, "Y": 63 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop13"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop13", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         },
@@ -379,7 +379,7 @@
             "PatchMode": "Overlay",
             "FromArea": {"X": 0, "Y": 0, "Width": 5, "Height": 5},
             "ToArea": {"X": 17, "Y": 68, "Width": 5, "Height": 5},
-            "MapTiles": [{"Position": { "X": 18, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random"}}],
+            "MapTiles": [{"Position": { "X": 18, "Y": 68 }, "Layer": "Back", "SetProperties": {"ceruleandeep.MarketDay.GrangeShop": "Random", "ceruleandeep.MarketDay.Position": "Shop14"}}],
             "When": {"ceruleandeep.MarketDay/ShopPositions": "Shop14", "ceruleandeep.MarketDay/IsMarketDay": true},
             "Update": "OnTimeChange"
         }

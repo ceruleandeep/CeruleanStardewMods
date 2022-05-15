@@ -1,10 +1,15 @@
 # Changes
 
+1.1.2 RELEASE
+* Fix DGA item sales
+* Fix sign summary in Chinese
+
+1.1.1 RELEASE
+* Fix town map change tracking in Chinese
+
 1.1.0 RELEASE
 * Forbid Krobus from leaving the house, their sprite can't handle it
 * Scale prize difficulty if player is using a reduced profit margin
-
-
 
 1.1.0-beta.2
 * Add dynamic signs for shops without custom art

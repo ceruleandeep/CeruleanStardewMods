@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MailFrameworkMod;
+using MarketDay.API;
 using MarketDay.Data;
 using MarketDay.ItemPriceAndStock;
 using MarketDay.Utility;
@@ -337,11 +338,12 @@ namespace MarketDay.Shop
 
         private bool OnPurchase(ISalable item, Farmer who, int stack)
         {
+            MarketDay.Log($"OnPurchase {item.Name} {stack}", LogLevel.Trace);
+            
             for (var j = 0; j < GrangeChest.items.Count; j++)
             {
-                if (item is not Item i) continue;
                 if (GrangeChest.items[j] is null) continue;
-                if (GrangeChest.items[j].ParentSheetIndex != i.ParentSheetIndex) continue;
+                if (!ItemsUtil.Equal(item, GrangeChest.items[j])) continue;
                 GrangeChest.items[j] = null;
                 return false;
             }
@@ -353,10 +355,10 @@ namespace MarketDay.Shop
         {
             foreach (var (stockItem, priceAndQty) in StockManager.ItemPriceAndStock)
             {
-                if (item.ParentSheetIndex != ((Item) stockItem).ParentSheetIndex || item.Category != ((Item) stockItem).Category) continue;
+                if (! ItemsUtil.Equal(item, stockItem)) continue;
                 return priceAndQty;
             }
-
+            MarketDay.Log($"getSellPriceArrayFromShopStock: returning null for item {item.Name}", LogLevel.Warn);
             return null;
         }
 
@@ -575,7 +577,7 @@ namespace MarketDay.Shop
             Game1.drawLetterMessage(message);
         }
 
-        private string SalesReport(string key="daily-summary", string prizeName="")
+        private string SalesReport(string key="sign-summary", string prizeName="")
         {
             var LevelStrapline = "";
             var WeeklyGoalProgress = "";

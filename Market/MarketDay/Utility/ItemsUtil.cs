@@ -67,6 +67,29 @@ namespace MarketDay.Utility
 
         }
 
+        internal static bool Equal(ISalable a, ISalable b)
+        {
+            if (a is null || b is null) return false;
+            
+            var dgaApi = APIs.dgaApi.Value;
+            if (dgaApi is not null)
+            {
+                var aID = dgaApi.GetDGAItemId(a);
+                var bID = dgaApi.GetDGAItemId(b);
+                if (aID is not null && bID is not null)
+                {
+                    return aID == bID;
+                }
+            }
+
+            if (a is Item aItem && b is Item bItem)
+            {
+                return aItem.ParentSheetIndex == bItem.ParentSheetIndex && aItem.Category == bItem.Category;
+            }
+
+            return a.Name == b.Name;
+        }
+
         /// <summary>
         /// Get the itemID given a name and the object information that item belongs to
         /// </summary>

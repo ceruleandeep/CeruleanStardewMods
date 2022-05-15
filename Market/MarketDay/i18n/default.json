@@ -2,7 +2,7 @@
   "date": "{{season}} {{day}}, Year {{year}}",
   "sales-detail": "^^Items sold:^{{ItemSalesList}}",
   "mail-summary": "Pelican Town Market{{LevelStrapline}}^^Sales for {{Farmer}}'s {{Farm}} Farm Shop^Date: {{Date}}^^{{Prize}}Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Sales today: {{TotalGoldToday}}g^Average bonus: {{AverageMult}}{{SalesDetail}}^^Total gold so far: {{TotalGold}}g{{LevelGoalProgress}}[#]Sales for {{Farmer}}'s {{Farm}} Farm Shop, {{Date}}",
-  "daily-summary": "Sales Today for {{Farmer}}'s {{Farm}} Farm Shop{{LevelStrapline}}^^Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Sales today: {{TotalGoldToday}}g^Average bonus: {{AverageMult}}{{SalesDetail}}{{WeeklyGoalProgress}}{{LevelGoalProgress}}",
+  "sign-summary": "Sales Today for {{Farmer}}'s {{Farm}} Farm Shop{{LevelStrapline}}^^Visitors: {{VisitorsToday}}^Grumpy Visitors: {{GrumpyVisitorsToday}}^Items sold: {{ItemsSold}}^Sales today: {{TotalGoldToday}}g^Average bonus: {{AverageMult}}{{SalesDetail}}{{WeeklyGoalProgress}}{{LevelGoalProgress}}",
   "weekly-goal-progress": "^Progress towards weekly goal: {{Progress}}%",
   "level-goal-progress": "^Progress towards {{NextLevelName}}: {{Progress}}%",
   "level-strapline": "^\"{{LevelStrapline}}\"",
