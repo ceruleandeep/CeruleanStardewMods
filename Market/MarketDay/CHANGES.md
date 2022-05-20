@@ -1,5 +1,9 @@
 # Changes
 
+1.1.3-beta.1
+* Fix item handling when buying hats, tools, and weapons 
+* Move GrangeShops.cs to #nullable
+
 1.1.2 RELEASE
 * Fix DGA item sales
 * Fix sign summary in Chinese

@@ -539,22 +539,21 @@ namespace MarketDay
             LogShopPositions("OnOneSecondUpdateTicking_SyncMap checked for invalid shops");
 
             var availableShopCount = AvailableNPCShopKeys.Count + AvailablePlayerShopKeys.Count;            
-            var expectedShopCount = IsMarketDay ? Math.Min(Progression.NumberOfShops, availableShopCount) : 0;
-            var actualShopCount = MapUtility.ShopAtTile().Count;
+            var expectedShopCount = IsMarketDay ? ShopPositions().Length : 0;
+            var actualShopCount = MapUtility.OpenShops().Count;
 
-            
             if (actualShopCount == expectedShopCount)
             {
                 Log($"Correct number of shops already open ({actualShopCount})", LogLevel.Trace);
                 return;
             }
 
-            Log($"Incorrect number of shops open (expected {expectedShopCount} actual {actualShopCount} available {availableShopCount})", LogLevel.Trace);
+            Log($"Incorrect number of shops open (expected {expectedShopCount} actual {actualShopCount} available {availableShopCount})", LogLevel.Debug);
 
             if (actualShopCount > 0)
             {
                 Log($"SyncMapUpdateStockOpenShop: closing shops", LogLevel.Info, true);
-                CloseShopsRemoveFurnitureSendMail(previousOpenedShops);
+                CloseShopsRemoveFurnitureSendMail(MapUtility.OpenShops());
                 LogShopPositions("OnOneSecondUpdateTicking_SyncMap (closed open shops)");
             }
 
@@ -1229,7 +1228,7 @@ namespace MarketDay
             return Game1.dayOfMonth is 6 or 7 or 20 or 21;
         }
 
-        private static string[] ShopPositions()
+        private static List<int> ShopPositionsWithoutGMM()
         {
             if (!Context.IsWorldReady) return null;
 
@@ -1237,16 +1236,21 @@ namespace MarketDay
             var key = $"{shopCount} Shops";
             if (!ShopLayouts.ContainsKey(key)) key = "6 Shops";
             if (!ShopLayouts.TryGetValue(key, out var layout)) return null;
-            
-            layout = layout.ToList();
+            return layout;
+        }
+        
+        private static string[] ShopPositions()
+        {
+            if (!Context.IsWorldReady) return null;
+            var layout = ShopPositionsWithoutGMM();
             if (!Config.GMMCompat || !isGMMDay()) return layout.Select(i => $"Shop{i}").ToArray();
+            
             if (GMMPaisleyPresent) layout.Remove(0);
             if (GMMPaisleyPresent) layout.Remove(5);
             if (GMMPaisleyPresent) layout.Remove(12);
             if (GMMPaisleyPresent) layout.Remove(13);
             if (GMMJosephPresent) layout.Remove(2);
             if (GMMJosephPresent) layout.Remove(7);
-
             return layout.Select(i => $"Shop{i}").ToArray();
         }
 

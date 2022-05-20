@@ -141,6 +141,8 @@ namespace MarketDay
             }
 
             var tileLocation = grangeShop.Origin;
+            if (tileLocation == Vector2.Zero) return;
+            
             var drawLayer = Math.Max(0f, (tileLocation.Y * Game1.tileSize - 24) / 10000f) + tileLocation.X * 1E-05f;
             grangeShop.drawGrangeItems(tileLocation, spriteBatch, drawLayer);
             

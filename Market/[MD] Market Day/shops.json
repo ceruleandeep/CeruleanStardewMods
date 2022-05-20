@@ -549,7 +549,7 @@
       "ItemStocks": [
         {"ItemType": "Object", "ItemNames": ["Cheese"], "Stock": 1},
         {"ItemType": "Hat", "ItemNames": ["%Match: Hat", "%Match: Hat", "%Match: Hat", "%Match: Hat", "%Match: Hat", "%Match: Cap", "%Match: Cap", "%Match: Cap", "%Match: Cap", "%Match: Cap"], "Stock": 1, "StockPrice": 1000},
-        {"ItemNames": ["Panda Hat", "Mouse Ears"], "StockPrice": 1000, "Stock": 1, "ItemType": "Hat"},
+        {"ItemNames": ["Panda Hat", "Mouse Ears", "Magic Cowboy Hat"], "StockPrice": 1000, "Stock": 1, "ItemType": "Hat"}
       ]
     },
     {

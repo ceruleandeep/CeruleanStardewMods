@@ -31,10 +31,10 @@ namespace MarketDay.Utility
             //load up all the object information into a static dictionary
             ObjectInfoSource = new Dictionary<string, IDictionary<int, string>>
             {
-                {"Object", Game1.objectInformation },
-                {"BigCraftable", Game1.bigCraftablesInformation },
-                {"Clothing", Game1.clothingInformation },
-                {"Ring", Game1.objectInformation },
+                {"Object", Game1.objectInformation},
+                {"BigCraftable", Game1.bigCraftablesInformation},
+                {"Clothing", Game1.clothingInformation},
+                {"Ring", Game1.objectInformation},
                 {"Hat", MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/hats")},
                 {"Boot", MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Boots")},
                 {"Furniture", MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Furniture")},
@@ -42,15 +42,17 @@ namespace MarketDay.Utility
             };
 
             //load up recipe information
-            RecipesList = MarketDay.helper.GameContent.Load<Dictionary<string, string>>(@"Data/CraftingRecipes").Keys.ToList();
-            RecipesList.AddRange(MarketDay.helper.GameContent.Load<Dictionary<string, string>>(@"Data/CookingRecipes").Keys.ToList());
+            RecipesList = MarketDay.helper.GameContent.Load<Dictionary<string, string>>(@"Data/CraftingRecipes").Keys
+                .ToList();
+            RecipesList.AddRange(MarketDay.helper.GameContent.Load<Dictionary<string, string>>(@"Data/CookingRecipes")
+                .Keys.ToList());
 
             //add "recipe" to the end of every element
             RecipesList = RecipesList.Select(s => s + " Recipe").ToList();
 
             //load up tree and crop data
             _fruitTreeData = MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/fruitTrees");
-            _cropData = MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Crops");  
+            _cropData = MarketDay.helper.GameContent.Load<Dictionary<int, string>>(@"Data/Crops");
         }
 
         /// <summary>
@@ -64,13 +66,12 @@ namespace MarketDay.Utility
             {
                 inventory.Remove(inventory.Keys.ElementAt(Game1.random.Next(inventory.Count)));
             }
-
         }
 
         internal static bool Equal(ISalable a, ISalable b)
         {
             if (a is null || b is null) return false;
-            
+
             var dgaApi = APIs.dgaApi.Value;
             if (dgaApi is not null)
             {
@@ -82,11 +83,26 @@ namespace MarketDay.Utility
                 }
             }
 
-            if (a is Item aItem && b is Item bItem)
+            switch (a)
             {
-                return aItem.ParentSheetIndex == bItem.ParentSheetIndex && aItem.Category == bItem.Category;
+                case Hat aHat when b is Hat bHat:
+                    return aHat.which.Value == bHat.which.Value;
+                case Tool aTool when b is Tool bTool:  // includes weapons
+                    return aTool.InitialParentTileIndex == bTool.InitialParentTileIndex;
+                case Boots aBoots when b is Boots bBoots:
+                    return aBoots.indexInTileSheet == bBoots.indexInTileSheet;
+                case Item aItem when b is Item bItem:
+                {
+                    if (aItem.ParentSheetIndex > -1 && bItem.ParentSheetIndex > -1)
+                    {
+                        return aItem.ParentSheetIndex == bItem.ParentSheetIndex && aItem.Category == bItem.Category;
+                    }
+                    break;
+                }
             }
 
+            if (a is not Item) MarketDay.Log($"Equal: {a.Name} not an item", LogLevel.Warn);
+            if (b is not Item) MarketDay.Log($"Equal: {b.Name} not an item", LogLevel.Warn);
             return a.Name == b.Name;
         }
 
@@ -128,10 +144,11 @@ namespace MarketDay.Utility
             {
                 return item;
             }
+
             MarketDay.Log($"{name}/{itemType}: not a saleable object", LogLevel.Trace);
             return null;
         }
-        
+
         /// <summary>
         /// Get the itemID given a category and the object information that item belongs to
         /// </summary>
@@ -152,7 +169,7 @@ namespace MarketDay.Utility
             if (candidates.Count > 0) return candidates[Game1.random.Next(candidates.Count)];
             return -1;
         }
-        
+
         /// <summary>
         /// Get the itemID given a pattern and the object information that item belongs to
         /// </summary>
@@ -219,7 +236,7 @@ namespace MarketDay.Utility
             return -1;
         }
 
-        public static void RegisterPacksToRemove(string[] JApacks,string[] recipePacks, string[] itemNames)
+        public static void RegisterPacksToRemove(string[] JApacks, string[] recipePacks, string[] itemNames)
         {
             if (JApacks != null)
                 PacksToRemove = PacksToRemove.Union(JApacks).ToList();
@@ -270,7 +287,8 @@ namespace MarketDay.Utility
                 if (trees != null)
                 {
                     foreach (int saplingID in trees.Select(GetSaplingId))
-                    {ItemsToRemove.Add(ObjectInfoSource["Object"][saplingID].Split('/')[0]);
+                    {
+                        ItemsToRemove.Add(ObjectInfoSource["Object"][saplingID].Split('/')[0]);
                     }
                 }
 
@@ -291,14 +309,13 @@ namespace MarketDay.Utility
                 {
                     ItemsToRemove.AddRange(items.Select(i => (i + " Recipe")));
                 }
-
             }
         }
 
         public static Dictionary<ISalable, int[]> RemoveSpecifiedJAPacks(Dictionary<ISalable, int[]> stock)
         {
             List<ISalable> removeItems = (stock.Keys.Where(item => ItemsToRemove.Contains(item.Name))).ToList();
-            
+
             foreach (var item in removeItems)
             {
                 stock.Remove(item);
