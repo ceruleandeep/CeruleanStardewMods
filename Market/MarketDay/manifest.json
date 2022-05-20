@@ -1,7 +1,7 @@
 ﻿{
   "Name": "Market Day",
   "Author": "ceruleandeep",
-  "Version": "1.1.3-beta.1",
+  "Version": "1.1.3-beta.2",
   "Description": "Market Day",
   "UniqueID": "ceruleandeep.MarketDay",
   "EntryDll": "MarketDay.dll",
@@ -16,7 +16,8 @@
       "MinimumVersion": "1.12.2"
     },
     {
-      "UniqueID": "spacechase0.DynamicGameAssets"
+      "UniqueID": "spacechase0.DynamicGameAssets",
+      "Required": false
     }
   ],
   "UpdateKeys": [

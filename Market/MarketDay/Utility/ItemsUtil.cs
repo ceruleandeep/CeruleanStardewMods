@@ -129,24 +129,22 @@ namespace MarketDay.Utility
         {
             if (APIs.dgaApi.Value is not { } dgaApi)
             {
-                MarketDay.Log($"{name}/{itemType}: could not get DGA API", LogLevel.Warn);
+                MarketDay.Log($"{name}/{itemType}: could not get DGA API", LogLevel.Trace);
                 return null;
             }
 
             var obj = dgaApi.SpawnDGAItem(name);
-            if (obj is null)
+            switch (obj)
             {
-                MarketDay.Log($"{name}/{itemType}: not a DGA object", LogLevel.Trace);
-                return null;
+                case null:
+                    MarketDay.Log($"{name}/{itemType}: not a DGA object", LogLevel.Trace);
+                    return null;
+                case ISalable item:
+                    return item;
+                default:
+                    MarketDay.Log($"{name}/{itemType}: not a saleable object", LogLevel.Trace);
+                    return null;
             }
-
-            if (obj is ISalable item)
-            {
-                return item;
-            }
-
-            MarketDay.Log($"{name}/{itemType}: not a saleable object", LogLevel.Trace);
-            return null;
         }
 
         /// <summary>

@@ -1,5 +1,8 @@
 # Changes
 
+1.1.3-beta.2
+* Remove hard dependency on DGA
+  
 1.1.3-beta.1
 * Fix item handling when buying hats, tools, and weapons 
 * Move GrangeShops.cs to #nullable
