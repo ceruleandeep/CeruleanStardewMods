@@ -3,6 +3,25 @@ Challenge Mode
 
 * Rep points for grange display, sales, being there, ???
 
+Scheduling
+---
+
+`IslandSouth.CanVisitIslandToday`
+* anyone who's spring or default
+
+
+Bugs
+---
+
+* MP config sync
+
+Requests
+---
+
+* Letters
+* Shops
+
+
 Future
 ---
 
@@ -54,134 +73,55 @@ Hello, I have many ideas for your market day mod, I'm sending message because it
 
 Shops:
 
-
-
 Robin:
 
 wood, hard wood (year 2), stone, pumpkin soup (fall), oak resin, maple syrup, pine tar, sap, hazelnut (fall), maple seed, acorn, pine cone and tree fertilizer.
-
-
-
 furniture: decorative axe, woodcut rug, many beds, small pine, manicured pine, log panel, wood panel, stump torch, bear statue (finished museum), squirrel figurine, various tables, various dressers, various windows, chicken statue, basic log and log section.
-
-
-
 clothing: canvas jacket.
-
-
-
 craftables: wood floor, straw floor, wood lamp post, wooden brazier, stump brazier, tapper and wood chipper (winter)
-
 
 
 Penny:
 
 different quality and color poppy flowers, sells poppy muffin, poppy honey, Penny's fryer, tortilla, cookie, apple, cranberry candy, rhubarb pie (spring), red plate (summer), pumpkin pie (fall) and roots platter (winter)
-
 furniture: luxury bookcase, earth globe, seasonal plants, seasonal decor and various rugs,
-
-
-
 winter furniture: icy rug, snowy rug, tree of the winter star, little light string, winter banner, winter tree decal and snowman rarecrow (year 2, winter) .
-
 clothing: pleated skirt, skirt, backpack shirt, tortilla shirt, sugar shirt, red striped shirt, white dot shirt, holiday shirt (winter), santa hat (winter).
-
-
-
-
-
-
 
 Alex:
 
 energy tonic, survival burger, fruit salad, banana, cherry, strawberry, blueberry, apricot, orange, apple, melon, pomegranate, peach, Alex's bat, he also sells mango and ice cream in summer.
-
-
-
 furniture: strawberry decal, fruit salad rug,
-
 clothing: fake muscles shirt, tunnelers jersey, cool cap (needs enough friendship), trucker hat and sneakers.
-
-
-
-
-
 
 
 Emily & Sandy (Emily brings goods from the desert with Sandy's help, shop appears every summer after unlocking the bus?)
 
 cactus fruit, coconut, sandstone, tom kha soup and sand fish.
-
-
-
 furniture: pyramid decal, seasonal plant (cactus), house plant (cactus), old world rug, wall cactus and long cactus.
-
-
-
 clothing: oasis gown, white turban, genie pants, 80's shirt, tropical sunrise shirt, sunset shirt, and vacation shirt.
-
-
-
-
-
 
 
 Disguised Krobus (he uses a disguise to sell in the market)
 
 dark essence, solar essence, void egg, void mayonnaise, pumpkin, quartz, slime, bat wing, bug meat.
-
-
-
 furniture: monster fireplace, wicked statue, sign of the vessel, monster danglers, green & purple serpent statues.
-
-
-
 clothing: darkness suit, fedora, purple blouse, hair bone.
-
-
-
 craftables: skull brazier and dark sign.
-
-
-
-
-
 
 
 Sebastian:
 
 frog (if has stardew valley expanded), pumpkin (fall), pumpkin soup (fall), obsidian, frozen tear and Seb's lost mace.
-
-
-
 clothing: frog hat, skull shirt, skeleton shirt (fall), skeleton mask (fall), dark shirt, dark boots, dark stripped shirt and dark jacket.
-
-
-
 furniture: frog stature, skull poster, bone rug, dark rug, funky rug (fall), skeleton statue (fall), starport decal, dark bookcase, dark chair, dark table, dark throne, prairie king arcade system & junimo kart arcade system (both year 2).
-
-
-
-
-
 
 
 Abigail:
 
 wooden blade, wood club, wood mallet, Abby's planchette, amethyst, quartz, slime, bat wing, bug meat, amethyst ring (friendship), leather boots, bone flute (friendship), ancient drum (friendship) and pumpkin (fall).
-
-
-
 clothing: blue long vest, warrior helmet, knight's helmet (fall), squire's helmet (fall) and pumpkin mask (fall).
-
-
-
 furniture: monster danglers, hanging shield, suit of armor, grave stone, wall pumpkin (fall), small wall pumpkin (fall) and crystal.
-
-
-
-
-
 
 
 Pam & Shane Beverages/Drinks (this shop disappears when you reach 7 hearts with Shane)
@@ -189,51 +129,19 @@ Pam & Shane Beverages/Drinks (this shop disappears when you reach 7 hearts with 
 beer, pale ale, various wines, mead, various juices, joja cola, starfruit, hot pepper and pepper poppers.
 
 
-
-
-
-
-
 Shane's Pizzeria (when cinema is built and joja mart goes aways Shane finds a new job)
 
 pizza, tomato, pickles, various juices, cheese and hot pepper.
-
-
-
 specific: if you go joja route and a joja cinema is built instead then Shane also sells joja cola.
-
-
-
 furniture: movie posters and decorative bowl.
-
-
-
-
-
 
 
 Leo (shop opens when Leo moves to Pelican Town)
 
 mango, banana, coconut, pineapple, mango sticky rice, poi, rainbow shell, clam, pearl, sea urchin, rain totem and blue discus fish,
-
-
-
 furniture: log section, stump seat, stump torch, jungle torch, tropical bed, tropical chair, indoor palm, long palm, wall palm, palm wall ornament, bamboo mat, jungle decals, ceiling leaves, stone parrot, totem pole.
-
-
-
 clothing: kelp shirt, totem mask and living hat.
-
-
-
 craftables: torch and campfire.
-
-
-
-
-
-
-
 
 
 Shop Updates, you could add:
@@ -255,5 +163,3 @@ Linus: garbage hat & trash can shirt (friendship), decorative trash can, dirt sh
 Gunther: excavator shirt, relic shirt, rusty shirt, stone slab, neolithic table, luxuy bookcase, modern bookcase,
 
 Demetrius: floor tv, budget tv, plasma tv, quartz, modern lamp and battery pack. 
-
-
