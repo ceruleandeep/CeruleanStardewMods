@@ -952,6 +952,10 @@ namespace MarketDay.Shop
             {
                 modData =
                 {
+                    ["furyx639.BetterChests/AutoOrganize"] = "Disabled",
+                    ["furyx639.BetterChests/CarryChest"] = "Disabled",
+                    ["furyx639.BetterChests/CraftFromChest"] = "Disabled",
+                    ["furyx639.BetterChests/StashToChest"] = "Disabled",
                     ["Pathoschild.ChestsAnywhere/IsIgnored"] = "true",
                     [$"{MarketDay.SMod.ModManifest.UniqueID}/{GrangeChestKey}"] = ShopKey
                 }
@@ -977,6 +981,10 @@ namespace MarketDay.Shop
             {
                 modData =
                 {
+                    ["furyx639.BetterChests/AutoOrganize"] = "Disabled",
+                    ["furyx639.BetterChests/CarryChest"] = "Disabled",
+                    ["furyx639.BetterChests/CraftFromChest"] = "Disabled",
+                    ["furyx639.BetterChests/StashToChest"] = "Disabled",
                     ["Pathoschild.ChestsAnywhere/IsIgnored"] = "true",
                     [$"{MarketDay.SMod.ModManifest.UniqueID}/{StockChestKey}"] = ShopKey,
                     [$"{MarketDay.SMod.ModManifest.UniqueID}/{OwnerKey}"] = owner

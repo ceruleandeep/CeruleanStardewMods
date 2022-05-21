@@ -1,5 +1,8 @@
 # Changes
 
+1.1.3-beta.3
+* Configure chests to be ignored by Better Chests
+
 1.1.3-beta.2
 * Remove hard dependency on DGA
   
