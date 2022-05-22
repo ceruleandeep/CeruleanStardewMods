@@ -123,6 +123,11 @@ namespace MarketDay.Utility
             return shops;
         }
 
+        internal static List<GrangeShop> OpenPlayerShops()
+        {
+            return OpenShops().Where(s => s.IsPlayerShop()).ToList();
+        }
+
         /// <summary>
         /// Find the GrangeShop that the player clicked on
         /// </summary>

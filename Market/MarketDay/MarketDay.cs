@@ -540,15 +540,18 @@ namespace MarketDay
 
             var availableShopCount = AvailableNPCShopKeys.Count + AvailablePlayerShopKeys.Count;            
             var expectedShopCount = IsMarketDay ? ShopPositions().Length : 0;
+            var expectedPlayerShopCount = IsMarketDay ? Math.Min(AvailablePlayerShopKeys.Count, expectedShopCount) : 0;
             var actualShopCount = MapUtility.OpenShops().Count;
-
-            if (actualShopCount == expectedShopCount)
+            var actualPlayerShopCount = MapUtility.OpenPlayerShops().Count;
+            
+            if (actualShopCount == expectedShopCount && actualPlayerShopCount == expectedPlayerShopCount)
             {
-                Log($"Correct number of shops already open ({actualShopCount})", LogLevel.Trace);
+                Log($"Correct number of shops already open ({expectedPlayerShopCount} player, {actualShopCount} total)", LogLevel.Trace);
                 return;
             }
 
-            Log($"Incorrect number of shops open (expected {expectedShopCount} actual {actualShopCount} available {availableShopCount})", LogLevel.Debug);
+            Log($"Incorrect number of shops open. Player: {expectedPlayerShopCount} expected, {actualPlayerShopCount} actual, {AvailablePlayerShopKeys.Count} available. "
+                +$"NPCs: {expectedShopCount} expected, {actualShopCount} actual, {availableShopCount} available", LogLevel.Debug);
 
             if (actualShopCount > 0)
             {

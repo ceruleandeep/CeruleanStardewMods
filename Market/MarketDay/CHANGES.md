@@ -1,5 +1,8 @@
 # Changes
 
+1.1.3-beta.4
+* Ensure that players get shops when the market is shrunk
+
 1.1.3-beta.3
 * Configure chests to be ignored by Better Chests
 
