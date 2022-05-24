@@ -551,7 +551,7 @@ namespace MarketDay
             }
 
             Log($"Incorrect number of shops open. Player: {expectedPlayerShopCount} expected, {actualPlayerShopCount} actual, {AvailablePlayerShopKeys.Count} available. "
-                +$"NPCs: {expectedShopCount} expected, {actualShopCount} actual, {availableShopCount} available", LogLevel.Debug);
+                +$"NPCs: {expectedShopCount} expected, {actualShopCount} actual, {availableShopCount} available", LogLevel.Trace);
 
             if (actualShopCount > 0)
             {
