@@ -1,7 +1,7 @@
 {
   "Name": "No Cooties",
   "Author": "ceruleandeep",
-  "Version": "1.0.3",
+  "Version": "1.0.4",
   "Description": "Spouses hug instead of kissing",
   "UniqueID": "ceruleandeep.nocooties",
   "EntryDll": "NoCooties.dll",
