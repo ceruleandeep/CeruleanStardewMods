@@ -787,19 +787,33 @@ namespace MarketDay.Shop
 
         private int GetGiftTasteForThisItem(Item item, NPC npc)
         {
-            int taste;
+            int taste = IsPlayerShop() ? NPC.gift_taste_dislike : NPC.gift_taste_like;
             try
             {
                 // so many other mods hack up NPCs that we have to wrap this
                 taste = npc.getGiftTasteForThisItem(item);
+                MarketDay.Log($"GetGiftTasteForThisItem: {item.Name} for {npc.Name}: {TasteName(taste)}", LogLevel.Debug);
             }
             catch (Exception)
             {
                 // stop players selling rubbish but also stop NPCs hating NPC merch
-                taste = IsPlayerShop() ? NPC.gift_taste_dislike : NPC.gift_taste_like;
+                MarketDay.Log($"GetGiftTasteForThisItem: exception while checking {item.Name} for {npc.Name}", LogLevel.Warn);
             }
 
             return taste;
+        }
+
+        private string TasteName(int taste)
+        {
+            return taste switch
+            {
+                NPC.gift_taste_dislike => "dislike",
+                NPC.gift_taste_hate => "hate",
+                NPC.gift_taste_like => "like",
+                NPC.gift_taste_love => "love",
+                NPC.gift_taste_neutral => "neutral",
+                _ => $"unknown [{taste}]"
+            };
         }
 
         private double ItemPreferenceIndex(Item item, NPC npc)
