@@ -1,0 +1,16 @@
+﻿{
+    "Name": "[DGA] Fine Art",
+    "Author": "ceruleandeep",
+    "Version": "1.0.0",
+    "Description": "A collection of fine, tasteful erotic paintings and photographs",
+    "UniqueID": "ceruleandeep.FineArt",
+    "UpdateKeys": [
+        "Nexus:12038"
+    ],
+    "ContentPackFor": {
+        "UniqueID": "spacechase0.DynamicGameAssets",
+        "MinimumVersion": "1.1.0"
+    },
+    "DGA.FormatVersion": 2,
+    "DGA.ConditionsFormatVersion": "1.23.0"
+}
