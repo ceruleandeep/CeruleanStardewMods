@@ -792,7 +792,7 @@ namespace MarketDay.Shop
             {
                 // so many other mods hack up NPCs that we have to wrap this
                 taste = npc.getGiftTasteForThisItem(item);
-                MarketDay.Log($"GetGiftTasteForThisItem: {item.Name} for {npc.Name}: {TasteName(taste)}", LogLevel.Debug);
+                MarketDay.Log($"GetGiftTasteForThisItem: {item.Name} for {npc.Name}: {TasteName(taste)}", LogLevel.Debug, true);
             }
             catch (Exception)
             {

@@ -96,6 +96,7 @@ namespace MarketDay
 
             Helper.Events.GameLoop.TimeChanged += OnTimeChanged_RestockThroughDay;
             Helper.Events.GameLoop.DayEnding += OnDayEnding_CloseShopsAndDestroyFurniture;
+            Helper.Events.GameLoop.Saving += OnSaving_SetStateForTomorrow;
             Helper.Events.GameLoop.Saving += OnSaving_WriteConfig;
             Helper.Events.GameLoop.Saved += OnSaved_DoNothing;
             Helper.Events.Input.ButtonPressed += OnButtonPressed_ShowShopOrGrangeOrStats;
@@ -405,6 +406,22 @@ namespace MarketDay
         /// <summary>Raised after the game is saved</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event arguments.</param>
+        private void OnSaving_SetStateForTomorrow(object sender, SavingEventArgs e)
+        {
+            Log($"SetStateForTomorrow: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+
+            var visitors = IsMarketDay ? Progression.NumberOfRandomVisitors : 0;
+            Game1.getFarm().modData[$"aedenthorn.RandomNPC/Visitors"] = $"{visitors}";
+            Log($"SetStateForTomorrow: {IsMarketDay} {visitors}", LogLevel.Debug);
+            
+            ListShopTiles("", null);
+            Helper.WriteConfig(Config);
+            Log($"SetStateForTomorrow: complete at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
+        }
+        
+        /// <summary>Raised after the game is saved</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void OnSaving_WriteConfig(object sender, SavingEventArgs e)
         {
             Log($"OnSaving: {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
@@ -629,10 +646,13 @@ namespace MarketDay
             foreach (var npc in StardewValley.Utility.getAllCharacters())
             {
                 if (npc is null) continue;
-                if (!npc.isVillager()) continue;
+                Log($"RecalculateSchedules:     {npc.Name}", LogLevel.Trace);
                 npc.Schedule = npc.getSchedule(Game1.dayOfMonth);
+                // if (npc.Name == "Haley") Schedule.PrintSchedule(npc);
+                // if (npc.Name.StartsWith("RNPC") && npc.Schedule.Values.Count > 0) Schedule.PrintSchedule(npc);
             }
-
+            
+            
             Log($"RecalculateSchedules: completed at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
 
@@ -1111,13 +1131,36 @@ namespace MarketDay
             );
             
             configMenu.AddBoolOption(ModManifest,
-                () => Config.NPCRescheduling,
-                val => Config.NPCRescheduling = val,
-                () => Helper.Translation.Get("cfg.npc-rescheduling"),
-                () => Helper.Translation.Get("cfg.npc-rescheduling.msg")
+                () => Config.NPCVisitorRescheduling,
+                val => Config.NPCVisitorRescheduling = val,
+                () => Helper.Translation.Get("cfg.npc-visitor-rescheduling"),
+                () => Helper.Translation.Get("cfg.npc-visitor-rescheduling.msg")
             );
-
-
+            
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.NPCOwnerRescheduling,
+                val => Config.NPCOwnerRescheduling = val,
+                () => Helper.Translation.Get("cfg.npc-owner-rescheduling"),
+                () => Helper.Translation.Get("cfg.npc-owner-rescheduling.msg")
+            );
+            
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.NPCScheduleReplacement,
+                val => Config.NPCScheduleReplacement = val,
+                () => Helper.Translation.Get("cfg.npc-schedule-replacement"),
+                () => Helper.Translation.Get("cfg.npc-schedule-replacement.msg")
+            );
+            
+            configMenu.AddNumberOption(ModManifest,
+                () => Config.NumberOfRandomVisitors,
+                val => Config.NumberOfRandomVisitors = val,
+                () => Helper.Translation.Get("cfg.random-visitors"),
+                () => Helper.Translation.Get("cfg.random-visitors.msg"),
+                0,
+                24,
+                fieldId: "fm_RandomVisitors"
+            );
+            
 
             configMenu.AddSectionTitle(ModManifest,
                 () => Helper.Translation.Get("cfg.debug-settings"));

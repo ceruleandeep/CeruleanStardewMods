@@ -6,9 +6,8 @@ Challenge Mode
 Scheduling
 ---
 
-`IslandSouth.CanVisitIslandToday`
-* anyone who's spring or default
-
+* Randos:
+* gift tastes
 
 Bugs
 ---

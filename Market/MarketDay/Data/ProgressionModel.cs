@@ -24,6 +24,7 @@ namespace MarketDay.Data
         public int Number { get; set; }
         public string Name { get; set; }
         public int NumberOfShops { get; set; }
+        public int NumberOfRandomVisitors { get; set; }
         public int UnlockAtEarnings { get; set; }
         public int UnlockAtEarningsForDifficulty => (int)(UnlockAtEarnings * Game1.player.difficultyModifier);
         public int AutoRestock { get; set; } = 4;
@@ -91,6 +92,13 @@ namespace MarketDay.Data
                     : MarketDay.Config.NumberOfShops
             ));
 
+        internal int NumberOfRandomVisitors =>
+            Math.Max(1, Math.Min(24, 
+                MarketDay.Config.Progression 
+                    ? CurrentLevel.NumberOfRandomVisitors
+                    : MarketDay.Config.NumberOfRandomVisitors
+            ));
+        
         internal double SellPriceMultiplierLimit =>
             Math.Max(1, Math.Min(4, 
                 MarketDay.Config.Progression 

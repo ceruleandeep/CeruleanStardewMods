@@ -8,6 +8,7 @@ using MarketDay.Shop;
 using MarketDay.Utility;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
+using StardewValley.Characters;
 using StardewValley.Locations;
 using StardewValley.Objects;
 using Object = StardewValley.Object;
@@ -164,7 +165,7 @@ namespace MarketDay
             if (MapUtility.ShopTiles.Count == 0) return;
             
             // if we're doing rescheduling we'll bend the pathfinding in pathfindToNextScheduleLocation
-            if (MarketDay.Config.NPCRescheduling) return; 
+            if (MarketDay.Config.NPCVisitorRescheduling) return; 
 
             __result = Schedule.pathFindViaGrangeShops(startPoint, endPoint, location, limit, 3*60);
         }
@@ -182,7 +183,8 @@ namespace MarketDay
             String rawData,
             ref Dictionary<int, SchedulePathDescription> __result)
         {
-            if (!MarketDay.Config.NPCRescheduling) return;
+            if (!__instance.isVillager() && __instance is not Child) return;
+            if (!MarketDay.Config.NPCVisitorRescheduling) return;
             if (!MarketDay.IsMarketDay) return;
             
             if (MapUtility.ShopTiles.Count == 0) return;
@@ -203,12 +205,66 @@ namespace MarketDay
             int dayOfMonth,
             ref Dictionary<int, SchedulePathDescription> __result)
         {
-            if (!MarketDay.Config.NPCRescheduling) return;
+            if (!__instance.isVillager() && __instance is not Child) return;
+            if (!MarketDay.Config.NPCOwnerRescheduling) return;
             if (!MarketDay.IsMarketDay) return;
 
             if (__result is not null && __result.Count > 0) return;
             
+            // new: fair-game rescheduling goes here
+            // if (__result is not null && __result.Count > 0)
+            // {
+            //     var scheduleKey = Schedule.getScheduleKey(__instance, dayOfMonth);
+            //     var fair_game = "spring,summer,fall,winter,default".Split(",");
+            //     if (fair_game.Contains(scheduleKey))
+            //     {
+            //         __result = Schedule.parseMasterSchedule(__instance, __instance.getMasterScheduleEntry(scheduleKey), allowTownInsertions: true);
+            //
+            //     }
+            // };
+            // end
+            
             __result = Schedule.getScheduleWhenNoDefault(__instance, dayOfMonth);
+        }
+    }
+    
+    [HarmonyPatch(typeof(NPC))]
+    [HarmonyPatch("getMasterScheduleEntry")]
+    //  public string getMasterScheduleEntry(string schedule_key)
+    //  if the schedule key is something boring, maybe we should give them
+    //  a more interesting one
+    //
+    //  TODO: check whether this allows NPC owners to visit their shops 
+    public class Postfix_getMasterScheduleEntry
+    {
+        public static void Postfix(
+            NPC __instance, 
+            string schedule_key,
+            ref string __result)
+        {
+            if (!__instance.isVillager() && __instance is not Child) return;
+            if (!MarketDay.IsMarketDay) return;
+            if (MapUtility.ShopTiles.Count == 0) return;
+
+            if (Schedule.IgnoreThisSchedule(__instance, __result))
+            {
+                return;
+            }
+            
+            var stranger = StardewValley.Utility.GetAllPlayerFriendshipLevel(__instance) <= 0;
+            if (stranger) return;
+            
+            var alreadyVisitingIsland = Game1.netWorldState.Value.IslandVisitors.ContainsKey(__instance.Name);
+            var couldVisitIslandButNot = Schedule.CanVisitIslandToday(__instance) && !alreadyVisitingIsland;
+
+            var genericSchedule = "spring,summer,fall,winter,default".Split(",").Contains(schedule_key);
+            
+            if (!MarketDay.Config.NPCScheduleReplacement) return;
+            
+            if (couldVisitIslandButNot)
+            {
+                __result = Schedule.scheduleStringForMarketVisit(__instance, __result);
+            }
         }
     }
 }

@@ -25,7 +25,10 @@ namespace MarketDay
         public bool VerboseLogging { get; set; }
         public bool ShowShopPositions { get; set; }
         public bool NPCVisitors { get; set; } = true;
-        public bool NPCRescheduling { get; set; } = true;
+        public bool NPCOwnerRescheduling { get; set; } = true;
+        public bool NPCVisitorRescheduling { get; set; } = true;
+        public bool NPCScheduleReplacement { get; set; } = true;
+        public int NumberOfRandomVisitors { get; set; } = 4;
         public bool AlwaysMarketDay { get; set; }
         public bool DebugKeybinds { get; set; }
         public SButton OpenConfigKeybind { get; set; } = SButton.V;
