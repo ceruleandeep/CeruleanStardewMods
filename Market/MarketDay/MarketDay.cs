@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using HarmonyLib;
-using MailFrameworkMod;
 using MarketDay.API;
 using MarketDay.Data;
 using MarketDay.ItemPriceAndStock;
@@ -17,8 +15,6 @@ using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
-using xTile.ObjectModel;
-using static MarketDay.MarketDay;
 using SObject = StardewValley.Object;
 
 namespace MarketDay
@@ -851,12 +847,11 @@ namespace MarketDay
         {
             if (!Context.IsWorldReady) return;
             if (Game1.activeClickableMenu is not null) return;
-            
-            if (Config.DebugKeybinds) CheckDebugKeybinds(e);
-            
-            string signOwner = null;
-            
             if (Game1.currentLocation is null) return;
+
+            if (Config.DebugKeybinds) CheckDebugKeybinds(e);
+
+            string signOwner = null;
             if (Game1.currentLocation.objects.TryGetValue(e.Cursor.GrabTile, out var objectAt))
             {
                 objectAt.modData.TryGetValue($"{ModManifest.UniqueID}/{GrangeShop.ShopSignKey}", out signOwner);
@@ -963,8 +958,8 @@ namespace MarketDay
         private void OnLaunched_STFRegistrations(object sender, GameLaunchedEventArgs e)
         {
             APIs.RegisterJsonAssets();
-            if (APIs.JsonAssets != null)
-                APIs.JsonAssets.AddedItemsToShop += JsonAssets_AddedItemsToShop;
+            // if (APIs.JsonAssets != null)
+            //     APIs.JsonAssets.AddedItemsToShop += JsonAssets_AddedItemsToShop;
 
             APIs.RegisterExpandedPreconditionsUtility();
             APIs.RegisterBFAV();
@@ -985,7 +980,7 @@ namespace MarketDay
             ShopManager.InitializeShops();
             ShopManager.InitializeItemStocks();
 
-            ItemsUtil.RegisterItemsToRemove();
+            // ItemsUtil.RegisterItemsToRemove();
         }
         
         private static void JsonAssets_AddedItemsToShop(object sender, EventArgs e)

@@ -323,7 +323,7 @@ namespace MarketDay.Shop
         /// <summary>
         /// Opens the shop if conditions are met. If not, display the closed message
         /// </summary>
-        public void DisplayShop(bool debug = false)
+        public void DisplayShop(bool debug = false) 
         {
             MarketDay.Log($"Attempting to open the shop \"{ShopName}\" at {Game1.timeOfDay}", LogLevel.Debug, true);
 
@@ -441,12 +441,7 @@ namespace MarketDay.Shop
 
                 // var price = getSellPriceFromShopStock(stockItem);
 
-                var price = getSellPriceArrayFromShopStock(stockItem)
-                            ?? new[]
-                            {
-                                (int) (StardewValley.Utility.getSellToStorePriceOfItem(stockItem, false) *
-                                       SellPriceMultiplier(stockItem, null))
-                            };
+                var price = getSellPriceArrayFromShopStock(stockItem);
 
                 var sellItem = stockItem.getOne();
                 sellItem.Stack = 1;
@@ -1312,7 +1307,7 @@ namespace MarketDay.Shop
             if (MarketDay.Config.ShowShopPositions)
             {
                 var town = Game1.getLocationFromName("Town");
-                var tileProperty = TileUtility.GetTileProperty(town, "Back", Origin);
+                var tileProperty = MapUtility.GetTileProperty(town, "Back", Origin);
                 if (tileProperty is not null)
                 {
                     if (tileProperty.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}.Position",
@@ -1382,8 +1377,8 @@ namespace MarketDay.Shop
 
 
             var signLoc = center - new Vector2(
-                (int) (MarketDay.BlankSign.Width * Game1.pixelZoom / 2),
-                (int) (MarketDay.BlankSign.Height * Game1.pixelZoom / 2));
+                MarketDay.BlankSign.Width * Game1.pixelZoom / 2,
+                MarketDay.BlankSign.Height * Game1.pixelZoom / 2);
 
             spriteBatch.Draw(
                 texture: MarketDay.BlankSign,

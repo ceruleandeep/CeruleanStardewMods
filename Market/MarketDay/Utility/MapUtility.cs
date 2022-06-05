@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Objects;
+using xTile.ObjectModel;
 
 namespace MarketDay.Utility
 {
@@ -49,7 +50,7 @@ namespace MarketDay.Utility
                     for (var y = 0; y < layerHeight; y++)
                     {
                         var v = new Vector2(x, y);
-                        var tileProperty = TileUtility.GetTileProperty(town, "Back", v);
+                        var tileProperty = GetTileProperty(town, "Back", v);
                         if (tileProperty is null) continue;
                         if (tileProperty.TryGetValue($"{MarketDay.SMod.ModManifest.UniqueID}.GrangeShop", out var ShopKey))
                         {
@@ -192,6 +193,20 @@ namespace MarketDay.Utility
             if (stockChestOwner is not null) owner = stockChestOwner;
             if (signOwner is not null) owner = signOwner;
             return owner;
+        }
+        
+        /// <summary>
+        /// Returns the tile property found at the given parameters
+        /// </summary>
+        /// <param name="map">an instance of the the map location</param>
+        /// <param name="layer">the name of the layer</param>
+        /// <param name="tile">the coordinates of the tile</param>
+        /// <returns>The tile property if there is one, null if there isn't</returns>
+        /// 
+        public static IPropertyCollection GetTileProperty(GameLocation map, string layer, Vector2 tile)
+        {
+            var checkTile = map?.Map.GetLayer(layer).Tiles[(int)tile.X, (int)tile.Y];
+            return checkTile?.Properties;
         }
     }
 }

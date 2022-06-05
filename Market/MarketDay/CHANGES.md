@@ -1,5 +1,9 @@
 # Changes
 
+1.1.4-beta.1
+* Allow schedule replacement for characters eligible to visit resort
+* Interoperate with (bundled) Random Visitors to get random visitors
+
 1.1.3 RELEASE
 
 1.1.3-beta.4
