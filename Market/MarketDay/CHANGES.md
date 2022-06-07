@@ -1,4 +1,6 @@
 # Changes
+1.1.4-beta.5
+* Configurable days/weeks/seasons for market opening
 
 1.1.4-beta.1
 * Allow schedule replacement for characters eligible to visit resort

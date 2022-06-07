@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using HarmonyLib;
 using MarketDay.API;
 using MarketDay.Data;
@@ -201,10 +202,15 @@ namespace MarketDay
         {
             try
             {
+                int dayOfWeek = Game1.dayOfMonth % 7;
+                int week = Game1.dayOfMonth / 7;
+                string season = Game1.currentSeason;
+                
                 var state = new List<string>
                 {
                     $"{SMod.ModManifest.Name} {SMod.ModManifest.Version} state:",
-                    $"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}"
+                    $"Time  {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}",
+                    $"Day  {dayOfWeek} {week} {season}"
                 };
                 var festival = StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
                 state.Add($"Weather  Rain: {Game1.isRaining}  Snow: {Game1.isSnowing}  Festival: {festival}");
@@ -642,6 +648,7 @@ namespace MarketDay
             foreach (var npc in StardewValley.Utility.getAllCharacters())
             {
                 if (npc is null) continue;
+                if (!npc.isVillager()) continue;
                 Log($"RecalculateSchedules:     {npc.Name}", LogLevel.Trace);
                 npc.Schedule = npc.getSchedule(Game1.dayOfMonth);
                 // if (npc.Name == "Haley") Schedule.PrintSchedule(npc);
@@ -1028,7 +1035,7 @@ namespace MarketDay
                 max: 6,
                 fieldId: "fm_DayOfWeek"
             );
-
+            
             configMenu.AddBoolOption(ModManifest,
                 () => Config.OpenInRain,
                 val => Config.OpenInRain = val,
@@ -1064,14 +1071,6 @@ namespace MarketDay
             );
             
             configMenu.AddBoolOption(ModManifest,
-                () => Config.AlwaysMarketDay,
-                val => Config.AlwaysMarketDay = val,
-                () => Helper.Translation.Get("cfg.always-market-day"),
-                () => Helper.Translation.Get("cfg.always-market-day.msg"),
-                fieldId: "fm_AlwaysMarketDay"
-            );
-            
-            configMenu.AddBoolOption(ModManifest,
                 () => Config.GMMCompat,
                 val => Config.GMMCompat = val,
                 () => Helper.Translation.Get("cfg.gmm-compat"),
@@ -1079,6 +1078,8 @@ namespace MarketDay
                 fieldId: "fm_GMMCompat"
             );
 
+            configMenu.AddPageLink(ModManifest, "Opening", () => Helper.Translation.Get("cfg.show-advanced-opening"));
+            
             configMenu.AddSectionTitle(ModManifest,
                 () => Helper.Translation.Get("cfg.free-play-options"));
             configMenu.AddParagraph(ModManifest,
@@ -1156,7 +1157,101 @@ namespace MarketDay
                 fieldId: "fm_RandomVisitors"
             );
             
+            configMenu.AddPageLink(ModManifest, "Debug", () => Helper.Translation.Get("cfg.debug-settings")+"...");
+            
+            configMenu.AddPage(ModManifest, "Opening", () => Helper.Translation.Get("cfg.advanced-opening"));
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.UseAdvancedOpeningOptions,
+                val => Config.UseAdvancedOpeningOptions = val,
+                () => Helper.Translation.Get("cfg.use-advanced-opening"),
+                () => Helper.Translation.Get("cfg.use-advanced-opening.msg"),
+                fieldId: "fm_UseAdvancedOpeningOptions");
 
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.AlwaysMarketDay,
+                val => Config.AlwaysMarketDay = val,
+                () => Helper.Translation.Get("cfg.always-market-day"),
+                () => Helper.Translation.Get("cfg.always-market-day.msg"),
+                fieldId: "fm_AlwaysMarketDay"
+            );
+
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenOnSun,
+                val => Config.OpenOnSun = val,
+                () => Helper.Translation.Get("cfg.open-sun"),
+                fieldId: "fm_OpenOnSun");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenOnMon,
+                val => Config.OpenOnMon = val,
+                () => Helper.Translation.Get("cfg.open-mon"),
+                fieldId: "fm_OpenOnMon");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenOnTue,
+                val => Config.OpenOnTue = val,
+                () => Helper.Translation.Get("cfg.open-tue"),
+                fieldId: "fm_OpenOnTue");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenOnWed,
+                val => Config.OpenOnWed = val,
+                () => Helper.Translation.Get("cfg.open-wed"),
+                fieldId: "fm_OpenOnWed");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenOnThu,
+                val => Config.OpenOnThu = val,
+                () => Helper.Translation.Get("cfg.open-thu"),
+                fieldId: "fm_OpenOnThu");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenOnFri,
+                val => Config.OpenOnFri = val,
+                () => Helper.Translation.Get("cfg.open-fri"),
+                fieldId: "fm_OpenOnFri");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenOnSat,
+                val => Config.OpenOnSat = val,
+                () => Helper.Translation.Get("cfg.open-sat"),
+                fieldId: "fm_OpenOnSat");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenWeek1,
+                val => Config.OpenWeek1 = val,
+                () => Helper.Translation.Get("cfg.open-week1"),
+                fieldId: "fm_OpenWeek1");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenWeek2,
+                val => Config.OpenWeek2 = val,
+                () => Helper.Translation.Get("cfg.open-week2"),
+                fieldId: "fm_OpenWeek2");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenWeek3,
+                val => Config.OpenWeek3 = val,
+                () => Helper.Translation.Get("cfg.open-week3"),
+                fieldId: "fm_OpenWeek3");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenWeek4,
+                val => Config.OpenWeek4 = val,
+                () => Helper.Translation.Get("cfg.open-week4"),
+                fieldId: "fm_OpenWeek4");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenInSpring,
+                val => Config.OpenInSpring = val,
+                () => Helper.Translation.Get("cfg.open-spring"),
+                fieldId: "fm_OpenInSpring");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenInSummer,
+                val => Config.OpenInSummer = val,
+                () => Helper.Translation.Get("cfg.open-summer"),
+                fieldId: "fm_OpenInSummer");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenInFall,
+                val => Config.OpenInFall = val,
+                () => Helper.Translation.Get("cfg.open-fall"),
+                fieldId: "fm_OpenInFall");
+            configMenu.AddBoolOption(ModManifest,
+                () => Config.OpenInWinter,
+                val => Config.OpenInWinter = val,
+                () => Helper.Translation.Get("cfg.open-winter"),
+                fieldId: "fm_OpenInWinter");
+
+            configMenu.AddPage(ModManifest, "Debug", () => Helper.Translation.Get("cfg.debug-settings"));
             configMenu.AddSectionTitle(ModManifest,
                 () => Helper.Translation.Get("cfg.debug-settings"));
 
@@ -1234,11 +1329,50 @@ namespace MarketDay
         {
             get
             {
-                if (Config.AlwaysMarketDay) return true;
-                var md = Game1.dayOfMonth % 7 == Config.DayOfWeek
-                         && !StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
+                var dayOfWeek = Game1.dayOfMonth % 7;
+                var week = Game1.dayOfMonth / 7;
+                var season = Game1.currentSeason;
+                
+                var md = !StardewValley.Utility.isFestivalDay(Game1.dayOfMonth, Game1.currentSeason);
                 md = md && (Config.OpenInRain || !Game1.isRaining);
                 md = md && (Config.OpenInSnow || !Game1.isSnowing);
+
+                if (Config.UseAdvancedOpeningOptions)
+                {
+                    if (Config.AlwaysMarketDay) return true;
+                
+                    md = dayOfWeek switch
+                    {
+                        0 => md && Config.OpenOnSun,
+                        1 => md && Config.OpenOnMon,
+                        2 => md && Config.OpenOnTue,
+                        3 => md && Config.OpenOnWed,
+                        4 => md && Config.OpenOnThu,
+                        5 => md && Config.OpenOnFri,
+                        6 => md && Config.OpenOnSat,
+                        _ => md
+                    };
+                    md = week switch
+                    {
+                        0 => md && Config.OpenWeek1,
+                        1 => md && Config.OpenWeek2,
+                        2 => md && Config.OpenWeek3,
+                        3 => md && Config.OpenWeek4,
+                        _ => md
+                    };
+                    md = season switch
+                    {
+                        "spring" => md && Config.OpenInSpring,
+                        "summer" => md && Config.OpenInSummer,
+                        "fall" => md && Config.OpenInFall,
+                        "winter" => md && Config.OpenInWinter,
+                        _ => md
+                    };
+                }
+                else
+                {
+                    md = md && Game1.dayOfMonth % 7 == Config.DayOfWeek;
+                }
                 return md;
             }
         }

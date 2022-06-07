@@ -11,7 +11,7 @@ namespace MarketDay.Data
     {
         public string Name { get; set; }
         public int Gold { get; set; }
-        public int GoldForDifficulty => (int)(Gold * Game1.player.difficultyModifier);
+        public int GoldForDifficulty => (int)(Gold * Game1.MasterPlayer.difficultyModifier);
         public int Score { get; set; }
         public string Object { get; set; }
         public string Flavor { get; set; }
@@ -26,7 +26,7 @@ namespace MarketDay.Data
         public int NumberOfShops { get; set; }
         public int NumberOfRandomVisitors { get; set; }
         public int UnlockAtEarnings { get; set; }
-        public int UnlockAtEarningsForDifficulty => (int)(UnlockAtEarnings * Game1.player.difficultyModifier);
+        public int UnlockAtEarningsForDifficulty => (int)(UnlockAtEarnings * Game1.MasterPlayer.difficultyModifier);
         public int AutoRestock { get; set; } = 4;
 
         public int ShopSize { get; set; } = 9;
