@@ -1,4 +1,8 @@
 # Changes
+1.1.4-beta.6
+* Exclude NPCs from rescheduling if they are excluded from island visits with Custom NPC Exclusions
+* Only a player's "official" spouse can run their shop
+
 1.1.4-beta.5
 * Configurable days/weeks/seasons for market opening
 

@@ -19,7 +19,7 @@ namespace MarketDay.Utility
     {
         public static Dictionary<int, List<string>> NPCInteractions = new();
 
-        private static Stack<Point> findPathForNPCSchedules(
+        private static Stack<Point> FindPathForNpcSchedules(
             Point startPoint,
             Point endPoint,
             GameLocation location,
@@ -374,7 +374,7 @@ namespace MarketDay.Utility
                 var narr = nextTimeIsArrival ? "a" : "";
                 // MarketDay.Log($"parseMasterSchedule:     [{j}] {npc.Name} {arr}{stepTime} {startLoc} -> {endLocationName} (next step {narr}{nextStepTime})", LogLevel.Debug);
 
-                if (changeScheduleForLocationAccessibility(npc, ref endLocationName, ref endingX, ref endingY,
+                if (ChangeScheduleForLocationAccessibility(npc, ref endLocationName, ref endingX, ref endingY,
                     ref faceDirection))
                 {
                     if (npc.getMasterScheduleRawData().ContainsKey("default"))
@@ -426,7 +426,7 @@ namespace MarketDay.Utility
 
                 if (shop is null)
                 {
-                    var schedulePathDescription = pathfindToNextScheduleLocation(npc, stepTime,
+                    var schedulePathDescription = PathfindToNextScheduleLocation(npc, stepTime,
                         nextStepTime, true, startLoc, startPoint.X, startPoint.Y, endLocationName, endingX,
                         endingY,
                         faceDirection, endBehavior, endMessage);
@@ -469,7 +469,7 @@ namespace MarketDay.Utility
         private static GrangeShop RouteViaOwnedShop(NPC npc, string startLoc, string endLocationName,
             IReflectedMethod getLocationRoute, int time, int nextStepTime, int minutesAvailable, Point startPoint,
             string endBehavior, string endMessage, int endingX, int endingY, int faceDirection,
-            Dictionary<int, SchedulePathDescription> masterSchedule,
+            IDictionary<int, SchedulePathDescription> masterSchedule,
             ref int stepTime)
         {
             if (startLoc is null || endLocationName is null) return null;
@@ -481,19 +481,19 @@ namespace MarketDay.Utility
             if (viaLocations is null || !viaLocations.Contains("Town")) return null;
 
             // see if they own a shop or their spouse owns a shop
-            MapUtility.ShopOwners.TryGetValue(npc.Name, out var shop);
-            if (shop is null && npc.getSpouse() is not null && npc.getSpouse().Name is not null)
-                MapUtility.ShopOwners.TryGetValue(npc.getSpouse().Name, out shop);
-
+            GrangeShop shop;
+            var spouseName = SpouseName(npc);
+            if (spouseName is not null) MapUtility.PlayerShopOwners.TryGetValue(spouseName, out shop);
+            MapUtility.ShopOwners.TryGetValue(npc.Name, out shop);
             if (shop is null) return null;
 
-            var startToTown = pathfindToNextScheduleLocation(npc, stepTime, nextStepTime, false, startLoc,
+            var startToTown = PathfindToNextScheduleLocation(npc, stepTime, nextStepTime, false, startLoc,
                 startPoint.X, startPoint.Y, "Town", (int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, 2, null,
                 null);
             var arriveInTownAt =
                 StardewValley.Utility.ConvertMinutesToTime(StardewValley.Utility.ConvertTimeToMinutes(stepTime) +
                                                            Minutes(startToTown));
-            var townToEnd = pathfindToNextScheduleLocation(npc, arriveInTownAt, nextStepTime, true, "Town",
+            var townToEnd = PathfindToNextScheduleLocation(npc, arriveInTownAt, nextStepTime, true, "Town",
                 (int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, endLocationName, endingX, endingY, faceDirection,
                 endBehavior, endMessage);
 
@@ -504,7 +504,7 @@ namespace MarketDay.Utility
             {
                 // they don't need to leave the market before it closes
                 // so have them stay until the end and go straight to next scheduled destination
-                townToEnd = pathfindToNextScheduleLocation(npc, arriveInTownAt, nextStepTime, false, "Town",
+                townToEnd = PathfindToNextScheduleLocation(npc, arriveInTownAt, nextStepTime, false, "Town",
                     (int) shop.OwnerTile.X, (int) shop.OwnerTile.Y, endLocationName, endingX, endingY,
                     faceDirection, endBehavior, endMessage);
                 leaveTownBy = MarketDay.Config.ClosingTime * 100;
@@ -537,6 +537,14 @@ namespace MarketDay.Utility
             return shop;
         }
 
+        private static string SpouseName(NPC npc)
+        {
+            var f = npc.getSpouse();
+            var s = f?.getSpouse();
+            if (s is null) return null;
+            return s != npc ? null : f.Name;
+        }
+
         private static void AddWorkingAt(NPC npc, int stepTime, GrangeShop shop, int leaveTownBy)
         {
             if (!NPCInteractions.ContainsKey(stepTime)) NPCInteractions[stepTime] = new List<string>();
@@ -557,19 +565,19 @@ namespace MarketDay.Utility
                 .Add($"{npc.displayName} visiting the market (until {leaveTownBy}, source: {source})");
         }
 
-        private static List<Point> Disjoints(IEnumerable<Point> route)
+        private static IEnumerable<Point> Disjoints(IEnumerable<Point> route)
         {
-            var disjoints = new List<Point>();
-            disjoints.Add(route.First());
+            var points = route.ToList();
+            var disjoints = new List<Point> { points.First() };
             Point? nextTile = null;
-            foreach (var tile in route)
+            foreach (var tile in points)
             {
                 if (!nextTile.HasValue)
                 {
                     nextTile = tile;
                     continue;
                 }
-
+                
                 if (Math.Abs(nextTile.Value.X - tile.X) + Math.Abs(nextTile.Value.Y - tile.Y) > 3)
                 {
                     disjoints.Add(nextTile.Value);
@@ -579,16 +587,16 @@ namespace MarketDay.Utility
                 nextTile = tile;
             }
 
-            disjoints.Add(route.Last());
+            disjoints.Add(points.Last());
             return disjoints;
         }
 
 
         private static double TravelTime(IEnumerable<Point> route)
         {
-            int pixels = 0;
+            var pixels = 0;
             Point? nextTile = null;
-            foreach (Point tile in route)
+            foreach (var tile in route)
             {
                 if (!nextTile.HasValue)
                 {
@@ -619,7 +627,7 @@ namespace MarketDay.Utility
             return Minutes(schedulePathDescription.route);
         }
 
-        private static bool changeScheduleForLocationAccessibility(
+        private static bool ChangeScheduleForLocationAccessibility(
             NPC npc,
             ref string locationName,
             ref int tileX,
@@ -645,12 +653,12 @@ namespace MarketDay.Utility
             return false;
         }
 
-        private static SchedulePathDescription pathfindToNextScheduleLocation(NPC npc, int stepTime, int nextStepTime,
+        private static SchedulePathDescription PathfindToNextScheduleLocation(NPC npc, int stepTime, int nextStepTime,
             bool visitShops, string startingLocation, int startingX, int startingY, string endingLocation, int endingX,
             int endingY, int finalFacingDirection, string endBehavior, string endMessage)
         {
-            Stack<Point> stack = new Stack<Point>();
-            Point startPoint = new Point(startingX, startingY);
+            var stack = new Stack<Point>();
+            var startPoint = new Point(startingX, startingY);
 
             // MarketDay.Log($"pfNSL: {npc.Name} {startingLocation} {stepTime} -> {endingLocation} {nextStepTime}  visit: {visitShops}", LogLevel.Debug);
 
@@ -682,7 +690,7 @@ namespace MarketDay.Utility
 
                     if (i < routeViaLocations.Count - 1)
                     {
-                        Point warpPointTo = locationFromName.getWarpPointTo(routeViaLocations[i + 1]);
+                        var warpPointTo = locationFromName.getWarpPointTo(routeViaLocations[i + 1]);
                         if (warpPointTo.Equals(Point.Zero) || startPoint.Equals(Point.Zero))
                         {
                             throw new Exception("schedule pathing tried to find a warp point that doesn't exist.");
@@ -692,8 +700,8 @@ namespace MarketDay.Utility
                                           StardewValley.Utility.ConvertTimeToMinutes(stepTime);
 
                         var newPoints = divert
-                            ? pathFindViaGrangeShops(startPoint, warpPointTo, locationFromName, 30000, maxDuration)
-                            : findPathForNPCSchedules(startPoint, warpPointTo, locationFromName, 30000);
+                            ? PathFindViaGrangeShops(startPoint, warpPointTo, locationFromName, 30000, maxDuration)
+                            : FindPathForNpcSchedules(startPoint, warpPointTo, locationFromName, 30000);
 
                         if (divert) AddVisit(npc, stepTime, nextStepTime, "pfNSL via Town");
 
@@ -710,7 +718,7 @@ namespace MarketDay.Utility
             }
             else if (startingLocation.Equals(endingLocation, StringComparison.Ordinal))
             {
-                GameLocation locationFromName2 = Game1.getLocationFromName(startingLocation);
+                var locationFromName2 = Game1.getLocationFromName(startingLocation);
                 if (locationFromName2.Name.Equals("Trailer") &&
                     Game1.MasterPlayer.mailReceived.Contains("pamHouseUpgrade"))
                 {
@@ -726,32 +734,32 @@ namespace MarketDay.Utility
                     var maxDuration = StardewValley.Utility.ConvertTimeToMinutes(nextStepTime) -
                                       StardewValley.Utility.ConvertTimeToMinutes(stepTime);
                     // MarketDay.Log($"    Diverting {npc.Name} via the market (B)", LogLevel.Trace);
-                    stack = pathFindViaGrangeShops(startPoint, new Point(endingX, endingY), locationFromName2, 30000,
+                    stack = PathFindViaGrangeShops(startPoint, new Point(endingX, endingY), locationFromName2, 30000,
                         maxDuration);
                     AddVisit(npc, stepTime, nextStepTime, "pfNSL within Town");
                 }
                 else
                 {
-                    stack = findPathForNPCSchedules(startPoint, new Point(endingX, endingY), locationFromName2, 30000);
+                    stack = FindPathForNpcSchedules(startPoint, new Point(endingX, endingY), locationFromName2, 30000);
                 }
             }
 
             return new SchedulePathDescription(stack, finalFacingDirection, endBehavior, endMessage);
         }
 
-        private static List<string> getLocationRoute(NPC npc, string startingLocation, string endingLocation)
+        private static List<string> GetLocationRoute(NPC npc, string startingLocation, string endingLocation)
         {
             // 			routesFromLocationToLocation = new List<List<string>>();
 
             var routesFromLocationToLocation = MarketDay.helper.Reflection
                 .GetField<List<List<string>>>(npc, "routesFromLocationToLocation").GetValue();
 
-            foreach (List<string> item in routesFromLocationToLocation)
+            foreach (var item in routesFromLocationToLocation)
             {
                 if (item.First().Equals(startingLocation, StringComparison.Ordinal) &&
                     item.Last().Equals(endingLocation, StringComparison.Ordinal) &&
-                    ((int) npc.Gender == 0 || !item.Contains<string>("BathHouse_MensLocker", StringComparer.Ordinal)) &&
-                    ((int) npc.Gender != 0 || !item.Contains<string>("BathHouse_WomensLocker", StringComparer.Ordinal)))
+                    (npc.Gender == 0 || !item.Contains("BathHouse_MensLocker", StringComparer.Ordinal)) &&
+                    (npc.Gender != 0 || !item.Contains("BathHouse_WomensLocker", StringComparer.Ordinal)))
                 {
                     return item;
                 }
@@ -760,7 +768,7 @@ namespace MarketDay.Utility
             return null;
         }
 
-        public static Stack<Point> pathFindViaGrangeShops(Point startPoint, Point endPoint, GameLocation location,
+        public static Stack<Point> PathFindViaGrangeShops(Point startPoint, Point endPoint, GameLocation location,
             int limit, int maxDuration)
         {
             const int STOP_DURATION_MINS = 5;
@@ -789,7 +797,7 @@ namespace MarketDay.Utility
             {
                 i++;
                 var thisStartPoint = new Point(wptX, wptY);
-                var originalPath = findPathForNPCSchedules(thisStartPoint, thisEndPoint, location, limit);
+                var originalPath = FindPathForNpcSchedules(thisStartPoint, thisEndPoint, location, limit);
                 if (originalPath is null || originalPath.Count == 0) continue;
 
                 duration += TravelTime(originalPath) + STOP_DURATION_MINS;
@@ -799,7 +807,7 @@ namespace MarketDay.Utility
                     LogLevel.Trace);
 
                 if (duration > maxDuration)
-                    originalPath = findPathForNPCSchedules(startPoint, thisEndPoint, location, limit);
+                    originalPath = FindPathForNpcSchedules(startPoint, thisEndPoint, location, limit);
 
                 var legPath = originalPath.ToList();
                 legPath.Reverse();
@@ -856,7 +864,7 @@ namespace MarketDay.Utility
                 var next = available.First();
                 available.Remove(next);
 
-                var visitPoint = new Point((int) next.X + Game1.random.Next(3), (int) next.Y + 4);
+                var visitPoint = new Point(next.X + Game1.random.Next(3), next.Y + 4);
 
                 if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);
             }
@@ -873,53 +881,41 @@ namespace MarketDay.Utility
         /// <returns></returns>
         public static Dictionary<int, SchedulePathDescription> getScheduleWhenNoDefault(NPC npc, int dayOfMonth)
         {
+            string there;
+            string back;
+
             // do they have a shop of their own?
-            if (MapUtility.ShopOwners.TryGetValue(npc.Name, out var shop))
+            if (MapUtility.NPCShopOwners.TryGetValue(npc.Name, out var shop))
             {
                 // MarketDay.Log($"getScheduleWhenNoDefault: {npc.Name} has shop {shop.ShopName}", LogLevel.Debug);
-                var there = $"a{MarketDay.Config.OpeningTime * 100} Town {shop.OwnerTile.X} {shop.OwnerTile.Y} 2";
-                var back = $"{MarketDay.Config.ClosingTime * 100} BusStop -1 23 3";
-                var schedule = $"{there}/{back}";
-                return parseMasterSchedule(npc, schedule);
+                there = $"a{MarketDay.Config.OpeningTime * 100} Town {shop.OwnerTile.X} {shop.OwnerTile.Y} 2";
+                back = $"{MarketDay.Config.ClosingTime * 100} BusStop -1 23 3";
+                return parseMasterSchedule(npc, $"{there}/{back}");
             }
 
             // are they married to a player?
-            if (npc.isMarried())
-            {
-                // MarketDay.Log($"getScheduleWhenNoDefault: {npc.Name} is married", LogLevel.Debug);
-                var spouse = npc.getSpouse()?.Name;
-
-                if (spouse is not null && MapUtility.ShopOwners.TryGetValue(spouse, out var spouseShop))
-                {
-                    // MarketDay.Log($"getScheduleWhenNoDefault: {npc.Name} married to owner of shop {spouseShop.ShopName}", LogLevel.Trace);
-                    var there =
-                        $"a{MarketDay.Config.OpeningTime * 100} Town {spouseShop.OwnerTile.X} {spouseShop.OwnerTile.Y} 2";
-                    var back = $"{MarketDay.Config.ClosingTime * 100} BusStop -1 23 3";
-                    var schedule = $"{there}/{back}";
-                    return parseMasterSchedule(npc, schedule);
-                }
-            }
-
-            return new Dictionary<int, SchedulePathDescription>();
+            var spouseName = SpouseName(npc);
+            if (spouseName is null) return new Dictionary<int, SchedulePathDescription>();
+            if (!MapUtility.PlayerShopOwners.TryGetValue(spouseName, out var spouseShop))
+                return new Dictionary<int, SchedulePathDescription>();
+            // MarketDay.Log($"getScheduleWhenNoDefault: {npc.Name} married to owner of shop {spouseShop.ShopName}", LogLevel.Trace);
+            there = $"a{MarketDay.Config.OpeningTime * 100} Town {spouseShop.OwnerTile.X} {spouseShop.OwnerTile.Y} 2";
+            back = $"{MarketDay.Config.ClosingTime * 100} BusStop -1 23 3";
+            return parseMasterSchedule(npc, $"{there}/{back}");
         }
 
-        public static string scheduleStringForMarketVisit(NPC npc, string currentSchedule)
+        public static string ScheduleStringForMarketVisit(NPC npc, string currentSchedule)
         {
             if (currentSchedule is null || currentSchedule.Length == 0) return currentSchedule;
 
             List<string> lunchOptions = new() {"Saloon 8 20 0", "Saloon 9 20 0", "Saloon 10 20 0", "Saloon 11 20 0"};
             var lunchSpot = lunchOptions[Game1.random.Next(lunchOptions.Count)];
 
-            // todo: random selection, aim NPC at shop visit strip
             var (shopX, shopY) = MapUtility.ShopTiles.Keys.First() + new Vector2(2, 4);
 
             // MarketDay.Log($"sSFMV: currentSchedule {currentSchedule}", LogLevel.Debug);
             var scheduleParts = currentSchedule.Split("/");
-
-            if (scheduleParts.Length < 2)
-            {
-                return currentSchedule;
-            }
+            if (scheduleParts.Length < 2) return currentSchedule;
 
             var bedSchedulePart = scheduleParts[^1];
             bedSchedulePart = string.Join(" ", bedSchedulePart.Split(" ")[1..]);
@@ -954,6 +950,16 @@ namespace MarketDay.Utility
                    (npc.Name != "Marnie" || str is "Tue" or "Mon") &&
                    npc.Name != "Sandy" && npc.Name != "Dwarf" && npc.Name != "Krobus" && npc.Name != "Wizard" &&
                    npc.Name != "Linus" && npc.Name != "Willy" && npc.Name != "Evelyn" && npc.Name != "George";
+        }
+
+        public static bool ExcludedFromIslandEvents(NPC npc)
+        {
+            var exclusions = MarketDay.helper.GameContent.Load<Dictionary<string, string>>(@"Data/CustomNPCExclusions");
+            if (exclusions.TryGetValue(npc.Name, out var exclusion))
+            {
+                return exclusion.Contains("IslandVisit") || exclusion.Contains("IslandEvent");
+            }
+            return false;
         }
 
         internal static void PrintSchedule(NPC npc)
@@ -998,78 +1004,31 @@ namespace MarketDay.Utility
             // MarketDay.Log($"IgnoreThisSchedule: examining {rawData} for {npc}", LogLevel.Debug);
             var scriptParts = rawData.Split('/');
             var num = 0;
-            if (scriptParts[0].Contains("GOTO"))
-            {
-                var text = scriptParts[0].Split(' ')[1];
-                if (text.ToLower().Equals("season"))
-                {
-                    text = Game1.currentSeason;
-                }
-
-                try
-                {
-                    // scriptParts = npc.getMasterScheduleRawData()[text].Split('/');
-                    return true;
-                }
-                catch (Exception)
-                {
-                    return true;
-                }
-            }
-
+            if (scriptParts[0].Contains("GOTO")) return true;
             if (scriptParts[0].Contains("NOT"))
             {
                 var array2 = scriptParts[0].Split(' ');
-                if (array2[1].ToLower() == "friendship")
+                if (array2[1].ToLower() != "friendship") return false;
+                var i = 2;
+                for (; i < array2.Length; i += 2)
                 {
-                    var i = 2;
-                    var flag = false;
-                    for (; i < array2.Length; i += 2)
-                    {
-                        var text2 = array2[i];
-                        if (int.TryParse(array2[i + 1], out var result))
-                        {
-                            if (Game1.getAllFarmers().Any(allFarmer =>
-                                allFarmer.getFriendshipHeartLevelForNPC(text2) >= result))
-                            {
-                                flag = true;
-                            }
-                        }
-
-                        if (flag)
-                        {
-                            break;
-                        }
-                    }
-
-                    if (flag)
+                    var text2 = array2[i];
+                    if (!int.TryParse(array2[i + 1], out var result)) continue;
+                    if (Game1.getAllFarmers().Any(allFarmer => allFarmer.getFriendshipHeartLevelForNPC(text2) >= result))
                     {
                         return true;
                     }
-
-                    num++;
                 }
+
+                num++;
             }
             else if (scriptParts[0].Contains("MAIL"))
             {
                 var item = scriptParts[0].Split(' ')[1];
-                num = !Game1.MasterPlayer.mailReceived.Contains(item) &&
-                      !NetWorldState.checkAnywhereForWorldStateID(item)
-                    ? num + 1
-                    : num + 2;
+                num = !Game1.MasterPlayer.mailReceived.Contains(item) && !NetWorldState.checkAnywhereForWorldStateID(item) ? 1 : 2;
             }
 
-            if (!scriptParts[num].Contains("GOTO")) return false;
-            var text3 = scriptParts[num].Split(' ')[1];
-            switch (text3.ToLower())
-            {
-                case "season":
-                    break;
-                case "no_schedule":
-                    return true;
-            }
-
-            return true;
+            return scriptParts[num].Contains("GOTO");
         }
     }
 }

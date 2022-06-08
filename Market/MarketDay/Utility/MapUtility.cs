@@ -83,8 +83,24 @@ namespace MarketDay.Utility
             get
             {
                 var s = new Dictionary<string, GrangeShop>();
-                foreach (var shop in ShopAtTile().Values) s[shop.Owner()] = shop;
+                foreach (var shop in ShopAtTile().Values) s[shop.Owner() ?? string.Empty] = shop;
                 return s;
+            }
+        }
+
+        public static Dictionary<string, GrangeShop> PlayerShopOwners
+        {
+            get
+            {
+                return ShopOwners.Where(s => s.Value.IsPlayerShop()).ToDictionary(k=>k.Key, v=>v.Value);
+            }
+        }
+        
+        public static Dictionary<string, GrangeShop> NPCShopOwners
+        {
+            get
+            {
+                return ShopOwners.Where(s => !s.Value.IsPlayerShop()).ToDictionary(k=>k.Key, v=>v.Value);
             }
         }
 

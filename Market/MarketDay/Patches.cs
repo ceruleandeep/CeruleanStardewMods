@@ -167,7 +167,7 @@ namespace MarketDay
             // if we're doing rescheduling we'll bend the pathfinding in pathfindToNextScheduleLocation
             if (MarketDay.Config.NPCVisitorRescheduling) return; 
 
-            __result = Schedule.pathFindViaGrangeShops(startPoint, endPoint, location, limit, 3*60);
+            __result = Schedule.PathFindViaGrangeShops(startPoint, endPoint, location, limit, 3*60);
         }
     }
 
@@ -242,6 +242,7 @@ namespace MarketDay
             string schedule_key,
             ref string __result)
         {
+            if (!MarketDay.Config.NPCScheduleReplacement) return;
             if (!__instance.isVillager() && __instance is not Child) return;
             if (!MarketDay.IsMarketDay) return;
             if (MapUtility.ShopTiles.Count == 0) return;
@@ -258,12 +259,11 @@ namespace MarketDay
             var couldVisitIslandButNot = Schedule.CanVisitIslandToday(__instance) && !alreadyVisitingIsland;
 
             var genericSchedule = "spring,summer,fall,winter,default".Split(",").Contains(schedule_key);
-            
-            if (!MarketDay.Config.NPCScheduleReplacement) return;
-            
-            if (couldVisitIslandButNot)
+
+            if (!couldVisitIslandButNot) return;
+            if (!Schedule.ExcludedFromIslandEvents(__instance))
             {
-                __result = Schedule.scheduleStringForMarketVisit(__instance, __result);
+                __result = Schedule.ScheduleStringForMarketVisit(__instance, __result);
             }
         }
     }
