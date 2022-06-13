@@ -251,8 +251,14 @@ namespace MarketDay
 
                 var ansk = string.Join(", ", AvailableNPCShopKeys);
                 state.Add($"Available NPC shops:  {AvailableNPCShopKeys.Count} shops: {ansk}");
+                
+                var townies = string.Join(", ", Schedule.TownieVisitorsToday.Select(n => n.displayName));
 
                 state.Add($"NPC interactions:");
+                state.Add($"    Townie visitors: {Progression.NumberOfTownieVisitors} requested, {Schedule.TownieVisitorsToday.Count} actual");
+                state.Add($"                   : {townies}");
+                state.Add($"    Random visitors: {Progression.NumberOfRandomVisitors} requested");
+
                 var times = Schedule.NPCInteractions.Keys.ToList();
                 times.Sort();
                 foreach (var time in times)
@@ -644,17 +650,16 @@ namespace MarketDay
             Log($"RecalculateSchedules: begins at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
 
             Schedule.NPCInteractions = new();
+            Schedule.TownieVisitorsToday = new HashSet<NPC>();
 
-            foreach (var npc in StardewValley.Utility.getAllCharacters())
+            var npcs = new List<NPC>();
+            StardewValley.Utility.getAllCharacters(npcs);
+            StardewValley.Utility.Shuffle(Game1.random, npcs);
+            foreach (var npc in npcs.Where(npc => npc is not null).Where(npc => npc.isVillager()))
             {
-                if (npc is null) continue;
-                if (!npc.isVillager()) continue;
                 Log($"RecalculateSchedules:     {npc.Name}", LogLevel.Trace);
                 npc.Schedule = npc.getSchedule(Game1.dayOfMonth);
-                // if (npc.Name == "Haley") Schedule.PrintSchedule(npc);
-                // if (npc.Name.StartsWith("RNPC") && npc.Schedule.Values.Count > 0) Schedule.PrintSchedule(npc);
             }
-            
             
             Log($"RecalculateSchedules: completed at {Game1.currentSeason} {Game1.dayOfMonth} {Game1.timeOfDay} {Game1.ticks}", LogLevel.Trace);
         }
@@ -1148,6 +1153,16 @@ namespace MarketDay
             );
             
             configMenu.AddNumberOption(ModManifest,
+                () => Config.NumberOfTownieVisitors,
+                val => Config.NumberOfTownieVisitors = val,
+                () => Helper.Translation.Get("cfg.townie-visitors"),
+                () => Helper.Translation.Get("cfg.townie-visitors.msg"),
+                0,
+                100,
+                fieldId: "fm_TownieVisitors"
+            );
+            
+            configMenu.AddNumberOption(ModManifest,
                 () => Config.NumberOfRandomVisitors,
                 val => Config.NumberOfRandomVisitors = val,
                 () => Helper.Translation.Get("cfg.random-visitors"),
@@ -1434,7 +1449,7 @@ namespace MarketDay
             return helper.Translation.Get(key);
         }
 
-        private static string Get(string key, object tokens)
+        internal static string Get(string key, object tokens)
         {
             return helper.Translation.Get(key, tokens);
         }

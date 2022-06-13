@@ -44,6 +44,7 @@ namespace MarketDay
         public bool NPCOwnerRescheduling { get; set; } = true;
         public bool NPCVisitorRescheduling { get; set; } = true;
         public bool NPCScheduleReplacement { get; set; } = true;
+        public int NumberOfTownieVisitors { get; set; } = 25;
         public int NumberOfRandomVisitors { get; set; } = 4;
         public bool AlwaysMarketDay { get; set; }
         public bool DebugKeybinds { get; set; }

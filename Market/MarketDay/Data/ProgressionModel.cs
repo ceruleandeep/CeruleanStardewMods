@@ -24,6 +24,7 @@ namespace MarketDay.Data
         public int Number { get; set; }
         public string Name { get; set; }
         public int NumberOfShops { get; set; }
+        public int NumberOfTownieVisitors { get; set; }
         public int NumberOfRandomVisitors { get; set; }
         public int UnlockAtEarnings { get; set; }
         public int UnlockAtEarningsForDifficulty => (int)(UnlockAtEarnings * Game1.MasterPlayer.difficultyModifier);
@@ -90,6 +91,13 @@ namespace MarketDay.Data
                 MarketDay.Config.Progression 
                     ? CurrentLevel.NumberOfShops
                     : MarketDay.Config.NumberOfShops
+            ));
+
+        internal int NumberOfTownieVisitors =>
+            Math.Max(1, Math.Min(100, 
+                MarketDay.Config.Progression 
+                    ? CurrentLevel.NumberOfTownieVisitors
+                    : MarketDay.Config.NumberOfTownieVisitors
             ));
 
         internal int NumberOfRandomVisitors =>

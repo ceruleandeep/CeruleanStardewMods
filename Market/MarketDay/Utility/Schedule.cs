@@ -18,6 +18,7 @@ namespace MarketDay.Utility
     public static class Schedule
     {
         public static Dictionary<int, List<string>> NPCInteractions = new();
+        internal static HashSet<NPC> TownieVisitorsToday;
 
         private static Stack<Point> FindPathForNpcSchedules(
             Point startPoint,
@@ -419,16 +420,15 @@ namespace MarketDay.Utility
                 // which is an opportunity to add another stop for owners or spouses
                 // if the location route takes them via the Town
 
-                GrangeShop shop = null;
-                shop = RouteViaOwnedShop(npc, startLoc, endLocationName, getLocationRoute, time, nextStepTime,
+                var shop = RouteViaOwnedShop(npc, startLoc, endLocationName, getLocationRoute, time, nextStepTime,
                     minutesAvailable, startPoint, endBehavior, endMessage, endingX, endingY, faceDirection,
                     masterSchedule, ref stepTime);
 
                 if (shop is null)
                 {
                     var schedulePathDescription = PathfindToNextScheduleLocation(npc, stepTime,
-                        nextStepTime, true, startLoc, startPoint.X, startPoint.Y, endLocationName, endingX,
-                        endingY,
+                        nextStepTime, true, startLoc, startPoint.X, startPoint.Y, 
+                        endLocationName, endingX, endingY,
                         faceDirection, endBehavior, endMessage);
                     if (timeIsArrival)
                     {
@@ -441,7 +441,11 @@ namespace MarketDay.Utility
 
                     if (stepTime == 0) MarketDay.Log($"stepTime is 0, watch for problems", LogLevel.Warn);
                     if (masterSchedule.ContainsKey(stepTime))
+                    {
                         MarketDay.Log($"stepTime {stepTime} already in schedule, watch for problems", LogLevel.Warn);
+                        MarketDay.Log($"    {startLoc} -> {endLocationName}", LogLevel.Warn);
+                        stepTime += 10;
+                    }
 
                     // MarketDay.Log($"parseMasterSchedule:         {npc.Name} {stepTime} {startLoc} {startPoint} -> {endLocationName} {endingX} {endingY}  lunch: {goingToLunch}", LogLevel.Debug);
                     masterSchedule.Add(stepTime, schedulePathDescription);
@@ -653,6 +657,21 @@ namespace MarketDay.Utility
             return false;
         }
 
+        private static bool WithinTownieQuota(NPC npc)
+        {
+            // random visitors always allowed
+            if (npc.Name.StartsWith("NPC")) return true;
+
+            // once you're in you're in
+            if (TownieVisitorsToday.Contains(npc)) return true;
+            
+            // do we have room in the Townie quotient for this visit?
+            if (TownieVisitorsToday.Count >= MarketDay.Progression.NumberOfTownieVisitors) return false;
+            
+            TownieVisitorsToday.Add(npc);
+            return true;
+        }    
+        
         private static SchedulePathDescription PathfindToNextScheduleLocation(NPC npc, int stepTime, int nextStepTime,
             bool visitShops, string startingLocation, int startingX, int startingY, string endingLocation, int endingX,
             int endingY, int finalFacingDirection, string endBehavior, string endMessage)
@@ -668,14 +687,14 @@ namespace MarketDay.Utility
             //     private Stack<Point> addToStackForSchedule(Stack<Point> original, Stack<Point> toAdd)
             var addToStackForSchedule = MarketDay.helper.Reflection.GetMethod(npc, "addToStackForSchedule");
 
-            List<string> routeViaLocations = !startingLocation.Equals(endingLocation, StringComparison.Ordinal)
+            var routeViaLocations = !startingLocation.Equals(endingLocation, StringComparison.Ordinal)
                 ? getLocationRoute.Invoke<List<string>>(startingLocation, endingLocation)
                 : null;
             if (routeViaLocations != null)
             {
-                for (int i = 0; i < routeViaLocations.Count; i++)
+                for (var i = 0; i < routeViaLocations.Count; i++)
                 {
-                    GameLocation locationFromName = Game1.getLocationFromName(routeViaLocations[i]);
+                    var locationFromName = Game1.getLocationFromName(routeViaLocations[i]);
                     if (locationFromName.Name.Equals("Trailer") &&
                         Game1.MasterPlayer.mailReceived.Contains("pamHouseUpgrade"))
                     {
@@ -685,8 +704,8 @@ namespace MarketDay.Utility
                     var divert = visitShops
                                  && locationFromName.Name == "Town"
                                  && stepTime < MarketDay.Config.ClosingTime * 100
-                                 && nextStepTime > MarketDay.Config.OpeningTime * 100;
-                    // MarketDay.Log($"pfNSL:     {i} {locationFromName.Name} divert: {divert}", LogLevel.Debug);
+                                 && nextStepTime > MarketDay.Config.OpeningTime * 100
+                                 && WithinTownieQuota(npc);
 
                     if (i < routeViaLocations.Count - 1)
                     {
@@ -725,21 +744,22 @@ namespace MarketDay.Utility
                     locationFromName2 = Game1.getLocationFromName("Trailer_Big");
                 }
 
+                var divert = visitShops
+                             && locationFromName2.Name == "Town"
+                             && stepTime < MarketDay.Config.ClosingTime * 100
+                             && nextStepTime > MarketDay.Config.OpeningTime * 100
+                             && WithinTownieQuota(npc);
+                
                 // MarketDay.Log($"pathfindToNextScheduleLocation: {npc.Name} {stepTime} {nextStepTime} - {locationFromName2.Name}", LogLevel.Debug);
-                if (visitShops
-                    && locationFromName2.Name == "Town"
-                    && stepTime < MarketDay.Config.ClosingTime * 100
-                    && nextStepTime > MarketDay.Config.OpeningTime * 100)
-                {
-                    var maxDuration = StardewValley.Utility.ConvertTimeToMinutes(nextStepTime) -
-                                      StardewValley.Utility.ConvertTimeToMinutes(stepTime);
+                if (divert) {
+                    var maxDuration = 
+                        StardewValley.Utility.ConvertTimeToMinutes(nextStepTime) -
+                        StardewValley.Utility.ConvertTimeToMinutes(stepTime);
+                    
                     // MarketDay.Log($"    Diverting {npc.Name} via the market (B)", LogLevel.Trace);
-                    stack = PathFindViaGrangeShops(startPoint, new Point(endingX, endingY), locationFromName2, 30000,
-                        maxDuration);
+                    stack = PathFindViaGrangeShops(startPoint, new Point(endingX, endingY), locationFromName2, 30000, maxDuration);
                     AddVisit(npc, stepTime, nextStepTime, "pfNSL within Town");
-                }
-                else
-                {
+                } else {
                     stack = FindPathForNpcSchedules(startPoint, new Point(endingX, endingY), locationFromName2, 30000);
                 }
             }
@@ -904,33 +924,129 @@ namespace MarketDay.Utility
             return parseMasterSchedule(npc, $"{there}/{back}");
         }
 
+        private static string SaloonTile()
+        {
+            var x = Game1.random.Next(8, 19);
+            return $"Saloon {x} 20 0";
+        }
+
+        private static string TownTile()
+        {
+            var choices = new List<string>
+            {
+                "Town 39 16 3", // mini-garden
+                "Town 40 16 0",
+                "Town 40 17 1",
+                "Town 39 17 3",
+                "Town 32 55 2", // tree near harvey's
+                "Town 41 57 0", // pierre notices
+                "Town 42 57 0",
+                "Town 62 16 2", // shrine-seat
+                "Town 63 16 2",
+                "Town 64 16 2",
+                "Town 40 19 1",
+                "Town 17 57 1", // bench left of market
+                "Town 17 58 1",
+                "Saloon 33 18 0", // arcade
+                "Saloon 34 18 0",
+                "Saloon 35 18 0",
+                "Saloon 37 18 0", // joja machine
+                "Saloon 38 18 0",
+                "Saloon 39 22 2", // tv
+            };
+            
+            // fountain 
+            for (var i = 24; i < 30; i++)
+            {
+                choices.Add($"Town {i} 29 0");
+                choices.Add($"Town 23 {i} 1");
+                choices.Add($"Town {i} 24 2");
+                choices.Add($"Town 29 {i} 3");
+            }
+            
+            // benches south of Saloon 
+            for (var i = 42; i < 46; i++)
+            {
+                choices.Add($"Town {i} 78 2");
+                choices.Add($"Town {i} 80 0");
+            }
+
+            // snooker
+            for (var i = 47; i < 42; i++)
+            {
+                choices.Add($"Saloon {i} 19 2");
+                choices.Add($"Saloon {i} 22 0");
+            }
+
+            // riverbank 
+            for (var i = 15; i < 24; i++)
+            {
+                choices.Add($"Town {i} 94 2");
+                choices.Add($"Town {i} 95 2");
+                choices.Add($"Town {i} 96 2");
+            }
+
+            //  grass above sewer
+            for (var i = 31; i < 39; i++)
+            {
+                choices.Add($"Town {i} 90 2");
+                choices.Add($"Town {i} 91 0");
+            }
+
+            // dirt patches left of market
+            for (var i = 9; i < 14; i++)
+            {
+                choices.Add($"Town {i} 60 2");
+                choices.Add($"Town {i} 62 0");
+                choices.Add($"Town {i} 68 2");
+                choices.Add($"Town {i} 70 0");
+            }
+            
+            return choices[Game1.random.Next(choices.Count)];
+        }
+
+        private static Vector2 RandomShopTile()
+        {
+            var r = Game1.random.Next(MapUtility.ShopTiles.Keys.Count);
+            var tile = MapUtility.ShopTiles.Keys.ToList()[r];
+            var x = Game1.random.Next(1, 5);
+            return tile + new Vector2(x, 4);
+        }
+        
         public static string ScheduleStringForMarketVisit(NPC npc, string currentSchedule)
         {
             if (currentSchedule is null || currentSchedule.Length == 0) return currentSchedule;
 
-            List<string> lunchOptions = new() {"Saloon 8 20 0", "Saloon 9 20 0", "Saloon 10 20 0", "Saloon 11 20 0"};
-            var lunchSpot = lunchOptions[Game1.random.Next(lunchOptions.Count)];
+            var newScheduleParts = new List<string>();
+            
+            var lunchSpot = SaloonTile();
 
             var (shopX, shopY) = MapUtility.ShopTiles.Keys.First() + new Vector2(2, 4);
 
-            // MarketDay.Log($"sSFMV: currentSchedule {currentSchedule}", LogLevel.Debug);
+            MarketDay.Log($"sSFMV: currentSchedule {currentSchedule}", LogLevel.Trace);
             var scheduleParts = currentSchedule.Split("/");
             if (scheduleParts.Length < 2) return currentSchedule;
 
             var bedSchedulePart = scheduleParts[^1];
             bedSchedulePart = string.Join(" ", bedSchedulePart.Split(" ")[1..]);
 
-            var lunchStartsAt = 1200 + Game1.random.Next(5) * 10;
-            var lunchEndsAt = lunchStartsAt + 100;
+            var hourOffset = Game1.random.Next(5) * 10;
+            for (var hour = MarketDay.Config.OpeningTime; hour <= MarketDay.Config.ClosingTime; hour++)
+            {
+                if (hour == MarketDay.Config.OpeningTime) {
+                    var tile = RandomShopTile();
+                    newScheduleParts.Add($"{hour * 100 + hourOffset} Town {tile.X} {tile.Y} 0");
+                } else if (hour == MarketDay.Config.ClosingTime) {
+                    newScheduleParts.Add($"{hour * 100} {bedSchedulePart}");
+                } else if (hour == 12) {
+                    newScheduleParts.Add($"a{hour * 100 + hourOffset} {lunchSpot}");
+                } else if (hour % 2 == 0) {
+                    newScheduleParts.Add($"{hour * 100 + hourOffset} {TownTile()}");
+                } 
+            }
 
-            var goHomeAt = Math.Min(MarketDay.Config.ClosingTime * 100, 2400);
-
-            var lunch = $"{lunchStartsAt} {lunchSpot}";
-            var town = $"a{lunchEndsAt} Town {shopX} {shopY} 0";
-            var bed = $"{goHomeAt} {bedSchedulePart}";
-
-            var schedule = $"{lunch}/{town}/{bed}";
-            // MarketDay.Log($"sSFMV: {npc.Name} schedule: {schedule}", LogLevel.Debug);
+            var schedule = string.Join("/", newScheduleParts);
+            MarketDay.Log($"sSFMV: {npc.Name} schedule: {schedule}", LogLevel.Trace);
             return schedule;
         }
 

@@ -4,6 +4,7 @@ using System.Linq;
 using StardewValley;
 using Microsoft.Xna.Framework;
 using HarmonyLib;
+using MarketDay.Data;
 using MarketDay.Shop;
 using MarketDay.Utility;
 using Microsoft.Xna.Framework.Graphics;
@@ -211,19 +212,6 @@ namespace MarketDay
 
             if (__result is not null && __result.Count > 0) return;
             
-            // new: fair-game rescheduling goes here
-            // if (__result is not null && __result.Count > 0)
-            // {
-            //     var scheduleKey = Schedule.getScheduleKey(__instance, dayOfMonth);
-            //     var fair_game = "spring,summer,fall,winter,default".Split(",");
-            //     if (fair_game.Contains(scheduleKey))
-            //     {
-            //         __result = Schedule.parseMasterSchedule(__instance, __instance.getMasterScheduleEntry(scheduleKey), allowTownInsertions: true);
-            //
-            //     }
-            // };
-            // end
-            
             __result = Schedule.getScheduleWhenNoDefault(__instance, dayOfMonth);
         }
     }
@@ -245,26 +233,82 @@ namespace MarketDay
             if (!MarketDay.Config.NPCScheduleReplacement) return;
             if (!__instance.isVillager() && __instance is not Child) return;
             if (!MarketDay.IsMarketDay) return;
+            if (Schedule.TownieVisitorsToday is null) return;
+            if (Schedule.TownieVisitorsToday.Count > MarketDay.Progression.NumberOfTownieVisitors) return;
+            if (Schedule.IgnoreThisSchedule(__instance, __result)) return;
             if (MapUtility.ShopTiles.Count == 0) return;
-
-            if (Schedule.IgnoreThisSchedule(__instance, __result))
-            {
-                return;
-            }
-            
-            var stranger = StardewValley.Utility.GetAllPlayerFriendshipLevel(__instance) <= 0;
-            if (stranger) return;
+            if (StardewValley.Utility.GetAllPlayerFriendshipLevel(__instance) <= 0) return;
             
             var alreadyVisitingIsland = Game1.netWorldState.Value.IslandVisitors.ContainsKey(__instance.Name);
-            var couldVisitIslandButNot = Schedule.CanVisitIslandToday(__instance) && !alreadyVisitingIsland;
+            var couldVisitIslandButNot = IslandSouth.CanVisitIslandToday(__instance) && !alreadyVisitingIsland;
 
             var genericSchedule = "spring,summer,fall,winter,default".Split(",").Contains(schedule_key);
-
+            
             if (!couldVisitIslandButNot) return;
-            if (!Schedule.ExcludedFromIslandEvents(__instance))
+            if (Schedule.ExcludedFromIslandEvents(__instance)) return;
+            __result = Schedule.ScheduleStringForMarketVisit(__instance, __result);
+            Schedule.TownieVisitorsToday.Add(__instance);
+        }
+    }
+    
+    [HarmonyPatch(typeof(NPC))]
+    [HarmonyPatch("sayHiTo")]
+    //  public void sayHiTo(Character c)
+    //
+    // things to talk about:
+    // recently bought items
+    // nearby shops
+    public class PostfixSayHiTo
+    {
+        public static void Postfix(
+            NPC __instance,
+            Character c)
+        {
+            if (!MarketDay.IsMarketDay) return;
+            if (__instance.currentLocation is null || __instance.currentLocation.Name != "Town") return;
+
+            var qn = Game1.random.Next(1, 4);
+            var an = Game1.random.Next(1, 4);
+            var manners = __instance.Manners switch
             {
-                __result = Schedule.ScheduleStringForMarketVisit(__instance, __result);
+                1 => "polite",
+                2 => "rude",
+                _ => "neutral"
+            };
+
+            var call = MarketDay.Get($"dialog.question.{qn}", new { Name=c.displayName });
+            var response = MarketDay.Get($"dialog.answer.{manners}.{an}",new { Name=__instance.displayName });
+
+            var shops = MapUtility.OpenShops().Where(s => s.Owner() is not null).ToList();
+            StardewValley.Utility.Shuffle(Game1.random, shops);
+            
+            foreach (var shop in shops)
+            {
+                var records = shop.Sales.Where(r => r.npc == __instance).ToList();
+                if (records.Count > 0)
+                {
+                    var record = records[Game1.random.Next(records.Count)];
+                    call = MarketDay.Get($"dialog.i-bought.{qn}", new { Name=c.displayName, Item=record.item.DisplayName, Owner=shop.Owner() });
+                    response = MarketDay.Get($"dialog.i-bought-response.{manners}.{an}", new { Name=__instance.displayName, Item=record.item.DisplayName, Owner=shop.Owner() });
+                    break;
+                }
+
+                records = shop.Sales.Where(r => r.npc == c).ToList();
+                if (records.Count > 0)
+                {
+                    var record = records[Game1.random.Next(records.Count)];
+                    call = MarketDay.Get($"dialog.did-you-buy.{qn}", new { Name=c.displayName, Item=record.item.DisplayName, Owner=shop.Owner() });
+                    response = MarketDay.Get($"dialog.did-you-buy-response.{manners}.{an}", new { Name=__instance.displayName, Item=record.item.DisplayName, Owner=shop.Owner() });
+                    break;
+                }
             }
+            
+            __instance.showTextAboveHead(call);
+            if (c is not NPC npc) return;
+            if (Game1.random.NextDouble() >= 0.66)
+                npc.showTextAboveHead(null);
+            else
+                npc.showTextAboveHead(response, preTimer: 1000 + Game1.random.Next(500));
         }
     }
 }
