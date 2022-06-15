@@ -144,5 +144,15 @@
   "dialog.did-you-buy-response.neutral.3": "{{Item}}",
   "dialog.did-you-buy-response.rude.1": "Get your own {{Item}}",
   "dialog.did-you-buy-response.rude.2": "{{Item}}, if you must know",
-  "dialog.did-you-buy-response.rude.3": "Ask {{Owner}} if you're so curious"
+  "dialog.did-you-buy-response.rude.3": "Ask {{Owner}} if you're so curious",
+  "chat.connected.0": "{0} joined, I guess we should reboot the whole market",
+  "chat.connected.1": "ok {0}'s here, now we can begin the market... again...",
+  "chat.connected.2": "well thanks for joining us {0}",
+  "chat.connected.3": "The wait is over... the party has started... {0} has arrived",
+  "chat.connected.4": "quick, {0}'s here, do we have another shop?",
+  "chat.disconnected.0": "{0} left, let's go through their stuff... oops too late",
+  "chat.disconnected.1": "winners never quit and quitters never win {0}",
+  "chat.disconnected.2": "ok {0}'s gone, stand by while I remove all trace",
+  "chat.disconnected.3": "Near... faaar... whereEEEEVER you are, {0}... our hearts will go on",
+  "chat.disconnected.4": "bye {0}... remind me to go to Lost and Found in the morning"
 }

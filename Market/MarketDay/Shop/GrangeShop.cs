@@ -23,7 +23,7 @@ namespace MarketDay.Shop
 
         private const int DisplayChestHidingOffsetY = 36;
 
-        public string ShopKey => IsPlayerShop() ? ShopName : $"{ContentPack.Manifest.UniqueID}/{ShopName}";
+        public string ShopKey => IsPlayerShop ? ShopName : $"{ContentPack.Manifest.UniqueID}/{ShopName}";
         public long PlayerID;
 
         public Vector2 Origin
@@ -62,14 +62,12 @@ namespace MarketDay.Shop
         public Texture2D? ClosedSign;
 
         // state queries
-        public bool IsPlayerShop()
-        {
-            return PlayerID != 0;
-        }
+
+        public bool IsPlayerShop => PlayerID != 0;
 
         public string? Owner()
         {
-            if (IsPlayerShop()) return ShopName.Replace("Farmer:", "");
+            if (IsPlayerShop) return ShopName.Replace("Farmer:", "");
             return NpcName.Length > 0 ? NpcName : null;
         }
 
@@ -78,7 +76,7 @@ namespace MarketDay.Shop
             get
             {
                 if (Owner() is null) return null; 
-                if (IsPlayerShop())
+                if (IsPlayerShop)
                 {
                     return Game1.getAllFarmers().FirstOrDefault(f => f.Name == Owner());
                 }
@@ -111,7 +109,7 @@ namespace MarketDay.Shop
             SetSharedValue(SalesTodayKey, 0);
             SetSharedValue(GoldTodayKey, 0);
 
-            if (!IsPlayerShop())
+            if (!IsPlayerShop)
             {
                 StockChestForTheDay();
                 RestockGrangeFromChest(true);
@@ -143,7 +141,7 @@ namespace MarketDay.Shop
             if (!Context.IsMainPlayer) return;
             if (!IsMarketDay) return;
 
-            if (IsPlayerShop())
+            if (IsPlayerShop)
             {
                 if (MarketDay.Progression.AutoRestock > 0) RestockGrangeFromChest();
             }
@@ -162,9 +160,9 @@ namespace MarketDay.Shop
                 return;
             }
             
-            Log($"    EmptyGrangeAndDestroyFurniture: IsPlayerShop: {IsPlayerShop()}", LogLevel.Trace);
+            Log($"    EmptyGrangeAndDestroyFurniture: IsPlayerShop: {IsPlayerShop}", LogLevel.Trace);
 
-            if (IsPlayerShop())
+            if (IsPlayerShop)
             {
                 MarketDay.IncrementSharedValue(MarketDay.TotalGoldKey, GetSharedValue(GoldTodayKey));
                 SendSalesReport();
@@ -311,7 +309,7 @@ namespace MarketDay.Shop
                 return;
             }
 
-            if (IsPlayerShop())
+            if (IsPlayerShop)
             {
                 if (PlayerID != Game1.player.UniqueMultiplayerID)
                 {
@@ -419,6 +417,14 @@ namespace MarketDay.Shop
 
         private int[] getSellPriceArrayFromShopStock(Item item)
         {
+            if (StockManager?.ItemPriceAndStock is null)
+            {
+                MarketDay.Log($"getSellPriceArrayFromShopStock: no Stockmanager or no StockManager.ItemPriceAndStock", LogLevel.Warn);
+                return new[]
+                {
+                    StardewValley.Utility.getSellToStorePriceOfItem(item, false)
+                };
+            }
             foreach (var (stockItem, priceAndQty) in StockManager.ItemPriceAndStock)
             {
                 if (!ItemsUtil.Equal(item, stockItem)) continue;
@@ -626,7 +632,7 @@ namespace MarketDay.Shop
             };
             Sales.Add(newSale);
 
-            if (!IsPlayerShop()) return;
+            if (!IsPlayerShop) return;
             IncrementSharedValue(SalesTodayKey);
             IncrementSharedValue(GoldTodayKey, salePrice);
             AddToPlayerFunds(salePrice);
@@ -806,7 +812,7 @@ namespace MarketDay.Shop
 
         private int GetGiftTasteForThisItem(Item item, NPC npc)
         {
-            int taste = IsPlayerShop() ? NPC.gift_taste_dislike : NPC.gift_taste_like;
+            int taste = IsPlayerShop ? NPC.gift_taste_dislike : NPC.gift_taste_like;
             try
             {
                 // so many other mods hack up NPCs that we have to wrap this
@@ -864,7 +870,7 @@ namespace MarketDay.Shop
 
             var nearby = (from npc in location.characters
                 where npc.getTileX() >= Origin.X 
-                      && npc.getTileX() <= Origin.X + 2 
+                      && npc.getTileX() <= Origin.X + 3 
                       && npc.getTileY() == (int)Origin.Y + 4
                 select npc).ToList();
             return nearby;
@@ -1007,7 +1013,7 @@ namespace MarketDay.Shop
         private void MakeStorageChest(GameLocation location, Vector2 OriginTile)
         {
             var VisibleChestPosition = OriginTile + new Vector2(3, 1);
-            string owner = IsPlayerShop()
+            string owner = IsPlayerShop
                 ? ShopName.Replace("Farmer:", "")
                 : NpcName;
 
@@ -1161,7 +1167,7 @@ namespace MarketDay.Shop
             }
 
             var restockLimitRemaining =
-                IsPlayerShop() ? MarketDay.Progression.AutoRestock : MarketDay.Config.RestockItemsPerHour;
+                IsPlayerShop ? MarketDay.Progression.AutoRestock : MarketDay.Config.RestockItemsPerHour;
 
             for (var j = 0; j < GrangeChest.items.Count; j++)
             {
@@ -1171,7 +1177,7 @@ namespace MarketDay.Shop
                     return;
                 }
 
-                if (restockLimitRemaining <= 0) return;
+                if (!fullRestock && restockLimitRemaining <= 0) return;
                 if (GrangeChest.items[j] != null) continue;
 
                 var stockItem = StockChest.items[Game1.random.Next(StockChest.items.Count)];

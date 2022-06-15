@@ -12,13 +12,13 @@
       "ShopSize": 3,
       "SellPriceMultiplierLimit": 1.2,
       "Prizes": [
-        {"Name": "3rd Prize (Profit)", "Gold": 15000, "Score": 0, "Object": "Quality Fertilizer"},
-        {"Name": "2nd Prize (Profit)", "Gold": 18000, "Score": 0, "Object": "Egg"},
-        {"Name": "1st Prize (Profit)", "Gold": 20000, "Score": 0, "Object": "Milk"},
+        {"Name": "3rd Prize (Profit)", "Gold": 10000, "Score": 0, "Object": "Quality Fertilizer"},
+        {"Name": "2nd Prize (Profit)", "Gold": 14000, "Score": 0, "Object": "Egg"},
+        {"Name": "1st Prize (Profit)", "Gold": 18000, "Score": 0, "Object": "Milk"},
         {"Name": "1st Prize (Reputation)", "Gold": 0, "Score": 60, "Object": "Cheese"},
-        {"Name": "3rd Prize", "Gold": 15000, "Score": 60, "Object": "Fairy Rose"},
-        {"Name": "2nd Prize", "Gold": 18000, "Score": 60, "Object": "Honey", "Flavor": "Blue Jazz"},
-        {"Name": "1st Prize", "Gold": 20000, "Score": 60, "Object": "Goat Cheese"}
+        {"Name": "3rd Prize", "Gold": 10000, "Score": 60, "Object": "Fairy Rose"},
+        {"Name": "2nd Prize", "Gold": 14000, "Score": 60, "Object": "Honey", "Flavor": "Blue Jazz"},
+        {"Name": "1st Prize", "Gold": 18000, "Score": 60, "Object": "Goat Cheese"}
       ]
     },
     {
@@ -27,17 +27,17 @@
       "NumberOfShops": 6,
       "NumberOfTownieVisitors": 40,
       "NumberOfRandomVisitors": 8,
-      "UnlockAtEarnings": 40000,
+      "UnlockAtEarnings": 30000,
       "AutoRestock": 0,
       "ShopSize": 6,
       "SellPriceMultiplierLimit": 1.5,
       "Prizes": [
-        {"Name": "3rd Prize", "Gold": 40000, "Score": 0, "Object": "Oil"},
-        {"Name": "2nd Prize (Profit)", "Gold": 45000, "Score": 0, "Object": "Bread"},
+        {"Name": "3rd Prize", "Gold": 30000, "Score": 0, "Object": "Oil"},
+        {"Name": "2nd Prize (Profit)", "Gold": 40000, "Score": 0, "Object": "Bread"},
         {"Name": "1st Prize (Profit)", "Gold": 50000, "Score": 0, "Object": "Wool"},
         {"Name": "1st Prize (Reputation)", "Gold": 0, "Score": 60, "Object": "Wheat Flour"},
-        {"Name": "3rd Prize", "Gold": 40000, "Score": 60, "Object": "Wheat Flour"},
-        {"Name": "2nd Prize", "Gold": 45000, "Score": 60, "Object": "Wheat Flour", "Stack": 3},
+        {"Name": "3rd Prize", "Gold": 30000, "Score": 60, "Object": "Wheat Flour"},
+        {"Name": "2nd Prize", "Gold": 40000, "Score": 60, "Object": "Wheat Flour", "Stack": 3},
         {"Name": "1st Prize", "Gold": 50000, "Score": 60, "Object": "Unmilled Rice", "Stack": 3}
       ]
     },
@@ -47,18 +47,18 @@
       "NumberOfShops": 9,
       "NumberOfTownieVisitors": 60,
       "NumberOfRandomVisitors": 12,
-      "UnlockAtEarnings": 450000,
+      "UnlockAtEarnings": 90000,
       "AutoRestock": 3,
       "ShopSize": 9,
       "SellPriceMultiplierLimit": 2.0,
       "Prizes": [
-        {"Name": "3rd Prize", "Gold": 80000, "Score": 0, "Object": "Large Egg"},
-        {"Name": "2nd Prize (Profit)", "Gold": 90000, "Score": 0, "Object": "Tea Leaves"},
-        {"Name": "1st Prize (Profit)", "Gold": 100000, "Score": 0, "Object": "Green Tea"},
+        {"Name": "3rd Prize", "Gold": 100000, "Score": 0, "Object": "Large Egg"},
+        {"Name": "2nd Prize (Profit)", "Gold": 120000, "Score": 0, "Object": "Tea Leaves"},
+        {"Name": "1st Prize (Profit)", "Gold": 140000, "Score": 0, "Object": "Green Tea"},
         {"Name": "1st Prize (Reputation)", "Gold": 0, "Score": 60, "Object": "Cheese", "Quality": 2},
-        {"Name": "3rd Prize", "Gold": 80000, "Score": 60, "Object": "Pumpkin"},
-        {"Name": "2nd Prize", "Gold": 90000, "Score": 60, "Object": "Juice", "Flavor": "Eggplant"},
-        {"Name": "1st Prize", "Gold": 100000, "Score": 60, "Object": "Sashimi"}
+        {"Name": "3rd Prize", "Gold": 100000, "Score": 60, "Object": "Pumpkin"},
+        {"Name": "2nd Prize", "Gold": 120000, "Score": 60, "Object": "Juice", "Flavor": "Eggplant"},
+        {"Name": "1st Prize", "Gold": 140000, "Score": 60, "Object": "Sashimi"}
       ]
     },
     {
@@ -67,17 +67,17 @@
       "NumberOfShops": 12,
       "NumberOfTownieVisitors": 80,
       "NumberOfRandomVisitors": 16,
-      "UnlockAtEarnings": 1500000,
+      "UnlockAtEarnings": 300000,
       "AutoRestock": 6,
       "ShopSize": 9,
       "SellPriceMultiplierLimit": 4.0,
       "Prizes": [
-        {"Name": "3rd Prize", "Gold": 150000, "Score": 0, "Object": "Mayonnaise", "Quality": 2},
-        {"Name": "2nd Prize (Profit)", "Gold": 175000, "Score": 0, "Object": "Hot Pepper"},
+        {"Name": "3rd Prize", "Gold": 120000, "Score": 0, "Object": "Mayonnaise", "Quality": 2},
+        {"Name": "2nd Prize (Profit)", "Gold": 150000, "Score": 0, "Object": "Hot Pepper"},
         {"Name": "1st Prize (Profit)", "Gold": 200000, "Score": 0, "Object": "Coffee Bean"},
         {"Name": "1st Prize (Reputation)", "Gold": 0, "Score": 60, "Object": "Wool", "Stack": 3},
-        {"Name": "3rd Prize", "Gold": 150000, "Score": 60, "Object": "Jelly", "Flavor": "Blueberry"},
-        {"Name": "2nd Prize", "Gold": 175000, "Score": 60, "Object": "Juice", "Flavor": "Yam"},
+        {"Name": "3rd Prize", "Gold": 120000, "Score": 60, "Object": "Jelly", "Flavor": "Blueberry"},
+        {"Name": "2nd Prize", "Gold": 150000, "Score": 60, "Object": "Juice", "Flavor": "Yam"},
         {"Name": "1st Prize", "Gold": 200000, "Score": 60, "Object": "Wine", "Flavor": "Starfruit"}
       ]
     },
@@ -87,18 +87,18 @@
       "NumberOfShops": 15,
       "NumberOfTownieVisitors": 100,
       "NumberOfRandomVisitors": 20,
-      "UnlockAtEarnings": 5000000,
+      "UnlockAtEarnings": 1000000,
       "AutoRestock": 9,
       "ShopSize": 9,
       "SellPriceMultiplierLimit": 10,
       "Prizes": [
-        {"Name": "3rd Prize", "Gold": 500000, "Score": 0, "Object": "Rhubarb Pie"},
-        {"Name": "2nd Prize (Profit)", "Gold": 550000, "Score": 0, "Object": "Jelly", "Flavor": "Blueberry"},
-        {"Name": "1st Prize (Profit)", "Gold": 600000, "Score": 0, "Object": "Wine", "Flavor": "Starfruit","Quality": 4},
+        {"Name": "3rd Prize", "Gold": 300000, "Score": 0, "Object": "Rhubarb Pie"},
+        {"Name": "2nd Prize (Profit)", "Gold": 400000, "Score": 0, "Object": "Jelly", "Flavor": "Blueberry"},
+        {"Name": "1st Prize (Profit)", "Gold": 500000, "Score": 0, "Object": "Wine", "Flavor": "Starfruit","Quality": 4},
         {"Name": "1st Prize (Reputation)", "Gold": 0, "Score": 60, "Object": "Mead", "Quality": 4},
-        {"Name": "3rd Prize", "Gold": 500000, "Score": 60, "Object": "Pink Cake", "Stack": 3},
-        {"Name": "2nd Prize", "Gold": 550000, "Score": 60, "Object": "Wine", "Flavor": "Starfruit", "Quality": 4},
-        {"Name": "1st Prize", "Gold": 600000, "Score": 60, "Object": "Copper Bar", "Stack": 3}
+        {"Name": "3rd Prize", "Gold": 300000, "Score": 60, "Object": "Pink Cake", "Stack": 3},
+        {"Name": "2nd Prize", "Gold": 400000, "Score": 60, "Object": "Wine", "Flavor": "Starfruit", "Quality": 4},
+        {"Name": "1st Prize", "Gold": 500000, "Score": 60, "Object": "Copper Bar", "Stack": 3}
       ]
     }
   ]

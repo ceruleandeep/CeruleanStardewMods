@@ -92,7 +92,7 @@ namespace MarketDay.Utility
         {
             get
             {
-                return ShopOwners.Where(s => s.Value.IsPlayerShop()).ToDictionary(k=>k.Key, v=>v.Value);
+                return ShopOwners.Where(s => s.Value.IsPlayerShop).ToDictionary(k=>k.Key, v=>v.Value);
             }
         }
         
@@ -100,7 +100,7 @@ namespace MarketDay.Utility
         {
             get
             {
-                return ShopOwners.Where(s => !s.Value.IsPlayerShop()).ToDictionary(k=>k.Key, v=>v.Value);
+                return ShopOwners.Where(s => !s.Value.IsPlayerShop).ToDictionary(k=>k.Key, v=>v.Value);
             }
         }
 
@@ -142,7 +142,7 @@ namespace MarketDay.Utility
 
         internal static List<GrangeShop> OpenPlayerShops()
         {
-            return OpenShops().Where(s => s.IsPlayerShop()).ToList();
+            return OpenShops().Where(s => s.IsPlayerShop).ToList();
         }
 
         /// <summary>

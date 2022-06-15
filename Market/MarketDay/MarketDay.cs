@@ -38,10 +38,6 @@ namespace MarketDay
         private static List<Vector2> previousShopLayout = new();
         private static List<GrangeShop> previousOpenedShops = new();
         
-        // set true when hot reload is done 
-        // following a GMCM change to market day
-        private static bool ConfigChangesSynced = true;
-        
         internal static ModConfig Config;
         internal static ProgressionModel Progression;
         internal static IModHelper helper;
@@ -86,13 +82,15 @@ namespace MarketDay
             Helper.Events.GameLoop.DayStarted += OnDayStarted_MakePlayerShops;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_FlagSyncNeeded;
             Helper.Events.GameLoop.DayStarted += OnDayStarted_SendPrompt;
+            helper.Events.Content.AssetRequested += AddChatStrings;
             Helper.Events.Content.AssetReady += OnAssetReady_FlagSyncNeeded;
+            Helper.Events.Multiplayer.PeerConnected += OnPeerConnected_ReloadMarket;
+            Helper.Events.Multiplayer.PeerDisconnected += OnPeerDisonnected_ReloadMarket;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_SyncMapUpdateStockOpenShop;
             Helper.Events.GameLoop.OneSecondUpdateTicking += OnOneSecondUpdateTicking_InteractWithNPCs;
             helper.Events.GameLoop.OneSecondUpdateTicked += Wizard.ConfigureFromWizard;
-
             Helper.Events.GameLoop.TimeChanged += OnTimeChanged_RestockThroughDay;
-            Helper.Events.GameLoop.DayEnding += OnDayEnding_CloseShopsAndDestroyFurniture;
+            Helper.Events.GameLoop.DayEnding += OnDayEnding_CloseShopsSendMailClearVisitorList;
             Helper.Events.GameLoop.Saving += OnSaving_SetStateForTomorrow;
             Helper.Events.GameLoop.Saving += OnSaving_WriteConfig;
             Helper.Events.GameLoop.Saved += OnSaved_DoNothing;
@@ -118,7 +116,7 @@ namespace MarketDay
         {
             foreach (var (shopKey, grangeShop) in ShopManager.GrangeShops)
             {
-                if (grangeShop.IsPlayerShop()) ShopManager.GrangeShops.Remove(shopKey);
+                if (grangeShop.IsPlayerShop) ShopManager.GrangeShops.Remove(shopKey);
             }
         }
         
@@ -128,18 +126,23 @@ namespace MarketDay
             var multiplayer = farmers.Count > 1;
             foreach (var farmer in farmers)
             {
+                if (ShopManager.GrangeShops.Values.Any(s => s.PlayerID == farmer.UniqueMultiplayerID))
+                    continue;
+
+                var shopKey = $"Farmer:{farmer.Name}";
                 var signText = multiplayer 
                     ? Get("shop-sign", new {Owner=farmer.Name}) 
                     : Get("farm-sign", new {FarmName=Game1.player.farmName.Value});
                 
                 var PlayerShop = new GrangeShop()
                 {
-                    ShopName = $"Farmer:{farmer.Name}",
+                    ShopName = shopKey,
                     Quote = "Farmer store",
                     ItemStocks = Array.Empty<ItemStock>(),
                     PlayerID = farmer.UniqueMultiplayerID,
                     OpenSignText = signText
                 };
+                
                 ShopManager.GrangeShops.Add(PlayerShop.ShopKey, PlayerShop);
                 Log($"Added shop {PlayerShop.ShopKey} ({signText}) for {PlayerShop.ShopName} ({PlayerShop.PlayerID})", LogLevel.Trace);
             }
@@ -150,17 +153,8 @@ namespace MarketDay
         private static void GMCMFieldChanged(string fieldID, object val)
         {
             Log($"GMCMFieldChanged: {fieldID} = {val}", LogLevel.Trace);
-            if (fieldID.StartsWith("fm_")) ConfigChangesSynced = false;
         }
 
-        private static void SyncAfterConfigChanges()
-        {
-            if (!Context.IsMainPlayer) return;
-            if (!Context.IsWorldReady) return;
-            Log($"SyncAfterConfigChanges: does nothing at the moment", LogLevel.Info, true);
-            LogShopPositions("SyncAfterConfigChanges");
-        }
-        
         private static void HotReload(string command=null, string[] args=null)
         {
             if (!Context.IsMainPlayer) return;
@@ -168,7 +162,7 @@ namespace MarketDay
             Log($"HotReload", LogLevel.Info);
 
             Log($"    Closing {MapUtility.ShopAtTile().Values.Count} stores", LogLevel.Debug);
-            OnDayEnding_CloseShopsAndDestroyFurniture(null, null);
+            OnDayEnding_CloseShopsSendMailClearVisitorList(null, null);
 
             // helper.ConsoleCommands.Trigger("patch", new[]{"reload", SMod.ModManifest.UniqueID+".CP"});
             
@@ -379,7 +373,7 @@ namespace MarketDay
             {
                 if (!MapUtility.ShopOwners.TryGetValue(args[0], out var grangeShop))
                 {
-                    var playerShops = string.Join(" ", MapUtility.ShopOwners.Values.Where(s => s.IsPlayerShop()).Select(s => s.Owner()));
+                    var playerShops = string.Join(" ", MapUtility.ShopOwners.Values.Where(s => s.IsPlayerShop).Select(s => s.Owner()));
                     Log($"Could not find shop for {args[0]}, should be one of [{playerShops}]", LogLevel.Error);
                     return;
                 }
@@ -520,7 +514,28 @@ namespace MarketDay
             RemovePlayerShops();
             MakePlayerShops();
         }
-        
+
+        private void AddChatStrings(object sender, AssetRequestedEventArgs e)
+        {
+            if (e.NameWithoutLocale.IsEquivalentTo("Strings/UI"))
+            {
+                e.Edit(asset =>
+                {
+                    var data = asset.AsDictionary<string, string>().Data;
+                    for (var i = 0; i < 5; i++)
+                    {
+                        var key = $"Chat_11778_connected_{i}";
+                        var val = Get($"chat.connected.{i}");
+                        data[key] = val;
+                        
+                        key = $"Chat_11778_disconnected_{i}";
+                        val = Get($"chat.disconnected.{i}");
+                        data[key] = val;
+                    }
+                });
+            }
+        }
+
         private static void OnAssetReady_FlagSyncNeeded(object sender, AssetReadyEventArgs e)
         {
             if (!Context.IsWorldReady) return;
@@ -534,8 +549,45 @@ namespace MarketDay
 
             LogShopPositions("OnAssetReady_FlagSyncNeeded");
             
-            Log($"OnAssetReady: requesting sync", LogLevel.Info, true);
+            Log($"OnAssetReady: requesting sync", LogLevel.Info, false);
             MapChangesSynced = false;
+        }
+
+        private static void OnPeerConnected_ReloadMarket(object sender, PeerConnectedEventArgs e)
+        {
+            Log($"OnPeerConnected_ReloadMarket: IsWorldReady {Context.IsWorldReady} IsMainPlayer {Context.IsMainPlayer}", LogLevel.Info, false);
+
+            if (!Context.IsWorldReady) return;
+            if (!Context.IsMainPlayer) return;
+            
+            Log($"OnPeerConnected_ReloadMarket: invalidating Maps/Town", LogLevel.Info, false);
+            helper.GameContent.InvalidateCache("Maps/Town");
+            
+            var newFarmer = Game1.getFarmer(e.Peer.PlayerID);
+            var r = Game1.random.Next(5);
+            var multiplayer = helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer").GetValue();
+            var globalChatInfoMessage = helper.Reflection.GetMethod(multiplayer, "globalChatInfoMessage");
+            globalChatInfoMessage.Invoke($"11778_connected_{r}", new[]{newFarmer.Name} );
+            Log($"OnPeerConnected_ReloadMarket: globalChatInfoMessage 11778_connected_{r}", LogLevel.Debug, false);
+        }
+        
+        private static void OnPeerDisonnected_ReloadMarket(object sender, PeerDisconnectedEventArgs e)
+        {
+            Log($"OnPeerDisonnected_ReloadMarket: IsWorldReady {Context.IsWorldReady} IsMainPlayer {Context.IsMainPlayer}", LogLevel.Info, false);
+
+            if (!Context.IsWorldReady) return;
+            if (!Context.IsMainPlayer) return;
+            
+            Log($"OnPeerDisonnected_ReloadMarket: invalidating Maps/Town", LogLevel.Info, false);
+            helper.GameContent.InvalidateCache("Maps/Town");
+            
+            var newFarmer = Game1.getFarmer(e.Peer.PlayerID);
+            if (newFarmer is null) return;
+            var r = Game1.random.Next(5);
+            var multiplayer = helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer").GetValue();
+            var globalChatInfoMessage = helper.Reflection.GetMethod(multiplayer, "globalChatInfoMessage");
+            globalChatInfoMessage.Invoke($"11778_disconnected_{r}", new[]{newFarmer.Name} );
+            Log($"OnPeerDisonnected_ReloadMarket: globalChatInfoMessage 11778_disconnected_{r}", LogLevel.Debug, false);
         }
         
         private static void OnDayStarted_FlagSyncNeeded(object sender, EventArgs e)
@@ -562,7 +614,19 @@ namespace MarketDay
                 shop.CloseShop();
             }
             LogShopPositions("OnOneSecondUpdateTicking_SyncMap checked for invalid shops");
-
+            
+            // at this point it would be wise to check that all player shops have connected players
+            var farmers = Game1.getAllFarmers().Where(f => f.isActive()).Select(f => f.UniqueMultiplayerID).ToList();
+            foreach (var shop in ShopManager.GrangeShops.Values.Where(shop => shop.IsPlayerShop && !farmers.Contains(shop.PlayerID)))
+            {
+                Log($"{shop.ShopName} has disconnected", LogLevel.Trace);
+                shop.CloseShop();
+                ShopManager.GrangeShops.Remove(shop.ShopKey);
+            }
+            
+            // and that all connected players have GrangeShops
+            MakePlayerShops();
+            
             var availableShopCount = AvailableNPCShopKeys.Count + AvailablePlayerShopKeys.Count;            
             var expectedShopCount = IsMarketDay ? ShopPositions().Length : 0;
             var expectedPlayerShopCount = IsMarketDay ? Math.Min(AvailablePlayerShopKeys.Count, expectedShopCount) : 0;
@@ -750,7 +814,7 @@ namespace MarketDay
                 var availableShopKeys = new List<string>();
                 foreach (var (ShopKey, shop) in ShopManager.GrangeShops)
                 {
-                    if (shop.IsPlayerShop()) continue;
+                    if (shop.IsPlayerShop) continue;
                     if (Config.ShopsEnabled.TryGetValue(ShopKey, out var enabled) && !enabled) continue;
                     if (shop.When is not null)
                     {
@@ -769,7 +833,7 @@ namespace MarketDay
                 var availableShopKeys = new List<string>();
                 foreach (var (ShopKey, shop) in ShopManager.GrangeShops)
                 {
-                    if (!shop.IsPlayerShop()) continue;
+                    if (!shop.IsPlayerShop) continue;
                     if (Config.ShopsEnabled.TryGetValue(ShopKey, out var enabled) && !enabled) continue;
                     if (shop.When is not null)
                     {
@@ -781,9 +845,10 @@ namespace MarketDay
             }
         }
 
-        private static void OnDayEnding_CloseShopsAndDestroyFurniture(object sender, EventArgs e)
+        private static void OnDayEnding_CloseShopsSendMailClearVisitorList(object sender, EventArgs e)
         {
             CloseShopsRemoveFurnitureSendMail(MapUtility.ShopAtTile().Values);
+            Schedule.TownieVisitorsToday = new HashSet<NPC>();
         }
 
         private static void CloseShopsRemoveFurnitureSendMail(IEnumerable<GrangeShop> shops)
@@ -1337,13 +1402,22 @@ namespace MarketDay
 
         public static void SaveConfig() {
             helper.WriteConfig(Config);
-            if (! ConfigChangesSynced) SyncAfterConfigChanges();
         }
 
         internal static bool IsMarketDay
         {
             get
             {
+                var farm = Game1.getFarm();
+                if (farm is null) return false;
+                
+                if (!Context.IsMainPlayer)
+                {
+                    if (farm.modData.TryGetValue($"{SMod.ModManifest.UniqueID}/IsMarketDay", out var md_str))
+                        return md_str == "true";
+                    return false;
+                }
+                
                 var dayOfWeek = Game1.dayOfMonth % 7;
                 var week = Game1.dayOfMonth / 7;
                 var season = Game1.currentSeason;
@@ -1354,7 +1428,11 @@ namespace MarketDay
 
                 if (Config.UseAdvancedOpeningOptions)
                 {
-                    if (Config.AlwaysMarketDay) return true;
+                    if (Config.AlwaysMarketDay)
+                    {
+                        farm.modData[$"{SMod.ModManifest.UniqueID}/IsMarketDay"] = "true";
+                        return true;
+                    }
                 
                     md = dayOfWeek switch
                     {
@@ -1388,6 +1466,8 @@ namespace MarketDay
                 {
                     md = md && Game1.dayOfMonth % 7 == Config.DayOfWeek;
                 }
+
+                farm.modData[$"{SMod.ModManifest.UniqueID}/IsMarketDay"] = md ? "true" : "false";
                 return md;
             }
         }
@@ -1425,22 +1505,33 @@ namespace MarketDay
             var shopCount = Progression.NumberOfShops;
             var key = $"{shopCount} Shops";
             if (!ShopLayouts.ContainsKey(key)) key = "6 Shops";
-            if (!ShopLayouts.TryGetValue(key, out var layout)) return null;
-            return layout;
+            return ShopLayouts.TryGetValue(key, out var layout) ? layout : null;
         }
         
         private static string[] ShopPositions()
         {
             if (!Context.IsWorldReady) return null;
-            var layout = ShopPositionsWithoutGMM();
-            if (!Config.GMMCompat || !isGMMDay()) return layout.Select(i => $"Shop{i}").ToArray();
+            var farm = Game1.getFarm();
+            if (farm is null) return null;
+                
+            if (!Context.IsMainPlayer)
+            {
+                return farm.modData.TryGetValue($"{SMod.ModManifest.UniqueID}/ShopPositions", out var positions) 
+                    ? positions.Split(" ") : null;
+            }
             
-            if (GMMPaisleyPresent) layout.Remove(0);
-            if (GMMPaisleyPresent) layout.Remove(5);
-            if (GMMPaisleyPresent) layout.Remove(12);
-            if (GMMPaisleyPresent) layout.Remove(13);
-            if (GMMJosephPresent) layout.Remove(2);
-            if (GMMJosephPresent) layout.Remove(7);
+            var layout = ShopPositionsWithoutGMM();
+            if (Config.GMMCompat && isGMMDay())
+            {
+                if (GMMPaisleyPresent) layout.Remove(0);
+                if (GMMPaisleyPresent) layout.Remove(5);
+                if (GMMPaisleyPresent) layout.Remove(12);
+                if (GMMPaisleyPresent) layout.Remove(13);
+                if (GMMJosephPresent) layout.Remove(2);
+                if (GMMJosephPresent) layout.Remove(7);
+            }
+            
+            farm.modData[$"{SMod.ModManifest.UniqueID}/ShopPositions"] = string.Join(" ", layout.Select(i => $"Shop{i}"));
             return layout.Select(i => $"Shop{i}").ToArray();
         }
 

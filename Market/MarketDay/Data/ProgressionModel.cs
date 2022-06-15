@@ -86,12 +86,18 @@ namespace MarketDay.Data
         /// Number of shops to open, accounting for challenge mode level
         /// and free play mode configuration
         /// </summary>
-        internal int NumberOfShops =>
-            Math.Max(1, Math.Min(15, 
-                MarketDay.Config.Progression 
-                    ? CurrentLevel.NumberOfShops
-                    : MarketDay.Config.NumberOfShops
-            ));
+        internal int NumberOfShops
+        {
+            get
+            {
+                var farmhands = Game1.getAllFarmers().Count(f => f.isActive()) - 1; 
+                return Math.Max(1, Math.Min(15,
+                    MarketDay.Config.Progression
+                        ? CurrentLevel.NumberOfShops + farmhands
+                        : MarketDay.Config.NumberOfShops
+                ));
+            }
+        }
 
         internal int NumberOfTownieVisitors =>
             Math.Max(1, Math.Min(100, 

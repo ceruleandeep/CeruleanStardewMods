@@ -18,7 +18,7 @@ namespace MarketDay.Utility
     public static class Schedule
     {
         public static Dictionary<int, List<string>> NPCInteractions = new();
-        internal static HashSet<NPC> TownieVisitorsToday;
+        internal static HashSet<NPC> TownieVisitorsToday = new();
 
         private static Stack<Point> FindPathForNpcSchedules(
             Point startPoint,
@@ -659,8 +659,11 @@ namespace MarketDay.Utility
 
         private static bool WithinTownieQuota(NPC npc)
         {
+            // something's triggered a schedule refresh on a farmhand, just don't crash
+            if (!Context.IsMainPlayer) return true;
+            
             // random visitors always allowed
-            if (npc.Name.StartsWith("NPC")) return true;
+            if (npc.Name.StartsWith("RNPC")) return true;
 
             // once you're in you're in
             if (TownieVisitorsToday.Contains(npc)) return true;
@@ -884,9 +887,13 @@ namespace MarketDay.Utility
                 var next = available.First();
                 available.Remove(next);
 
-                var visitPoint = new Point(next.X + Game1.random.Next(3), next.Y + 4);
 
-                if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance) placesToVisit.Add(visitPoint);
+                if (Game1.random.NextDouble() < MarketDay.Config.StallVisitChance)
+                {
+                    var visitPoint = new Point(next.X + Game1.random.Next(2), next.Y + 4);
+                    placesToVisit.Add(visitPoint);
+                    placesToVisit.Add(visitPoint + new Point(1, 0));
+                }
             }
 
 
