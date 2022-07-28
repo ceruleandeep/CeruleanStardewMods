@@ -38,6 +38,7 @@ namespace PersonalEffects
                 
                 //despawn old items
                 var l = Game1.getLocationFromName(ss.Location);
+                if (!l) continue;
                 var pos = new Vector2(ss.X, ss.Y);
                 if (l.objects.ContainsKey(pos))
                 {
