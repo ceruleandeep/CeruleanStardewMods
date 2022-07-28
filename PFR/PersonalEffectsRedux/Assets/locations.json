@@ -7,7 +7,8 @@
     "Description": "",
     "X": 1,
     "Y": 18,
-    "Rarity": "normal"
+    "Rarity": "normal",
+    "ForSVE": "only"
   },
   {
     "NPC": "Susan",
@@ -17,7 +18,8 @@
     "Description": "",
     "X": 24,
     "Y": 19,
-    "Rarity": "rare"
+    "Rarity": "rare",
+    "ForSVE": "only"
   },
   {
     "NPC": "Susan",
@@ -27,7 +29,8 @@
     "Description": "house",
     "X": 22,
     "Y": 7,
-    "Rarity": "normal"
+    "Rarity": "normal",
+    "ForSVE": "only"
   },
   {
     "NPC": "Andy",
@@ -37,7 +40,8 @@
     "Description": "house",
     "X": 11,
     "Y": 7,
-    "Rarity": "normal"
+    "Rarity": "normal",
+    "ForSVE": "only"
   },
   {
     "NPC": "Olivia",
@@ -47,7 +51,8 @@
     "Description": "house",
     "X": 19,
     "Y": 8,
-    "Rarity": "normal"
+    "Rarity": "normal",
+    "ForSVE": "only"
   },
   {
     "NPC": "Victor",
@@ -57,7 +62,8 @@
     "Description": "bath pool",
     "X": 3,
     "Y": 10,
-    "Rarity": "rare"
+    "Rarity": "rare",
+    "ForSVE": "only"
   },
   {
     "NPC": "Victor",
@@ -67,7 +73,8 @@
     "Description": "house",
     "X": 30,
     "Y": 7,
-    "Rarity": "normal"
+    "Rarity": "normal",
+    "ForSVE": "only"
   },
   {
     "NPC": "Sophia",
@@ -77,7 +84,8 @@
     "Description": "bath locker",
     "X": 8,
     "Y": 8,
-    "Rarity": "normal"
+    "Rarity": "normal",
+    "ForSVE": "only"
   },
   {
     "NPC": "Sophia",
@@ -87,7 +95,8 @@
     "Description": "Blue moon vineyard",
     "X": 19,
     "Y": 7,
-    "Rarity": "always"
+    "Rarity": "always",
+    "ForSVE": "only"
   },
   {
     "NPC": "Sophia",
@@ -97,7 +106,8 @@
     "Description": "Bath",
     "X": 3,
     "Y": 11,
-    "Rarity": "normal"
+    "Rarity": "normal",
+    "ForSVE": "only"
   },
   {
     "NPC": "Abigail",
